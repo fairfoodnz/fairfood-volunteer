@@ -90,11 +90,8 @@ export default async function MePage({ searchParams }: Props) {
                     key={b.id}
                     className="relative grid gap-4 overflow-hidden rounded-md border border-border bg-card p-5 md:grid-cols-[auto_1fr_auto] md:items-center"
                   >
-                    <div className="grid h-14 w-14 place-items-center rounded bg-cream-deep">
-                      <ProgramArt
-                        slug={b.shift.program.slug}
-                        className="h-9 w-9 text-leaf-deep"
-                      />
+                    <div className="relative h-14 w-14 overflow-hidden rounded bg-cream-deep">
+                      <ProgramArt slug={b.shift.program.slug} />
                     </div>
                     <div>
                       <p className="text-sm font-semibold uppercase tracking-[0.14em] text-leaf-deep">

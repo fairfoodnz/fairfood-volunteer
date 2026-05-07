@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -119,48 +120,26 @@ function PolaroidStack() {
       <Polaroid
         rotate="-7deg"
         position="top-2 left-0"
-        accent="from-tomato/80 to-tomato/40"
         title="The kai table"
         caption="Tuesday, 11:42am"
-        emoji={
-          <svg viewBox="0 0 64 64" className="h-16 w-16 text-cream/95" aria-hidden>
-            <path d="M8 32 Q32 8 56 32 Q32 56 8 32 Z" fill="currentColor" />
-            <path d="M16 32 Q32 22 48 32" stroke="#3DA84A" strokeWidth="3" fill="none" strokeLinecap="round" />
-            <circle cx="22" cy="28" r="2" fill="#3DA84A" />
-            <circle cx="42" cy="28" r="2" fill="#3DA84A" />
-          </svg>
-        }
+        src="/photos/hero-rescue.webp"
+        alt="Volunteers sorting rescued kai at the Fair Food warehouse"
       />
       <Polaroid
         rotate="4deg"
         position="top-20 right-2"
-        accent="from-leaf to-leaf-deep"
         title="Pack &amp; share"
         caption="Avondale warehouse"
-        emoji={
-          <svg viewBox="0 0 64 64" className="h-16 w-16 text-cream/95" aria-hidden>
-            <path d="M10 22 L32 12 L54 22 L54 50 L32 60 L10 50 Z" fill="currentColor" />
-            <path d="M10 22 L32 32 L54 22" stroke="#1a1a1a" strokeWidth="2" fill="none" />
-            <path d="M32 32 L32 60" stroke="#1a1a1a" strokeWidth="2" />
-          </svg>
-        }
+        src="/photos/kai-box.webp"
+        alt="Volunteers packing kai boxes ready for whānau"
       />
       <Polaroid
         rotate="-3deg"
         position="bottom-0 left-12"
-        accent="from-charcoal to-charcoal/80"
         title="Conscious Kitchen"
         caption="Every Wed · 9am"
-        emoji={
-          <svg viewBox="0 0 64 64" className="h-16 w-16 text-cream/95" aria-hidden>
-            <path d="M14 36 L14 50 Q14 54 18 54 L46 54 Q50 54 50 50 L50 36 Z" fill="currentColor" />
-            <path d="M14 36 L50 36" stroke="#1a1a1a" strokeWidth="2" />
-            <path d="M32 36 L32 18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-            <path d="M28 18 q4 -8 8 0" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-            <circle cx="22" cy="46" r="1.5" fill="#1a1a1a" />
-            <circle cx="42" cy="46" r="1.5" fill="#1a1a1a" />
-          </svg>
-        }
+        src="/photos/hero-kitchen.webp"
+        alt="Cooks preparing a meal in the Conscious Kitchen"
       />
     </div>
   );
@@ -169,35 +148,30 @@ function PolaroidStack() {
 function Polaroid({
   rotate,
   position,
-  accent,
   title,
   caption,
-  emoji,
+  src,
+  alt,
 }: {
   rotate: string;
   position: string;
-  accent: string;
   title: string;
   caption: string;
-  emoji: React.ReactNode;
+  src: string;
+  alt: string;
 }) {
   return (
     <div
       className={`absolute ${position} w-56 select-none rounded-sm bg-white p-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] transition-transform hover:scale-[1.02]`}
       style={{ transform: `rotate(${rotate})` }}
     >
-      <div
-        className={`relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-gradient-to-br ${accent}`}
-      >
-        <div className="absolute inset-0 grid place-items-center">{emoji}</div>
-        <div
-          aria-hidden
-          className="absolute inset-0 mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)",
-            backgroundSize: "8px 8px",
-          }}
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-charcoal/10">
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="224px"
+          className="object-cover"
         />
       </div>
       <div className="px-1 pt-3 pb-1">

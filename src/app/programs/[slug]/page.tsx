@@ -75,11 +75,8 @@ export default async function ProgramPage({ params }: Props) {
                 </Button>
               </div>
             </div>
-            <div className="grid h-72 place-items-center rounded-md bg-leaf/10 md:h-96">
-              <ProgramArt
-                slug={program.slug}
-                className="h-2/3 w-2/3 text-leaf-deep"
-              />
+            <div className="relative h-72 overflow-hidden rounded-md bg-leaf/10 md:h-96">
+              <ProgramArt slug={program.slug} />
             </div>
           </div>
         </section>

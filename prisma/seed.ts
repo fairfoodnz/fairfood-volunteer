@@ -13,7 +13,7 @@ const programs = [
     description:
       "Help sort fresh fruit, vegetables and pantry goods rescued from across Tāmaki Makaurau, then pack them into kai boxes that go straight to whānau, foodbanks and community groups the same day.",
     order: 1,
-    image: "/programs/kai-box.jpg",
+    image: "/photos/kai-box.webp",
     weeklySlots: [
       { day: 1, start: "09:00", end: "12:00", capacity: 12 },
       { day: 1, start: "13:00", end: "16:00", capacity: 12 },
@@ -31,7 +31,7 @@ const programs = [
     description:
       "Roll up your sleeves with our chefs to turn surplus ingredients into beautiful meals. Whether you're a pro in the kitchen or just like to eat, there's a place for you at the bench.",
     order: 2,
-    image: "/programs/kitchen.jpg",
+    image: "/photos/kitchen.webp",
     weeklySlots: [
       { day: 2, start: "09:00", end: "12:00", capacity: 6 },
       { day: 3, start: "09:00", end: "12:00", capacity: 6 },
@@ -45,7 +45,7 @@ const programs = [
     description:
       "A nine-week programme for rangatahi and adults building confidence and a CV. One day a week, 10am–3pm, working alongside our team in the warehouse and kitchen with a hospitality skills option on Fridays.",
     order: 3,
-    image: "/programs/work-skills.jpg",
+    image: "/photos/skills.webp",
     weeklySlots: [
       { day: 2, start: "10:00", end: "15:00", capacity: 8 },
       { day: 3, start: "10:00", end: "15:00", capacity: 8 },
@@ -60,7 +60,7 @@ const programs = [
     description:
       "We modify tasks, allow support people to come along, and welcome groups like the Young Onset Dementia Collective every Monday. Tell us what you need on the form — there's nearly always a way.",
     order: 4,
-    image: "/programs/inclusive.jpg",
+    image: "/photos/inclusive.webp",
     weeklySlots: [
       { day: 1, start: "10:00", end: "12:00", capacity: 6, note: "Young Onset Dementia Collective" },
       { day: 3, start: "10:00", end: "12:00", capacity: 6 },
@@ -73,7 +73,7 @@ const programs = [
     description:
       "Over 150 companies have rolled their sleeves up with us. Half-day team experiences combining the warehouse and kitchen, with a debrief over kai. Email us to plan your day.",
     order: 5,
-    image: "/programs/team.jpg",
+    image: "/photos/team.webp",
     weeklySlots: [],
   },
 ];
