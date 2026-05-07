@@ -60,11 +60,13 @@ function Button({
   render,
   ...props
 }: ButtonProps) {
-  const resolvedRender =
-    render ??
-    (asChild && React.isValidElement(children)
-      ? (children as React.ReactElement)
-      : undefined)
+  const resolvedRender: React.ReactElement | undefined = React.isValidElement(
+    render,
+  )
+    ? render
+    : asChild && React.isValidElement(children)
+      ? children
+      : undefined
 
   if (resolvedRender) {
     // Style the rendered element (e.g. <Link>) as a button without going
