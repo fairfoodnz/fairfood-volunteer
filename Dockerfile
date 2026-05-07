@@ -37,7 +37,8 @@ RUN mkdir -p /opt/migrator \
  && cd /opt/migrator \
  && npm init -y >/dev/null \
  && npm install --omit=optional --no-package-lock --no-audit --no-fund \
-      prisma@7.8.0 dotenv@17.4.2 tsx@4.21.0 \
+      prisma@7.8.0 @prisma/client@7.8.0 @prisma/adapter-pg@7.8.0 \
+      dotenv@17.4.2 tsx@4.21.0 \
  && chown -R nextjs:nodejs /opt/migrator
 
 # Standalone bundle (includes its own minimal node_modules traced by NFT)
