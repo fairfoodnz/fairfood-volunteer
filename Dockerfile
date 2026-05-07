@@ -29,14 +29,15 @@ RUN apk add --no-cache openssl \
  && addgroup -g 1001 -S nodejs \
  && adduser -S nextjs -u 1001
 
-# Isolated install of the Prisma CLI for `migrate deploy` at startup.
-# Kept in /opt so it can't conflict with the standalone bundle's node_modules.
+# Isolated install of the Prisma CLI (for `migrate deploy` and `db seed`)
+# plus tsx (used by the seed script). Kept in /opt so it can't conflict
+# with the standalone bundle's node_modules.
 # Versions must match package.json — bump together.
 RUN mkdir -p /opt/migrator \
  && cd /opt/migrator \
  && npm init -y >/dev/null \
  && npm install --omit=optional --no-package-lock --no-audit --no-fund \
-      prisma@7.8.0 dotenv@17.4.2 \
+      prisma@7.8.0 dotenv@17.4.2 tsx@4.21.0 \
  && chown -R nextjs:nodejs /opt/migrator
 
 # Standalone bundle (includes its own minimal node_modules traced by NFT)
@@ -47,6 +48,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # Prisma schema + config — needed by `migrate deploy` at runtime.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# Generated Prisma client — NFT only traces the files imported by app code,
+# leaving package metadata behind that `prisma db seed` and tsx need to
+# resolve `../src/generated/prisma` from prisma/seed.ts.
+COPY --from=builder --chown=nextjs:nodejs /app/src/generated/prisma ./src/generated/prisma
+
+# Put tsx on PATH so `prisma db seed` (which runs "tsx prisma/seed.ts") works.
+ENV PATH="/opt/migrator/node_modules/.bin:$PATH"
 
 USER nextjs
 EXPOSE 3000
