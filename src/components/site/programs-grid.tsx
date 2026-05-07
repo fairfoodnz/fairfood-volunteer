@@ -86,14 +86,19 @@ export async function ProgramsGrid() {
                 </span>
               </div>
 
-              <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 opacity-90">
-                <ProgramArt
-                  slug={p.slug}
-                  className={`h-full w-full ${palette.art}`}
-                />
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 w-3/5"
+                style={{
+                  maskImage:
+                    "linear-gradient(to right, transparent 0%, black 35%)",
+                  WebkitMaskImage:
+                    "linear-gradient(to right, transparent 0%, black 35%)",
+                }}
+              >
+                <ProgramArt slug={p.slug} />
               </div>
 
-              <div className="relative z-10 mt-auto max-w-sm space-y-3">
+              <div className="relative z-10 mt-auto max-w-[60%] space-y-3">
                 <h3 className="display text-3xl font-semibold leading-tight md:text-[2.4rem]">
                   {p.title}
                 </h3>
