@@ -116,10 +116,10 @@ function BackgroundFlair() {
 
 function PolaroidStack() {
   return (
-    <div className="relative mx-auto h-[28rem] w-full max-w-md md:h-[32rem]">
+    <div className="relative mx-auto h-[26rem] w-full max-w-md md:h-[32rem]">
       <Polaroid
         rotate="-7deg"
-        position="top-2 left-0"
+        position="top-2 left-2 sm:left-0"
         title="The kai table"
         caption="Tuesday, 11:42am"
         src="/photos/hero-rescue.webp"
@@ -135,7 +135,7 @@ function PolaroidStack() {
       />
       <Polaroid
         rotate="-3deg"
-        position="bottom-0 left-12"
+        position="bottom-0 left-8 sm:left-12"
         title="Conscious Kitchen"
         caption="Every Wed · 9am"
         src="/photos/hero-kitchen.webp"
@@ -162,7 +162,7 @@ function Polaroid({
 }) {
   return (
     <div
-      className={`absolute ${position} w-56 select-none rounded-sm bg-white p-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] transition-transform hover:scale-[1.02]`}
+      className={`absolute ${position} w-44 select-none rounded-sm bg-white p-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] transition-transform hover:scale-[1.02] sm:w-56`}
       style={{ transform: `rotate(${rotate})` }}
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-charcoal/10">
@@ -170,7 +170,7 @@ function Polaroid({
           src={src}
           alt={alt}
           fill
-          sizes="224px"
+          sizes="(min-width: 640px) 224px, 176px"
           className="object-cover"
         />
       </div>
