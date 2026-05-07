@@ -51,4 +51,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.
 USER nextjs
 EXPOSE 3000
 
-CMD ["sh", "-c", "/opt/migrator/node_modules/.bin/prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "NODE_PATH=/opt/migrator/node_modules /opt/migrator/node_modules/.bin/prisma migrate deploy && node server.js"]
