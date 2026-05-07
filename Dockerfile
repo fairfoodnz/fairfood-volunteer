@@ -29,20 +29,26 @@ RUN apk add --no-cache openssl \
  && addgroup -g 1001 -S nodejs \
  && adduser -S nextjs -u 1001
 
+# Isolated install of the Prisma CLI for `migrate deploy` at startup.
+# Kept in /opt so it can't conflict with the standalone bundle's node_modules.
+# Versions must match package.json — bump together.
+RUN mkdir -p /opt/migrator \
+ && cd /opt/migrator \
+ && npm init -y >/dev/null \
+ && npm install --omit=optional --no-package-lock --no-audit --no-fund \
+      prisma@7.8.0 dotenv@17.4.2 \
+ && chown -R nextjs:nodejs /opt/migrator
+
 # Standalone bundle (includes its own minimal node_modules traced by NFT)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Prisma CLI + schema for `migrate deploy` at startup. Not picked up by
-# NFT tracing since the app code never imports `prisma` directly.
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
+# Prisma schema + config — needed by `migrate deploy` at runtime.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 
 USER nextjs
 EXPOSE 3000
 
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "/opt/migrator/node_modules/.bin/prisma migrate deploy && node server.js"]
