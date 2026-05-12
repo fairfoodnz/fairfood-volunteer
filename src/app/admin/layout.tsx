@@ -27,7 +27,7 @@ export default async function AdminLayout({
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur md:hidden">
           <SidebarTrigger />
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
-            Whakahaere · Admin
+            Admin
           </span>
         </header>
         <div className="flex-1">{children}</div>

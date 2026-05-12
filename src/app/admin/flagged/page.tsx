@@ -63,7 +63,7 @@ export default async function FlaggedPage() {
       <div className="mx-auto max-w-4xl">
         <p className="eyebrow">Volunteers</p>
         <h1 className="display mt-2 text-balance text-3xl font-bold leading-tight md:text-4xl">
-          Kōrero needed
+          Needs review
         </h1>
         <p className="mt-3 max-w-2xl text-foreground/75">
           These volunteers flagged something on their profile. Have a chat
@@ -73,13 +73,13 @@ export default async function FlaggedPage() {
 
         <FlagSection
           label="arrest history"
-          empty="Nothing flagged. Mā te wā."
+          empty="Nothing flagged right now."
           users={arrestUsers}
           field="arrest"
         />
         <FlagSection
           label="health conditions"
-          empty="Nothing flagged. Mā te wā."
+          empty="Nothing flagged right now."
           users={healthUsers}
           field="health"
         />
@@ -185,7 +185,7 @@ function FlaggedCard({ user, field }: { user: FlaggedUser; field: "arrest" | "he
           <p className="text-xs text-foreground/55">
             {reviewed
               ? `Reviewed ${formatDateNZ(user.flagReviewedAt!)}.`
-              : "Mark as reviewed once you've had the kōrero."}
+              : "Mark as reviewed once you've spoken with them."}
           </p>
           <form
             action={reviewed ? clearFlagReviewedAction : markFlagReviewedAction}

@@ -45,7 +45,7 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
   {
     label: "Volunteers",
     links: [
-      { href: "/admin/flagged", label: "Kōrero needed", icon: AlertCircle },
+      { href: "/admin/flagged", label: "Needs review", icon: AlertCircle },
       { href: "/admin/volunteers", label: "All volunteers", icon: Users, disabled: true },
     ],
   },
@@ -74,7 +74,7 @@ export function AdminSidebar({
           <LogoMark size={36} />
           <span className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
-              Whakahaere
+              Fair Food
             </span>
             <span className="text-sm font-semibold">Admin</span>
           </span>

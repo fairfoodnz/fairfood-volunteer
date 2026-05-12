@@ -1,4 +1,4 @@
-# /admin/flagged — Volunteers needing a kōrero
+# /admin/flagged — Volunteers needing a chat
 
 **Inherits** `MASTER.md`. Privacy-first surface, admin-only.
 
@@ -9,7 +9,7 @@ Lists users where `arrestHistory === true` OR `healthConditions === true`. Coord
 Route guarded by `role === ADMIN`. Render 404 (not 403) for non-admins to avoid leaking the page's existence.
 
 ## Layout
-- Page header: eyebrow "Admin · Volunteers", h1 "Kōrero needed"
+- Page header: eyebrow "Admin · Volunteers", h1 "Needs review"
 - Sub-copy: "These volunteers flagged something on their profile. Have a chat before their first shift. Don't share these notes outside the coordinator team."
 - Two horizontal-scroll-safe sections, with mono divider labels:
   - `arrest history` — list of cards
@@ -18,8 +18,8 @@ Route guarded by `role === ADMIN`. Render 404 (not 403) for non-admins to avoid 
 
 ## Volunteer card (default state: COLLAPSED)
 ```
-[avatar/initial]  Aroha W.            Joined 12 Apr 2026          [Reveal notes ▾]
-                  aroha@…  ·  021…    Last booked: Sat 3 May
+[avatar/initial]  Sarah W.            Joined 12 Apr 2026          [Reveal notes ▾]
+                  sarah@…  ·  021…    Last booked: Sat 3 May
 ```
 - `rounded-md border border-border bg-card p-5`
 - Name uses first name + last initial *in admin*, full name on reveal (keep the privacy ladder consistent with the volunteer-facing roster)
@@ -31,7 +31,7 @@ Route guarded by `role === ADMIN`. Render 404 (not 403) for non-admins to avoid 
 - Includes a "Mark as reviewed" button — sets a `reviewedAt` field on the User; reviewed cards collapse to a thin row at the bottom of each section in a `text-foreground/55` style
 
 ## Empty state
-"Nothing flagged. Mā te wā." — dashed card, same pattern as `MASTER.md` empty state.
+"Nothing flagged right now." — dashed card, same pattern as `MASTER.md` empty state.
 
 ## Mobile
 - Cards stack full-width

@@ -34,3 +34,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Working in this repo
 
 - For any frontend work (components in `src/components/**`, pages in `src/app/**`, styling, layout, or interaction changes), load the `frontend-design:frontend-design` and `ui-ux-pro-max:ui-ux-pro-max` skills before editing — they shape the design quality this project expects.
+- **Te reo Māori is for volunteer-facing surfaces only.** Admin/coordinator pages (anything under `/admin`, plus `src/components/admin/**` and `design-system/pages/admin-*.md`) stay in plain English — no Māori headings, labels, empty-state copy, or sprinkle words. The design-system master file's "te reo sprinkles" guidance applies to public/volunteer pages only.

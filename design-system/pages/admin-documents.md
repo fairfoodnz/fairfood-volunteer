@@ -6,7 +6,7 @@
 Admins upload, re-categorise, replace, and delete documents stored in Garage. Volunteer-facing `/resources` reflects this list.
 
 ## Layout
-- Page header: eyebrow "Admin · Resources", h1 "Volunteer kete", sub-copy on where uploads go
+- Page header: eyebrow "Admin · Resources", h1 "Volunteer library", sub-copy on where uploads go
 - Two-column on `lg`: left = upload area (`lg:col-span-1`), right = existing documents list (`lg:col-span-2`)
 
 ## Upload area (left column)
