@@ -63,6 +63,7 @@ export function UserMenu({
         <DropdownMenuSeparator />
         <form action={signOutAction}>
           <DropdownMenuItem
+            nativeButton
             render={(props) => (
               <button type="submit" {...props}>
                 Sign out
