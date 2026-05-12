@@ -1,0 +1,129 @@
+services:
+  garage:
+    image: dxflrs/garage:v1.0.1
+    restart: unless-stopped
+    expose:
+      - "3900"
+      - "3901"
+      - "3903"
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN}
+      GARAGE_METRICS_TOKEN: ${GARAGE_METRICS_TOKEN}
+    configs:
+      - source: garage_toml
+        target: /etc/garage.toml
+    volumes:
+      - fairfood-garage-meta:/var/lib/garage/meta
+      - fairfood-garage-data:/var/lib/garage/data
+
+  garage-init:
+    image: alpine:3.20
+    restart: "no"
+    depends_on:
+      - garage
+    environment:
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN}
+      ZONE: dc1
+      CAPACITY: "50000000000"
+      BUCKET: fairfood
+      KEY_NAME: fairfood-prod
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -eu
+        apk add --no-cache curl jq >/dev/null
+
+        ADMIN="http://garage:3903"
+        AUTH="Authorization: Bearer $$GARAGE_ADMIN_TOKEN"
+
+        echo "→ waiting for garage admin api..."
+        for i in $$(seq 1 60); do
+          if curl -fsS -H "$$AUTH" "$$ADMIN/v1/status" >/dev/null 2>&1; then break; fi
+          sleep 1
+        done
+
+        STATUS=$$(curl -fsS -H "$$AUTH" "$$ADMIN/v1/status")
+        NODE_ID=$$(echo "$$STATUS" | jq -r '.nodes[0].id')
+        echo "→ node: $$NODE_ID"
+
+        LAYOUT=$$(curl -fsS -H "$$AUTH" "$$ADMIN/v1/layout")
+        ROLE=$$(echo "$$LAYOUT" | jq -r --arg id "$$NODE_ID" '.roles[]? | select(.nodeId==$$id) | .zone')
+        if [ -z "$$ROLE" ]; then
+          echo "→ assigning layout..."
+          curl -fsS -X POST -H "$$AUTH" -H "Content-Type: application/json" \
+            -d "[{\"id\":\"$$NODE_ID\",\"zone\":\"$$ZONE\",\"capacity\":$$CAPACITY,\"tags\":[\"prod\"]}]" \
+            "$$ADMIN/v1/layout" >/dev/null
+          NEXT_VERSION=$$(curl -fsS -H "$$AUTH" "$$ADMIN/v1/layout" | jq -r '.version + 1')
+          curl -fsS -X POST -H "$$AUTH" -H "Content-Type: application/json" \
+            -d "{\"version\":$$NEXT_VERSION}" \
+            "$$ADMIN/v1/layout/apply" >/dev/null
+          echo "  applied layout v$$NEXT_VERSION"
+        else
+          echo "→ layout already applied"
+        fi
+
+        if curl -fsS -H "$$AUTH" "$$ADMIN/v1/bucket?globalAlias=$$BUCKET" >/dev/null 2>&1; then
+          echo "→ bucket '$$BUCKET' exists"
+        else
+          echo "→ creating bucket '$$BUCKET'..."
+          curl -fsS -X POST -H "$$AUTH" -H "Content-Type: application/json" \
+            -d "{\"globalAlias\":\"$$BUCKET\"}" \
+            "$$ADMIN/v1/bucket" >/dev/null
+        fi
+        BUCKET_ID=$$(curl -fsS -H "$$AUTH" "$$ADMIN/v1/bucket?globalAlias=$$BUCKET" | jq -r '.id')
+
+        KEY_ID=$$(curl -fsS -H "$$AUTH" "$$ADMIN/v1/key?search=$$KEY_NAME" 2>/dev/null | jq -r '.accessKeyId? // empty')
+        if [ -z "$$KEY_ID" ]; then
+          echo "→ creating key '$$KEY_NAME'..."
+          KEY_RESP=$$(curl -fsS -X POST -H "$$AUTH" -H "Content-Type: application/json" \
+            -d "{\"name\":\"$$KEY_NAME\"}" \
+            "$$ADMIN/v1/key")
+          KEY_ID=$$(echo "$$KEY_RESP" | jq -r '.accessKeyId')
+          SECRET=$$(echo "$$KEY_RESP" | jq -r '.secretAccessKey')
+          echo ""
+          echo "================ COPY THESE NOW ================"
+          echo "S3_ACCESS_KEY_ID=$$KEY_ID"
+          echo "S3_SECRET_ACCESS_KEY=$$SECRET"
+          echo "================================================"
+          echo "The secret is only printed once. Paste into the"
+          echo "Next.js app env vars in Coolify, then redeploy it."
+          echo ""
+        else
+          echo "→ key '$$KEY_NAME' exists (id: $$KEY_ID)"
+        fi
+
+        echo "→ granting key on bucket (idempotent)..."
+        curl -fsS -X POST -H "$$AUTH" -H "Content-Type: application/json" \
+          -d "{\"bucketId\":\"$$BUCKET_ID\",\"accessKeyId\":\"$$KEY_ID\",\"permissions\":{\"read\":true,\"write\":true,\"owner\":false}}" \
+          "$$ADMIN/v1/bucket/allow" >/dev/null
+
+        echo "✓ bootstrap complete"
+
+configs:
+  garage_toml:
+    content: |
+      metadata_dir = "/var/lib/garage/meta"
+      data_dir = "/var/lib/garage/data"
+      db_engine = "lmdb"
+      replication_factor = 1
+      rpc_bind_addr = "[::]:3901"
+      rpc_public_addr = "garage:3901"
+
+      [s3_api]
+      s3_region = "garage"
+      api_bind_addr = "[::]:3900"
+      root_domain = ".s3.garage.localhost"
+
+      [s3_web]
+      bind_addr = "[::]:3902"
+      root_domain = ".web.garage.localhost"
+      index = "index.html"
+
+      [admin]
+      api_bind_addr = "[::]:3903"
+
+volumes:
+  fairfood-garage-meta:
+  fairfood-garage-data:

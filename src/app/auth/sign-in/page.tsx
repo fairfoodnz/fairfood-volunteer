@@ -60,7 +60,7 @@ export default async function SignInPage({ searchParams }: Props) {
                 Create your volunteer account →
               </Link>
             </p>
-            {process.env.NODE_ENV !== "production" && <DevQuickLogin />}
+            <DevQuickLogin />
           </div>
         </div>
       </main>

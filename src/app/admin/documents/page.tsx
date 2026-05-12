@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { signedDownloadUrl } from "@/lib/s3";
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -24,22 +23,16 @@ export default async function AdminDocumentsPage() {
     orderBy: [{ category: "asc" }, { title: "asc" }],
   });
 
-  const rows = await Promise.all(
-    documents.map(async (d) => ({
-      id: d.id,
-      title: d.title,
-      description: d.description,
-      category: d.category,
-      mimeType: d.mimeType,
-      sizeBytes: d.sizeBytes,
-      createdAt: NZ_DATE.format(d.createdAt),
-      downloadUrl: await signedDownloadUrl({
-        key: d.objectKey,
-        filename: `${d.title}`,
-        expiresInSeconds: 60 * 30,
-      }),
-    })),
-  );
+  const rows = documents.map((d) => ({
+    id: d.id,
+    title: d.title,
+    description: d.description,
+    category: d.category,
+    mimeType: d.mimeType,
+    sizeBytes: d.sizeBytes,
+    createdAt: NZ_DATE.format(d.createdAt),
+    downloadUrl: `/api/documents/${d.id}`,
+  }));
 
   const grouped = new Map<DocumentCategory, typeof rows>();
   for (const r of rows) {

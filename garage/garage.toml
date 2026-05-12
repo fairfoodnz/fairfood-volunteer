@@ -7,7 +7,8 @@ replication_factor = 1
 
 rpc_bind_addr = "[::]:3901"
 rpc_public_addr = "127.0.0.1:3901"
-rpc_secret = "1799bccfd7411eddcf9ebd1e0a6c0a0eba18a8f01ed2e5e8d4b3f5d4f9c2bce1"
+# Secrets come from env vars so this file can stay in git:
+#   GARAGE_RPC_SECRET, GARAGE_ADMIN_TOKEN, GARAGE_METRICS_TOKEN
 
 [s3_api]
 s3_region = "garage"
@@ -21,5 +22,3 @@ index = "index.html"
 
 [admin]
 api_bind_addr = "[::]:3903"
-admin_token = "dev-only-admin-token"
-metrics_token = "dev-only-metrics-token"

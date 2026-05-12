@@ -5,7 +5,6 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const endpoint = process.env.S3_ENDPOINT;
 const region = process.env.S3_REGION;
@@ -55,17 +54,14 @@ export async function deleteObject(key: string) {
   await s3.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: key }));
 }
 
-export async function signedDownloadUrl(opts: {
-  key: string;
-  filename: string;
-  expiresInSeconds?: number;
-}) {
-  const cmd = new GetObjectCommand({
-    Bucket: S3_BUCKET,
-    Key: opts.key,
-    ResponseContentDisposition: `attachment; filename="${opts.filename.replace(/"/g, "")}"`,
-  });
-  return getSignedUrl(s3, cmd, {
-    expiresIn: opts.expiresInSeconds ?? 60 * 10,
-  });
+export async function getObject(key: string) {
+  const res = await s3.send(
+    new GetObjectCommand({ Bucket: S3_BUCKET, Key: key }),
+  );
+  if (!res.Body) throw new Error(`Empty body for ${key}`);
+  return {
+    stream: res.Body.transformToWebStream(),
+    contentType: res.ContentType,
+    contentLength: res.ContentLength,
+  };
 }

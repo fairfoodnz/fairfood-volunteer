@@ -2,7 +2,6 @@ import { FileText, Image as ImageIcon, Map as MapIcon } from "lucide-react";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { db } from "@/lib/db";
-import { signedDownloadUrl } from "@/lib/s3";
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -68,22 +67,16 @@ export default async function ResourcesPage() {
     orderBy: [{ category: "asc" }, { title: "asc" }],
   });
 
-  const cards: ResourceCard[] = await Promise.all(
-    documents.map(async (d) => ({
-      id: d.id,
-      title: d.title,
-      description: d.description,
-      category: d.category,
-      mimeType: d.mimeType,
-      sizeBytes: d.sizeBytes,
-      updatedAt: d.updatedAt,
-      downloadUrl: await signedDownloadUrl({
-        key: d.objectKey,
-        filename: d.title,
-        expiresInSeconds: 60 * 15,
-      }),
-    })),
-  );
+  const cards: ResourceCard[] = documents.map((d) => ({
+    id: d.id,
+    title: d.title,
+    description: d.description,
+    category: d.category,
+    mimeType: d.mimeType,
+    sizeBytes: d.sizeBytes,
+    updatedAt: d.updatedAt,
+    downloadUrl: `/api/documents/${d.id}`,
+  }));
 
   const grouped = new Map<DocumentCategory, ResourceCard[]>();
   for (const c of cards) {

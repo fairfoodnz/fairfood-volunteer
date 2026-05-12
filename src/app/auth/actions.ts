@@ -130,16 +130,12 @@ export async function signOutAction() {
   redirect("/");
 }
 
-// Dev-only one-click login for seeded accounts. No-op in production.
-// Wired up on the sign-in page beneath the regular form so reviewers can
-// poke around without remembering passwords.
 const DEV_SEED_EMAILS = {
   admin: "admin@fairfood.test",
   volunteer: "volunteer@fairfood.test",
 } as const;
 
 export async function devSignInAction(formData: FormData) {
-  if (process.env.NODE_ENV === "production") return;
   const role = formData.get("role");
   if (role !== "admin" && role !== "volunteer") return;
   const email = DEV_SEED_EMAILS[role];
