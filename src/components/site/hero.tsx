@@ -58,8 +58,10 @@ export function Hero() {
               <dd className="font-medium text-foreground">Tāmaki Makaurau</dd>
             </div>
             <div className="flex items-baseline gap-2">
-              <dt className="font-mono text-xs text-foreground/50">crew</dt>
-              <dd className="font-medium text-foreground">2,400 kg of kai / day</dd>
+              <dt className="font-mono text-xs text-foreground/50">mahi</dt>
+              <dd className="font-medium text-foreground">
+                2,400 kg of kai / day
+              </dd>
             </div>
           </dl>
         </div>
@@ -106,7 +108,12 @@ function BackgroundFlair() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <pattern id="paper" width="3" height="3" patternUnits="userSpaceOnUse">
+          <pattern
+            id="paper"
+            width="3"
+            height="3"
+            patternUnits="userSpaceOnUse"
+          >
             <circle cx="1" cy="1" r="0.5" fill="currentColor" />
           </pattern>
         </defs>

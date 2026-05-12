@@ -16,5 +16,18 @@ services:
       timeout: 5s
       retries: 10
 
+  garage:
+    image: dxflrs/garage:v1.0.1
+    restart: unless-stopped
+    ports:
+      - "3900:3900" # S3 API
+      - "3903:3903" # admin API
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - fairfood-garage-meta:/var/lib/garage/meta
+      - fairfood-garage-data:/var/lib/garage/data
+
 volumes:
   fairfood-db:
+  fairfood-garage-meta:
+  fairfood-garage-data:

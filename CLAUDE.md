@@ -4,6 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## Session start — load these skills immediately
+
+Before responding to anything in this repo, invoke the **Skill** tool for both of these (one tool call each, in parallel):
+
+1. `frontend-design:frontend-design`
+2. `ui-ux-pro-max:ui-ux-pro-max`
+
+This is not conditional on the task — load them at the start of every session so design guidance is in context before you touch any component, page, layout, copy, or interaction. Do this once per session; do not re-invoke them on every turn.
+
 ## Commands
 
 - `npm run dev` — Next.js dev server on http://localhost:3000.
@@ -11,6 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm start` — run the built server.
 - `npm run lint` — ESLint via flat config (`eslint.config.mjs`); there is no separate `typecheck` script — rely on `next build` for full TS checking.
 - `docker compose up -d db` — starts the Postgres 17 dev DB on **localhost:5434** (DB `fairfood`, user/pass `postgres`).
+- `docker compose up -d garage` — starts the local Garage S3 on **localhost:3900** (admin API on 3903). Config is `garage/garage.toml`. After first start run `./scripts/garage-init.sh` to assign the layout, create the `fairfood` bucket + access key, and print the `S3_*` env vars to drop into `.env`. Script is idempotent — safe to re-run.
 - `npx prisma migrate dev` / `npx prisma migrate deploy` / `npx prisma db seed` — migrations and seeding. Seed is `tsx prisma/seed.ts` (configured in `prisma.config.ts`, not `package.json`).
 - No test framework is configured.
 
@@ -33,5 +43,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Working in this repo
 
-- For any frontend work (components in `src/components/**`, pages in `src/app/**`, styling, layout, or interaction changes), load the `frontend-design:frontend-design` and `ui-ux-pro-max:ui-ux-pro-max` skills before editing — they shape the design quality this project expects.
+- Design skills are loaded at session start (see top of this file); honour the guidance they ship from when editing anything under `src/components/**` or `src/app/**`.
 - **Te reo Māori is for volunteer-facing surfaces only.** Admin/coordinator pages (anything under `/admin`, plus `src/components/admin/**` and `design-system/pages/admin-*.md`) stay in plain English — no Māori headings, labels, empty-state copy, or sprinkle words. The design-system master file's "te reo sprinkles" guidance applies to public/volunteer pages only.

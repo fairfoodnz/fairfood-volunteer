@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { Logo } from "./logo";
 import { currentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
 
-const links = [
+const links: { href: string; label: string; external?: boolean }[] = [
   { href: "/programs", label: "Programmes" },
   { href: "/shifts", label: "Shifts" },
-  { href: "/about", label: "About" },
+  { href: "https://www.fairfood.org.nz", label: "About", external: true },
 ];
 
 export async function SiteNav() {
@@ -22,9 +23,12 @@ export async function SiteNav() {
             <Link
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-foreground/75 transition-colors hover:text-foreground"
+              target={l.external ? "_blank" : undefined}
+              rel={l.external ? "noopener noreferrer" : undefined}
+              className="inline-flex items-center gap-1 text-sm font-medium text-foreground/75 transition-colors hover:text-foreground"
             >
               {l.label}
+              {l.external && <ArrowUpRight className="size-3.5" aria-hidden />}
             </Link>
           ))}
         </nav>

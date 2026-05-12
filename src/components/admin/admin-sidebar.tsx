@@ -32,6 +32,9 @@ type NavLink = {
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
   disabled?: boolean;
+  // Key into the badges map passed by the parent. Lets the route stay decoupled
+  // from how its count is computed.
+  badge?: "unreviewed";
 };
 
 const SECTIONS: { label: string; links: NavLink[] }[] = [
@@ -45,24 +48,34 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
   {
     label: "Volunteers",
     links: [
-      { href: "/admin/flagged", label: "Needs review", icon: AlertCircle },
-      { href: "/admin/volunteers", label: "All volunteers", icon: Users, disabled: true },
+      {
+        href: "/admin/flagged",
+        label: "Needs review",
+        icon: AlertCircle,
+        badge: "unreviewed",
+      },
+      { href: "/admin/volunteers", label: "All volunteers", icon: Users },
     ],
   },
   {
     label: "Resources",
     links: [
-      { href: "/admin/documents", label: "Documents", icon: FileText, disabled: true },
+      { href: "/admin/documents", label: "Documents", icon: FileText },
     ],
   },
 ];
 
 export function AdminSidebar({
   user,
+  unreviewedCount = 0,
 }: {
   user: { name: string; email: string };
+  unreviewedCount?: number;
 }) {
   const pathname = usePathname();
+  const badgeCounts: Record<NonNullable<NavLink["badge"]>, number> = {
+    unreviewed: unreviewedCount,
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -113,15 +126,39 @@ export function AdminSidebar({
                       </SidebarMenuItem>
                     );
                   }
+                  const count = link.badge ? badgeCounts[link.badge] : 0;
+                  const showBadge = count > 0;
                   return (
                     <SidebarMenuItem key={link.href}>
                       <SidebarMenuButton
                         isActive={active}
-                        tooltip={link.label}
+                        tooltip={
+                          showBadge
+                            ? `${link.label} (${count})`
+                            : link.label
+                        }
                         render={<Link href={link.href} />}
                       >
-                        <Icon className="size-4" />
-                        <span>{link.label}</span>
+                        <span className="relative">
+                          <Icon className="size-4" />
+                          {showBadge ? (
+                            <span
+                              aria-hidden
+                              className="absolute -top-1 -right-1 hidden size-2 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block"
+                            />
+                          ) : null}
+                        </span>
+                        <span className="flex w-full items-center justify-between gap-2">
+                          <span>{link.label}</span>
+                          {showBadge ? (
+                            <span
+                              className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums group-data-[collapsible=icon]:hidden"
+                              aria-label={`${count} awaiting review`}
+                            >
+                              {count}
+                            </span>
+                          ) : null}
+                        </span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

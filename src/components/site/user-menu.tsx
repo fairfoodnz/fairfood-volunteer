@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTransition } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ export function UserMenu({
 }: {
   user: { name: string; email: string; role: string };
 }) {
+  const [pending, start] = useTransition();
   const initials =
     user.name
       ?.split(" ")
@@ -61,16 +63,12 @@ export function UserMenu({
           </>
         )}
         <DropdownMenuSeparator />
-        <form action={signOutAction}>
-          <DropdownMenuItem
-            nativeButton
-            render={(props) => (
-              <button type="submit" {...props}>
-                Sign out
-              </button>
-            )}
-          />
-        </form>
+        <DropdownMenuItem
+          disabled={pending}
+          onClick={() => start(() => signOutAction())}
+        >
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

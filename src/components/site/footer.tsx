@@ -16,6 +16,17 @@ export function SiteFooter() {
             <br />
             Avondale, Tāmaki Makaurau
           </p>
+          <p className="text-xs text-cream/50">
+            Registered charity{" "}
+            <a
+              href="https://register.charities.govt.nz/Charity/CC48507"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline-offset-4 hover:text-cream hover:underline"
+            >
+              CC48507
+            </a>
+          </p>
         </div>
 
         <FooterCol
@@ -52,10 +63,9 @@ export function SiteFooter() {
       <div className="border-t border-cream/10">
         <div className="container-x flex flex-col items-start justify-between gap-2 py-6 text-xs text-cream/50 md:flex-row md:items-center">
           <span>
-            © {new Date().getFullYear()} Fair Food Aotearoa. Volunteer kai-tahi
-            built with aroha.
+            © {new Date().getFullYear()} Fair Food Aotearoa. Built with aroha.
           </span>
-          <span>Ngā mihi nui ki ngā kaiāwhina katoa.</span>
+          <span>Thank you to all our volunteers.</span>
         </div>
       </div>
     </footer>

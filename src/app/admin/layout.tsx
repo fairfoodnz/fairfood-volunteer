@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import {
   SidebarInset,
   SidebarProvider,
@@ -20,9 +21,19 @@ export default async function AdminLayout({
   if (!user) redirect("/auth/sign-in?next=/admin");
   if (user.role !== "ADMIN") notFound();
 
+  const unreviewedCount = await db.user.count({
+    where: {
+      flagReviewedAt: null,
+      OR: [{ arrestHistory: true }, { healthConditions: true }],
+    },
+  });
+
   return (
     <SidebarProvider>
-      <AdminSidebar user={{ name: user.name, email: user.email }} />
+      <AdminSidebar
+        user={{ name: user.name, email: user.email }}
+        unreviewedCount={unreviewedCount}
+      />
       <SidebarInset className="bg-background">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur md:hidden">
           <SidebarTrigger />
