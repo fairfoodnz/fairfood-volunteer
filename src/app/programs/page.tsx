@@ -15,7 +15,7 @@ export default function ProgramsPage() {
           <div className="container-x py-16 md:py-20">
             <p className="eyebrow">Tūmahi · Programmes</p>
             <h1 className="display mt-3 text-balance text-4xl font-bold leading-[1.05] md:text-6xl">
-              Five ways to roll up your sleeves with us.
+              Three ways to roll up your sleeves with us.
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-foreground/75">
               From sorting kai boxes to cooking nourishing meals, here&rsquo;s

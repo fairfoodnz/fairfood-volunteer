@@ -11,17 +11,9 @@ const PROGRAM_PHOTOS: Record<string, { src: string; alt: string }> = {
     src: "/photos/kitchen.webp",
     alt: "Cooks preparing a meal in the Conscious Kitchen",
   },
-  WORK_SKILLS: {
-    src: "/photos/skills.webp",
-    alt: "Trainees learning kitchen and food-handling skills",
-  },
   INCLUSIVE: {
     src: "/photos/inclusive.webp",
     alt: "Volunteers from the inclusive programme working together",
-  },
-  CORPORATE: {
-    src: "/photos/team.webp",
-    alt: "A corporate team volunteering at the warehouse",
   },
 };
 

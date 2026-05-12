@@ -3,10 +3,11 @@ import { ProgramSlug } from "@/generated/prisma";
 const SLUG_TO_PATH: Record<ProgramSlug, string> = {
   KAI_BOX: "/programs/kai-box",
   CONSCIOUS_KITCHEN: "/programs/conscious-kitchen",
-  WORK_SKILLS: "/programs/work-skills",
   INCLUSIVE: "/programs/inclusive",
-  CORPORATE: "/programs/bring-your-team",
 };
+
+export const CORPORATE_MAILTO =
+  "mailto:volunteering@fairfood.org.nz?subject=Corporate%20volunteering";
 
 const PATH_TO_SLUG: Record<string, ProgramSlug> = Object.fromEntries(
   Object.entries(SLUG_TO_PATH).map(([slug, path]) => [path.split("/").pop()!, slug as ProgramSlug]),

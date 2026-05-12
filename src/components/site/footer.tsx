@@ -23,7 +23,11 @@ export function SiteFooter() {
           items={[
             { label: "All programmes", href: "/programs" },
             { label: "Browse shifts", href: "/shifts" },
-            { label: "Bring your team", href: "/programs/bring-your-team" },
+            { label: "Resources", href: "/resources" },
+            {
+              label: "Corporate volunteering",
+              href: "mailto:volunteering@fairfood.org.nz?subject=Corporate%20volunteering",
+            },
             { label: "My shifts", href: "/me" },
           ]}
         />

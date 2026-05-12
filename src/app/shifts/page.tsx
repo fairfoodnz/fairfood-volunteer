@@ -16,7 +16,6 @@ const SLUG_FILTERS: { label: string; slug: ProgramSlug | "ALL" }[] = [
   { label: "All", slug: "ALL" },
   { label: "Pack Kai Boxes", slug: "KAI_BOX" },
   { label: "Conscious Kitchen", slug: "CONSCIOUS_KITCHEN" },
-  { label: "Work Skills", slug: "WORK_SKILLS" },
   { label: "Inclusive", slug: "INCLUSIVE" },
 ];
 

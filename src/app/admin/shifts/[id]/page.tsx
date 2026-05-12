@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { SiteNav } from "@/components/site/nav";
-import { SiteFooter } from "@/components/site/footer";
 import { formatShiftRange } from "@/lib/programs";
 import { Button } from "@/components/ui/button";
 import { setBookingStatus, cancelShift } from "../../actions";
@@ -14,7 +11,6 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export default async function AdminShiftPage({ params }: Props) {
-  await requireAdmin();
   const { id } = await params;
 
   const shift = await db.shift.findUnique({
@@ -37,16 +33,14 @@ export default async function AdminShiftPage({ params }: Props) {
   );
 
   return (
-    <>
-      <SiteNav />
-      <main className="flex-1 py-10 md:py-14">
-        <div className="container-x max-w-5xl">
-          <Link
-            href="/admin"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-foreground/65 hover:text-foreground"
-          >
-            ← Admin
-          </Link>
+    <div className="px-6 py-10 md:px-10 md:py-14">
+      <div className="mx-auto max-w-5xl">
+        <Link
+          href="/admin"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-foreground/65 hover:text-foreground"
+        >
+          ← Admin
+        </Link>
 
           <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
@@ -143,10 +137,8 @@ export default async function AdminShiftPage({ params }: Props) {
               </ul>
             </Section>
           )}
-        </div>
-      </main>
-      <SiteFooter />
-    </>
+      </div>
+    </div>
   );
 }
 

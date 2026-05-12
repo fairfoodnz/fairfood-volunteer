@@ -1,8 +1,5 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { SiteNav } from "@/components/site/nav";
-import { SiteFooter } from "@/components/site/footer";
 import { formatShiftRange } from "@/lib/programs";
 import { BookingStatus } from "@/generated/prisma";
 
@@ -10,7 +7,6 @@ export const metadata = { title: "Admin · Fair Food Volunteer" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  await requireAdmin();
 
   const [shifts, totalVolunteers, weekBookings] = await Promise.all([
     db.shift.findMany({
@@ -37,13 +33,11 @@ export default async function AdminPage() {
   const totalBooked = shifts.reduce((s, x) => s + x._count.bookings, 0);
 
   return (
-    <>
-      <SiteNav />
-      <main className="flex-1 py-10 md:py-14">
-        <div className="container-x">
+    <div className="px-6 py-10 md:px-10 md:py-14">
+      <div className="mx-auto max-w-6xl">
           <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="eyebrow">Whakahaere · Admin</p>
+              <p className="eyebrow">Dashboard</p>
               <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
                 Today&rsquo;s rosters & coming weeks.
               </h1>
@@ -126,10 +120,8 @@ export default async function AdminPage() {
               </table>
             </div>
           </section>
-        </div>
-      </main>
-      <SiteFooter />
-    </>
+      </div>
+    </div>
   );
 }
 

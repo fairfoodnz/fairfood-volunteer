@@ -5,6 +5,11 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 
+// bcryptjs hash of "fairfood" (10 rounds). Used only for the seeded admin user;
+// real signups hash their own password in src/app/auth/actions.ts. Replace in prod.
+const SEED_ADMIN_PASSWORD_HASH =
+  "$2b$10$.3M46YAu7KP.OfKnE6b2guF3RR/Zxn/Y3SgNT620XZvZvX5OoB6Su";
+
 const programs = [
   {
     slug: ProgramSlug.KAI_BOX,
@@ -39,42 +44,17 @@ const programs = [
     ],
   },
   {
-    slug: ProgramSlug.WORK_SKILLS,
-    title: "Work Skills Programme",
-    tagline: "Nine weeks, real work, real skills",
-    description:
-      "A nine-week programme for rangatahi and adults building confidence and a CV. One day a week, 10am–3pm, working alongside our team in the warehouse and kitchen with a hospitality skills option on Fridays.",
-    order: 3,
-    image: "/photos/skills.webp",
-    weeklySlots: [
-      { day: 2, start: "10:00", end: "15:00", capacity: 8 },
-      { day: 3, start: "10:00", end: "15:00", capacity: 8 },
-      { day: 4, start: "10:00", end: "15:00", capacity: 8 },
-      { day: 5, start: "10:00", end: "15:00", capacity: 8, note: "Hospitality skills focus" },
-    ],
-  },
-  {
     slug: ProgramSlug.INCLUSIVE,
     title: "Inclusive Volunteering",
     tagline: "Built for every body",
     description:
       "We modify tasks, allow support people to come along, and welcome groups like the Young Onset Dementia Collective every Monday. Tell us what you need on the form — there's nearly always a way.",
-    order: 4,
+    order: 3,
     image: "/photos/inclusive.webp",
     weeklySlots: [
       { day: 1, start: "10:00", end: "12:00", capacity: 6, note: "Young Onset Dementia Collective" },
       { day: 3, start: "10:00", end: "12:00", capacity: 6 },
     ],
-  },
-  {
-    slug: ProgramSlug.CORPORATE,
-    title: "Bring Your Team",
-    tagline: "Corporate volunteering",
-    description:
-      "Over 150 companies have rolled their sleeves up with us. Half-day team experiences combining the warehouse and kitchen, with a debrief over kai. Email us to plan your day.",
-    order: 5,
-    image: "/photos/team.webp",
-    weeklySlots: [],
   },
 ];
 
@@ -131,18 +111,42 @@ async function main() {
     }
   }
 
-  console.log("Seeding admin user…");
+  console.log("Seeding dev users…");
   await prisma.user.upsert({
     where: { email: "admin@fairfood.test" },
-    update: { role: Role.ADMIN },
+    update: {
+      role: Role.ADMIN,
+      passwordHash: SEED_ADMIN_PASSWORD_HASH,
+      profileCompletedAt: new Date(),
+    },
     create: {
       email: "admin@fairfood.test",
       name: "Admin Kaiārahi",
       role: Role.ADMIN,
+      passwordHash: SEED_ADMIN_PASSWORD_HASH,
+      profileCompletedAt: new Date(),
     },
   });
 
-  console.log("Done.");
+  await prisma.user.upsert({
+    where: { email: "volunteer@fairfood.test" },
+    update: {
+      role: Role.VOLUNTEER,
+      passwordHash: SEED_ADMIN_PASSWORD_HASH,
+      profileCompletedAt: new Date(),
+    },
+    create: {
+      email: "volunteer@fairfood.test",
+      name: "Aroha Williams",
+      role: Role.VOLUNTEER,
+      passwordHash: SEED_ADMIN_PASSWORD_HASH,
+      profileCompletedAt: new Date(),
+    },
+  });
+
+  console.log("Done. Dev logins (password: fairfood):");
+  console.log("  admin@fairfood.test (ADMIN)");
+  console.log("  volunteer@fairfood.test (VOLUNTEER)");
 }
 
 main()

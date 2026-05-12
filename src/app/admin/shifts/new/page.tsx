@@ -1,7 +1,4 @@
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { SiteNav } from "@/components/site/nav";
-import { SiteFooter } from "@/components/site/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,19 +9,16 @@ export const metadata = { title: "New shift · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function NewShiftPage() {
-  await requireAdmin();
   const programs = await db.program.findMany({
     where: { active: true },
     orderBy: { order: "asc" },
   });
 
   return (
-    <>
-      <SiteNav />
-      <main className="flex-1 py-12 md:py-16">
-        <div className="container-x max-w-2xl">
-          <p className="eyebrow">Whakahaere · Admin</p>
-          <h1 className="display mt-2 text-3xl font-bold leading-tight">New shift</h1>
+    <div className="px-6 py-12 md:px-10 md:py-16">
+      <div className="mx-auto max-w-2xl">
+        <p className="eyebrow">New shift</p>
+        <h1 className="display mt-2 text-3xl font-bold leading-tight">Add a shift to the roster</h1>
 
           <form action={createShift} className="mt-8 space-y-5 rounded-md border border-border bg-card p-6 md:p-8">
             <div className="space-y-2">
@@ -90,9 +84,7 @@ export default async function NewShiftPage() {
               </Button>
             </div>
           </form>
-        </div>
-      </main>
-      <SiteFooter />
-    </>
+      </div>
+    </div>
   );
 }

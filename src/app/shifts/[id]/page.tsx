@@ -7,6 +7,7 @@ import { ProgramArt } from "@/components/site/illustrations";
 import { formatShiftRange } from "@/lib/programs";
 import { currentUser } from "@/lib/auth";
 import { BookForm } from "./book-form";
+import { CancelBookingDialog } from "./cancel-booking";
 import { BookingStatus } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -31,27 +32,28 @@ export default async function ShiftPage({ params }: Props) {
     where: { id },
     include: {
       program: true,
-      _count: {
-        select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
+      bookings: {
+        where: { status: BookingStatus.CONFIRMED },
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          userId: true,
+          user: { select: { name: true } },
+        },
       },
     },
   });
   if (!shift) notFound();
 
   const user = await currentUser();
-  const alreadyBooked = user
-    ? await db.booking.findFirst({
-        where: {
-          userId: user.id,
-          shiftId: shift.id,
-          status: BookingStatus.CONFIRMED,
-        },
-      })
-    : null;
+  const myBooking =
+    (user && shift.bookings.find((b) => b.userId === user.id)) || null;
 
-  const free = Math.max(0, shift.capacity - shift._count.bookings);
+  const bookedCount = shift.bookings.length;
+  const free = Math.max(0, shift.capacity - bookedCount);
   const isFull = free === 0;
   const inPast = shift.startsAt < new Date();
+  const rosterChips = buildRosterChips(shift.bookings, user?.id ?? null);
 
   return (
     <>
@@ -88,6 +90,36 @@ export default async function ShiftPage({ params }: Props) {
                   {shift.program.description}
                 </p>
               </div>
+
+              <section aria-labelledby="roster-heading" className="space-y-3">
+                <p
+                  id="roster-heading"
+                  className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
+                >
+                  Going · {bookedCount} of {shift.capacity}
+                </p>
+                {rosterChips.length === 0 ? (
+                  <p className="text-sm text-foreground/65">
+                    Be the first to put your name down.
+                  </p>
+                ) : (
+                  <ul className="flex flex-wrap gap-2">
+                    {rosterChips.map((c) => (
+                      <li key={c.key}>
+                        <span
+                          className={
+                            c.isYou
+                              ? "inline-flex rounded-full bg-leaf px-3 py-1 text-sm font-semibold text-cream"
+                              : "inline-flex rounded-full bg-leaf/15 px-3 py-1 text-sm font-medium text-leaf-deep"
+                          }
+                        >
+                          {c.label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
 
               <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
                 <Detail label="Location" value={shift.program.location} />
@@ -138,15 +170,25 @@ export default async function ShiftPage({ params }: Props) {
                       See upcoming {shift.program.title} shifts →
                     </Link>
                   </Note>
-                ) : alreadyBooked ? (
-                  <Note title="You&rsquo;re booked in. See you then.">
-                    <Link
-                      href="/me"
-                      className="mt-3 inline-flex font-semibold text-leaf-deep underline-offset-4 hover:underline"
-                    >
-                      Go to my shifts →
-                    </Link>
-                  </Note>
+                ) : myBooking ? (
+                  <div className="space-y-4">
+                    <p className="eyebrow text-leaf-deep">Your shift</p>
+                    <h3 className="display text-xl font-semibold leading-snug">
+                      You&rsquo;re booked in. See you then.
+                    </h3>
+                    <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/55">
+                      {formatShiftRange(shift.startsAt, shift.endsAt)}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <Link
+                        href="/me"
+                        className="inline-flex h-9 items-center rounded border border-border bg-card px-3 text-sm font-semibold text-foreground/80 transition-colors hover:border-leaf hover:text-leaf-deep"
+                      >
+                        All my shifts →
+                      </Link>
+                      <CancelBookingDialog bookingId={myBooking.id} />
+                    </div>
+                  </div>
                 ) : isFull ? (
                   <Note title="This shift is full">
                     Try another time slot, or join the waitlist by emailing us.
@@ -204,4 +246,36 @@ function Note({ title, children }: { title: string; children: React.ReactNode })
       <div className="text-sm text-foreground/75">{children}</div>
     </div>
   );
+}
+
+type RosterChip = { key: string; label: string; isYou: boolean };
+
+function buildRosterChips(
+  bookings: { id: string; userId: string; user: { name: string } }[],
+  currentUserId: string | null,
+): RosterChip[] {
+  // First names only, disambiguate duplicates with a last initial.
+  const firsts = bookings.map((b) => {
+    const parts = b.user.name.trim().split(/\s+/);
+    const first = parts[0] ?? "";
+    const lastInitial = parts.length > 1
+      ? parts[parts.length - 1]!.charAt(0).toUpperCase()
+      : "";
+    return { ...b, first, lastInitial };
+  });
+  const firstCounts = new Map<string, number>();
+  for (const b of firsts) {
+    firstCounts.set(b.first, (firstCounts.get(b.first) ?? 0) + 1);
+  }
+
+  const chips: RosterChip[] = firsts.map((b) => {
+    const isYou = currentUserId !== null && b.userId === currentUserId;
+    const needsInitial = (firstCounts.get(b.first) ?? 0) > 1 && b.lastInitial;
+    const display = needsInitial ? `${b.first} ${b.lastInitial}.` : b.first;
+    return { key: b.id, label: isYou ? "You" : display, isYou };
+  });
+
+  // Move the current user's chip to the front for visibility.
+  chips.sort((a, b) => (a.isYou === b.isYou ? 0 : a.isYou ? -1 : 1));
+  return chips;
 }

@@ -42,7 +42,9 @@ export function Hero() {
               size="lg"
               className="h-12 px-5 text-base"
             >
-              <Link href="/programs/bring-your-team">I&rsquo;m bringing a team</Link>
+              <Link href="mailto:volunteering@fairfood.org.nz?subject=Corporate%20volunteering">
+                I&rsquo;m bringing a team
+              </Link>
             </Button>
           </div>
 

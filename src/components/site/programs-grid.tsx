@@ -17,20 +17,10 @@ const PALETTES: Record<
     art: "text-tomato",
     tag: "bg-tomato/20 text-cream",
   },
-  WORK_SKILLS: {
-    card: "bg-tomato/10",
-    art: "text-tomato",
-    tag: "bg-tomato/20 text-tomato",
-  },
   INCLUSIVE: {
     card: "bg-leaf/10",
     art: "text-leaf-deep",
     tag: "bg-leaf/20 text-leaf-deep",
-  },
-  CORPORATE: {
-    card: "bg-cream-deep",
-    art: "text-charcoal",
-    tag: "bg-charcoal/10 text-charcoal",
   },
 };
 
@@ -45,7 +35,7 @@ export async function ProgramsGrid() {
     <section id="programs" className="container-x py-20 md:py-28">
       <header className="mb-12 flex flex-col gap-4 md:mb-16 md:flex-row md:items-end md:justify-between">
         <div className="max-w-2xl">
-          <p className="eyebrow">Five ways to roll up your sleeves</p>
+          <p className="eyebrow">Three ways to roll up your sleeves</p>
           <h2 className="display mt-3 text-balance text-4xl font-semibold leading-tight md:text-5xl">
             Find a place that fits the day you&rsquo;ve got.
           </h2>
@@ -59,16 +49,13 @@ export async function ProgramsGrid() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-12">
         {programs.map((p, idx) => {
           const palette = PALETTES[p.slug] ?? PALETTES.KAI_BOX;
+          // Bento rhythm for 3 cards: a feature pair (7+5) then a full-width band.
           const span =
             idx === 0
               ? "lg:col-span-7"
               : idx === 1
                 ? "lg:col-span-5"
-                : idx === 2
-                  ? "lg:col-span-5"
-                  : idx === 3
-                    ? "lg:col-span-7"
-                    : "lg:col-span-12";
+                : "lg:col-span-12";
           return (
             <Link
               key={p.id}

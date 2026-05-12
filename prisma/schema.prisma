@@ -1,6 +1,7 @@
 // Fair Food volunteer scheduling
-// Programs (Kai Box, Conscious Kitchen, Work Skills, Inclusive) have recurring shifts.
-// Volunteers register and book shifts; admins manage rosters and attendance.
+// Programs (Kai Box, Conscious Kitchen, Inclusive) have recurring shifts.
+// Volunteers register, complete a questionnaire, then book shifts.
+// Admins manage rosters, attendance, and resource documents.
 
 generator client {
   provider = "prisma-client-js"
@@ -19,9 +20,7 @@ enum Role {
 enum ProgramSlug {
   KAI_BOX
   CONSCIOUS_KITCHEN
-  WORK_SKILLS
   INCLUSIVE
-  CORPORATE
 }
 
 enum BookingStatus {
@@ -31,34 +30,55 @@ enum BookingStatus {
   NO_SHOW
 }
 
-model User {
-  id             String              @id @default(cuid())
-  email          String              @unique
-  name           String
-  phone          String?
-  role           Role                @default(VOLUNTEER)
-  pronouns       String?
-  emergencyName  String?
-  emergencyPhone String?
-  notes          String?             @db.Text
-  accessNeeds    String?             @db.Text
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  bookings       Booking[]
-  sessions       Session[]
-  loginTokens    LoginToken[]
+enum HeardAbout {
+  FRIEND
+  SOCIAL
+  SEARCH
+  WORKPLACE
+  EVENT
+  OTHER
 }
 
-model LoginToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
+enum DocumentCategory {
+  HANDBOOK
+  HEALTH_SAFETY
+  GETTING_HERE
+  FORMS
+  OTHER
+}
 
-  @@index([token])
+model User {
+  id              String              @id @default(cuid())
+  email           String              @unique
+  passwordHash    String
+  name            String
+  phone           String?
+  role            Role                @default(VOLUNTEER)
+  pronouns        String?
+  emergencyName   String?
+  emergencyPhone  String?
+  notes           String?             @db.Text
+  accessNeeds     String?             @db.Text
+
+  // Onboarding questionnaire — required before booking a shift.
+  // profileCompletedAt being non-null gates bookShiftAction.
+  birthday          DateTime?
+  heardAbout        HeardAbout?
+  heardAboutOther   String?
+  whyInterested     String?             @db.Text
+  arrestHistory     Boolean?
+  arrestDetails     String?             @db.Text
+  healthConditions  Boolean?
+  healthDetails     String?             @db.Text
+  profileCompletedAt DateTime?
+  // Admin can mark a flagged volunteer as reviewed (kept private to coordinators).
+  flagReviewedAt    DateTime?
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  bookings        Booking[]
+  sessions        Session[]
+  uploadedDocs    Document[]          @relation("DocumentUploader")
 }
 
 model Session {
@@ -117,4 +137,23 @@ model Booking {
 
   @@unique([userId, shiftId])
   @@index([shiftId, status])
+}
+
+// Volunteer-facing documents (handbook, H&S, map etc.) stored in Garage / S3.
+// Soft-deleted via deletedAt so admin actions stay reversible until a sweep.
+model Document {
+  id           String            @id @default(cuid())
+  title        String
+  description  String?           @db.Text
+  category     DocumentCategory  @default(OTHER)
+  objectKey    String            @unique
+  mimeType     String
+  sizeBytes    Int
+  uploadedById String?
+  uploadedBy   User?             @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  deletedAt    DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([category, deletedAt])
 }

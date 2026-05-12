@@ -13,39 +13,6 @@ export function SignInForm({ next }: { next?: string }) {
     {},
   );
 
-  if (state.ok) {
-    return (
-      <div className="space-y-5 text-center">
-        <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-leaf/15 text-leaf-deep">
-          <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-            <path d="M3 7l9 6 9-6" />
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-          </svg>
-        </div>
-        <div className="space-y-2">
-          <h2 className="display text-2xl font-semibold">Check your email</h2>
-          <p className="text-sm text-foreground/70">
-            We&rsquo;ve sent a magic link. Tap it on this device to finish
-            signing in.
-          </p>
-        </div>
-        {state.link && (
-          <div className="rounded-md border border-dashed border-leaf/40 bg-leaf/5 p-4 text-left text-sm">
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
-              Dev only — no email sent
-            </p>
-            <Link
-              href={state.link}
-              className="break-all font-mono text-xs text-leaf-deep underline underline-offset-4"
-            >
-              {state.link}
-            </Link>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <form action={formAction} className="space-y-5">
       <div className="space-y-2">
@@ -61,20 +28,33 @@ export function SignInForm({ next }: { next?: string }) {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="name">
-          Your name <span className="text-foreground/50">(if first time)</span>
-        </Label>
+        <div className="flex items-baseline justify-between">
+          <Label htmlFor="password">Password</Label>
+          <Link
+            href="mailto:volunteering@fairfood.org.nz?subject=Volunteer%20password%20reset"
+            className="text-xs text-foreground/60 underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot?
+          </Link>
+        </div>
         <Input
-          id="name"
-          name="name"
-          autoComplete="name"
-          placeholder="e.g. Aroha Williams"
+          id="password"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
           className="h-11"
         />
       </div>
       {next && <input type="hidden" name="next" value={next} />}
       {state.error && (
-        <p className="text-sm text-destructive">{state.error}</p>
+        <p
+          role="alert"
+          aria-live="polite"
+          className="text-sm text-destructive"
+        >
+          {state.error}
+        </p>
       )}
       <Button
         type="submit"
@@ -82,11 +62,16 @@ export function SignInForm({ next }: { next?: string }) {
         disabled={pending}
         className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
       >
-        {pending ? "Sending magic link…" : "Email me a magic link"}
+        {pending ? "Signing in…" : "Sign in"}
       </Button>
-      <p className="text-xs text-foreground/55">
-        By signing in you agree to be a kind kaiāwhina at the kai table. We
-        only use your details to roster shifts.
+      <p className="text-sm text-foreground/65">
+        New here?{" "}
+        <Link
+          href={next ? `/auth/sign-up?next=${encodeURIComponent(next)}` : "/auth/sign-up"}
+          className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
+        >
+          Create an account →
+        </Link>
       </p>
     </form>
   );
