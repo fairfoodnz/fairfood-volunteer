@@ -11,6 +11,17 @@ RUN npm ci
 FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# Placeholder env vars so `next build` can import server modules that
+# validate env at module-evaluation time (e.g. src/lib/s3.ts). These are
+# only present in the builder stage and never copied into the runner.
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public
+ENV AUTH_SECRET=build-placeholder-not-used-at-runtime
+ENV NEXT_PUBLIC_APP_URL=http://localhost:3000
+ENV S3_ENDPOINT=http://localhost:3900
+ENV S3_REGION=build
+ENV S3_BUCKET=build
+ENV S3_ACCESS_KEY_ID=build
+ENV S3_SECRET_ACCESS_KEY=build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
