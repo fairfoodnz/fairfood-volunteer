@@ -7,10 +7,13 @@ export const metadata = { title: "Admin · Fair Food Volunteer" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  const now = new Date();
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const [shifts, totalVolunteers, weekBookings] = await Promise.all([
     db.shift.findMany({
-      where: { startsAt: { gte: new Date() }, cancelled: false },
+      where: { startsAt: { gte: now }, cancelled: false },
       orderBy: { startsAt: "asc" },
       take: 30,
       include: {
@@ -24,7 +27,7 @@ export default async function AdminPage() {
     db.booking.count({
       where: {
         status: BookingStatus.CONFIRMED,
-        createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        createdAt: { gte: sevenDaysAgo },
       },
     }),
   ]);
