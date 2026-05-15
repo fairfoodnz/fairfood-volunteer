@@ -71,7 +71,7 @@ export default function ForgotPasswordEmail({
           fontStyle="normal"
         />
       </Head>
-      <Preview>Reset your {org.name} password — link valid for {expiresInHours} hours</Preview>
+      <Preview>{`Reset your ${org.name} password — link valid for ${expiresInHours} hours`}</Preview>
       <Tailwind>
         <Body
           className={`bg-[${brand.cream}] py-[40px] m-0`}
