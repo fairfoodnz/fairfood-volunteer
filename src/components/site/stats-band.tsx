@@ -9,7 +9,7 @@ export function StatsBand() {
   return (
     <section className="bg-leaf text-primary-foreground">
       <div className="container-x grid grid-cols-2 gap-y-10 py-14 md:grid-cols-4 md:gap-y-0">
-        {stats.map((s, i) => (
+        {stats.map((s) => (
           <div
             key={s.label}
             className="relative px-2 md:px-6 md:[&:not(:last-child)]:border-r md:[&:not(:last-child)]:border-cream/15"
@@ -21,14 +21,6 @@ export function StatsBand() {
               {s.label}
             </div>
             <div className="mt-1 text-xs text-cream/65">{s.suffix}</div>
-            {i === 0 && (
-              <span
-                aria-hidden
-                className="absolute -top-3 left-2 hidden font-mono text-[10px] uppercase tracking-widest text-cream/60 md:block"
-              >
-                running total
-              </span>
-            )}
           </div>
         ))}
       </div>

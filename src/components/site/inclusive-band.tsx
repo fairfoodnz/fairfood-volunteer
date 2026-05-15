@@ -1,14 +1,25 @@
 import Link from "next/link";
+import {
+  Accessibility,
+  HeartHandshake,
+  Languages,
+  type LucideIcon,
+  SlidersHorizontal,
+  Sprout,
+  UsersRound,
+  Volume1,
+  Waves,
+} from "lucide-react";
 
-const tags = [
-  "Modified tasks",
-  "Bring a support person",
-  "Wheelchair accessible",
-  "Quiet shift options",
-  "Te reo welcome",
-  "Group bookings",
-  "Sensory-aware",
-  "First-timers",
+const tags: { label: string; icon: LucideIcon }[] = [
+  { label: "Modified tasks", icon: SlidersHorizontal },
+  { label: "Bring a support person", icon: HeartHandshake },
+  { label: "Wheelchair accessible", icon: Accessibility },
+  { label: "Quiet shift options", icon: Volume1 },
+  { label: "Te reo welcome", icon: Languages },
+  { label: "Group bookings", icon: UsersRound },
+  { label: "Sensory-aware", icon: Waves },
+  { label: "First-timers", icon: Sprout },
 ];
 
 export function InclusiveBand() {
@@ -33,17 +44,18 @@ export function InclusiveBand() {
           </Link>
         </div>
 
-        <ul className="grid grid-cols-2 gap-3 self-center">
-          {tags.map((t, i) => (
+        <ul className="grid grid-cols-1 gap-3 self-center sm:grid-cols-2">
+          {tags.map(({ label, icon: Icon }) => (
             <li
-              key={t}
-              className="rounded-full border border-foreground/10 bg-background px-4 py-2.5 text-sm font-medium text-foreground/85"
-              style={{
-                marginLeft: i % 2 === 1 ? "1rem" : 0,
-              }}
+              key={label}
+              className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3 shadow-[0_1px_0_oklch(0_0_0/0.03)] transition duration-200 ease-out hover:-translate-y-0.5 hover:border-leaf-deep/35 hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
-              <span className="mr-2 text-leaf-deep">✓</span>
-              {t}
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-leaf-deep/10 text-leaf-deep transition-colors duration-200 group-hover:bg-leaf-deep/15">
+                <Icon aria-hidden className="size-[18px]" strokeWidth={2} />
+              </span>
+              <span className="text-sm font-medium text-foreground">
+                {label}
+              </span>
             </li>
           ))}
         </ul>

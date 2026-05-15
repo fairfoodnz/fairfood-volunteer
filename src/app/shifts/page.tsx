@@ -104,21 +104,20 @@ export default async function ShiftsPage({ searchParams }: Props) {
                         <li key={s.id}>
                           <Link
                             href={`/shifts/${s.id}`}
-                            className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-md border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-leaf/50 hover:shadow-sm"
+                            className="group flex h-full flex-col gap-4 overflow-hidden rounded-md border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-leaf/50 hover:shadow-sm"
                           >
-                            <div className="absolute right-2 top-2 h-20 w-24 opacity-25 transition-opacity group-hover:opacity-50">
-                              <ProgramArt
-                                slug={s.program.slug}
-                                className="h-full w-full text-leaf-deep"
-                              />
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-leaf-deep">
-                                {s.program.title}
-                              </p>
-                              <p className="mt-1 text-sm font-medium text-foreground/75">
-                                {formatShiftRange(s.startsAt, s.endsAt)}
-                              </p>
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-leaf-deep">
+                                  {s.program.title}
+                                </p>
+                                <p className="mt-1 text-sm font-medium text-foreground/75">
+                                  {formatShiftRange(s.startsAt, s.endsAt)}
+                                </p>
+                              </div>
+                              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-cream-deep transition-transform group-hover:scale-[1.03]">
+                                <ProgramArt slug={s.program.slug} />
+                              </div>
                             </div>
                             <div className="mt-auto flex items-center justify-between">
                               <span className="text-sm">
