@@ -79,16 +79,15 @@ export default async function ShiftPage({ params }: Props) {
                 </p>
               </header>
 
-              <div className="relative overflow-hidden rounded-md border border-border bg-cream-deep px-7 py-10">
-                <div className="pointer-events-none absolute -right-6 -top-6 h-48 w-48 opacity-50">
-                  <ProgramArt
-                    slug={shift.program.slug}
-                    className="h-full w-full text-leaf-deep"
-                  />
+              <div className="overflow-hidden rounded-md border border-border bg-cream-deep">
+                <div className="grid sm:grid-cols-[1fr_14rem]">
+                  <div className="relative h-44 w-full sm:order-2 sm:h-auto">
+                    <ProgramArt slug={shift.program.slug} />
+                  </div>
+                  <p className="px-7 py-8 text-foreground/85 sm:order-1 sm:max-w-xl">
+                    {shift.program.description}
+                  </p>
                 </div>
-                <p className="relative max-w-xl text-foreground/85">
-                  {shift.program.description}
-                </p>
               </div>
 
               <section aria-labelledby="roster-heading" className="space-y-3">
