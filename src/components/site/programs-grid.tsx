@@ -5,22 +5,25 @@ import { programSlugToHref } from "@/lib/programs";
 
 const PALETTES: Record<
   string,
-  { card: string; art: string; tag: string }
+  { card: string; art: string; tag: string; scrim: string }
 > = {
   KAI_BOX: {
     card: "bg-cream-deep",
     art: "text-leaf-deep",
     tag: "bg-leaf/15 text-leaf-deep",
+    scrim: "var(--ff-cream-deep)",
   },
   CONSCIOUS_KITCHEN: {
     card: "bg-charcoal text-cream",
     art: "text-tomato",
     tag: "bg-tomato/20 text-cream",
+    scrim: "var(--ff-charcoal)",
   },
   INCLUSIVE: {
-    card: "bg-leaf/10",
-    art: "text-leaf-deep",
-    tag: "bg-leaf/20 text-leaf-deep",
+    card: "bg-forest text-cream",
+    art: "text-cream",
+    tag: "bg-cream/15 text-cream",
+    scrim: "var(--ff-forest)",
   },
 };
 
@@ -62,7 +65,7 @@ export async function ProgramsGrid() {
               href={programSlugToHref(p.slug)}
               className={`group relative flex min-h-[22rem] flex-col justify-between overflow-hidden rounded-md p-7 transition-transform hover:-translate-y-0.5 ${palette.card} ${span}`}
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="relative z-10 flex items-start justify-between gap-4">
                 <span
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.16em] ${palette.tag}`}
                 >
@@ -85,7 +88,15 @@ export async function ProgramsGrid() {
                 <ProgramArt slug={p.slug} />
               </div>
 
-              <div className="relative z-10 mt-auto max-w-[60%] space-y-3">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background: `linear-gradient(to right, ${palette.scrim} 0%, ${palette.scrim} 50%, transparent 82%)`,
+                }}
+              />
+
+              <div className="relative z-10 mt-auto max-w-[55%] space-y-3">
                 <h3 className="display text-3xl font-semibold leading-tight md:text-[2.4rem]">
                   {p.title}
                 </h3>

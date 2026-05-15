@@ -170,8 +170,9 @@ function Polaroid({
   alt: string;
 }) {
   return (
-    <div
-      className={`absolute ${position} w-44 select-none rounded-sm bg-white p-3 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] transition-transform hover:scale-[1.02] sm:w-56`}
+    <button
+      type="button"
+      className={`absolute ${position} z-10 w-44 cursor-pointer select-none rounded-sm bg-white p-3 text-left font-sans shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] outline-none transition-[scale,box-shadow] duration-300 ease-out hover:z-30 hover:scale-[1.04] hover:shadow-[0_28px_58px_-14px_rgba(0,0,0,0.34)] focus:z-20 focus:scale-[1.02] focus:shadow-[0_28px_58px_-14px_rgba(0,0,0,0.34)] focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none sm:w-56`}
       style={{ transform: `rotate(${rotate})` }}
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-charcoal/10">
@@ -192,6 +193,6 @@ function Polaroid({
           {caption}
         </p>
       </div>
-    </div>
+    </button>
   );
 }
