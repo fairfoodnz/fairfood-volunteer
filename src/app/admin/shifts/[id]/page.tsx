@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatShiftRange } from "@/lib/programs";
 import { Button } from "@/components/ui/button";
-import { setBookingStatus, cancelShift } from "../../actions";
+import { CancelShiftDialog } from "@/components/admin/cancel-shift-dialog";
+import { setBookingStatus } from "../../actions";
 import { BookingStatus } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -57,18 +58,17 @@ export default async function AdminShiftPage({ params }: Props) {
                 )}
               </p>
             </div>
-            {!shift.cancelled && (
-              <form action={cancelShift}>
-                <input type="hidden" name="shiftId" value={shift.id} />
-                <Button
-                  type="submit"
-                  variant="outline"
-                  className="border-tomato/40 text-tomato hover:bg-tomato/10 hover:text-tomato"
-                >
-                  Cancel shift
-                </Button>
-              </form>
-            )}
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link href={`/admin/shifts/${shift.id}/edit`}>Edit shift</Link>
+              </Button>
+              {!shift.cancelled && (
+                <CancelShiftDialog
+                  shiftId={shift.id}
+                  bookedCount={confirmed.length}
+                />
+              )}
+            </div>
           </header>
 
           {shift.notes && (
