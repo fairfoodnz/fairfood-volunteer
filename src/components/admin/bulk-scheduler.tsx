@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
-import { CalendarRange, Check } from "lucide-react";
+import { CalendarRange, Check, Pencil } from "lucide-react";
 import {
   bulkSchedule,
   type BulkScheduleResult,
@@ -160,11 +161,28 @@ export function BulkScheduler({
         </div>
 
         <div className="space-y-2">
-          <Label>Templates</Label>
+          <div className="flex items-center justify-between gap-3">
+            <Label>Templates</Label>
+            {programId && (
+              <Link
+                href={`/admin/programmes/${programId}#shift-templates`}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-leaf-deep hover:underline"
+              >
+                <Pencil className="size-3" />
+                Manage templates
+              </Link>
+            )}
+          </div>
           {templates.length === 0 ? (
             <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-foreground/65">
-              This programme has no active templates. Add one on the
-              programme&rsquo;s page first.
+              This programme has no active templates.{" "}
+              <Link
+                href={`/admin/programmes/${programId}#shift-templates`}
+                className="font-semibold text-leaf-deep hover:underline"
+              >
+                Add one on its page
+              </Link>{" "}
+              first.
             </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">

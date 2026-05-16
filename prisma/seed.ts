@@ -46,6 +46,11 @@ const programs = [
       { day: 5, start: "09:00", end: "12:00", capacity: 12 },
       { day: 6, start: "09:00", end: "12:00", capacity: 8 },
     ],
+    templates: [
+      { label: "Morning pack", start: "09:00", end: "12:00", capacity: 12 },
+      { label: "Afternoon pack", start: "13:00", end: "16:00", capacity: 12 },
+      { label: "Saturday pack", start: "09:00", end: "12:00", capacity: 8 },
+    ],
   },
   {
     slug: "conscious-kitchen",
@@ -64,6 +69,9 @@ const programs = [
       { day: 2, start: "09:00", end: "12:00", capacity: 6 },
       { day: 3, start: "09:00", end: "12:00", capacity: 6 },
       { day: 4, start: "09:00", end: "12:00", capacity: 6 },
+    ],
+    templates: [
+      { label: "Morning cook", start: "09:00", end: "12:00", capacity: 6 },
     ],
   },
   {
@@ -88,6 +96,16 @@ const programs = [
         note: "Young Onset Dementia Collective",
       },
       { day: 3, start: "10:00", end: "12:00", capacity: 6 },
+    ],
+    templates: [
+      {
+        label: "Monday collective",
+        start: "10:00",
+        end: "12:00",
+        capacity: 6,
+        note: "Young Onset Dementia Collective",
+      },
+      { label: "Midweek session", start: "10:00", end: "12:00", capacity: 6 },
     ],
   },
 ];
@@ -599,15 +617,39 @@ const volunteers: Volunteer[] = [
 ];
 
 async function wipeSeedData() {
-  // Order matters: bookings → shifts (FK) → seeded users
+  // Order matters: bookings → shifts (FK) → seeded users. Templates have no
+  // dependents and programmes are upserted (not deleted), so clearing all
+  // templates keeps reseeds idempotent — same philosophy as the shift wipe.
   const bookings = await prisma.booking.deleteMany({});
   const shifts = await prisma.shift.deleteMany({});
+  const templates = await prisma.shiftTemplate.deleteMany({});
   const users = await prisma.user.deleteMany({
     where: { email: { endsWith: `@${SEED_EMAIL_DOMAIN}` } },
   });
   console.log(
-    `Wiped: ${bookings.count} bookings, ${shifts.count} shifts, ${users.count} seeded volunteers.`,
+    `Wiped: ${bookings.count} bookings, ${shifts.count} shifts, ${templates.count} templates, ${users.count} seeded volunteers.`,
   );
+}
+
+async function seedTemplates(programIds: Record<string, string>) {
+  let count = 0;
+  for (const p of programs) {
+    for (const [i, t] of p.templates.entries()) {
+      await prisma.shiftTemplate.create({
+        data: {
+          programId: programIds[p.slug],
+          label: t.label,
+          startTime: t.start,
+          endTime: t.end,
+          capacity: t.capacity,
+          notes: "note" in t ? (t.note as string) : null,
+          order: i,
+        },
+      });
+      count++;
+    }
+  }
+  return count;
 }
 
 async function seedPrograms() {
@@ -860,6 +902,10 @@ async function main() {
 
   console.log("Seeding programs…");
   const programIds = await seedPrograms();
+
+  console.log("Seeding shift templates…");
+  const templates = await seedTemplates(programIds);
+  console.log(`  ${templates} templates created.`);
 
   console.log(
     `Seeding shifts (weeks ${-WEEKS_BACK} to +${WEEKS_FORWARD - 1})…`,

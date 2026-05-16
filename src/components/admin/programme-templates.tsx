@@ -48,7 +48,10 @@ export function ProgrammeTemplates({
   const [adding, setAdding] = useState(false);
 
   return (
-    <section className="mt-10 rounded-md border border-border bg-card p-6">
+    <section
+      id="shift-templates"
+      className="mt-10 scroll-mt-20 rounded-md border border-border bg-card p-6"
+    >
       <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="display text-xl font-semibold">Shift templates</h2>
