@@ -82,7 +82,7 @@ export default async function ShiftPage({ params }: Props) {
               <div className="overflow-hidden rounded-md border border-border bg-cream-deep">
                 <div className="grid sm:grid-cols-[1fr_14rem]">
                   <div className="relative h-44 w-full sm:order-2 sm:h-auto">
-                    <ProgramArt slug={shift.program.slug} />
+                    <ProgramArt program={shift.program} />
                   </div>
                   <p className="px-7 py-8 text-foreground/85 sm:order-1 sm:max-w-xl">
                     {shift.program.description}

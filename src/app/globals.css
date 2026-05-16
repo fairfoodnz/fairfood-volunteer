@@ -43,6 +43,8 @@
   --color-forest: var(--ff-forest);
   --color-charcoal: var(--ff-charcoal);
   --color-tomato: var(--ff-tomato);
+  --color-clay: var(--ff-clay);
+  --color-ocean: var(--ff-ocean);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -59,6 +61,9 @@
   --ff-forest: oklch(0.22 0.04 140);
   --ff-charcoal: oklch(0.18 0.012 140);
   --ff-tomato: oklch(0.66 0.19 32);
+  /* Extra programme card themes — deep enough to carry cream text. */
+  --ff-clay: oklch(0.42 0.09 45);
+  --ff-ocean: oklch(0.4 0.055 215);
 
   --background: var(--ff-cream);
   --foreground: var(--ff-charcoal);

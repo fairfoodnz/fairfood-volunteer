@@ -1,31 +1,8 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { ProgramArt } from "./illustrations";
-import { programSlugToHref } from "@/lib/programs";
-
-const PALETTES: Record<
-  string,
-  { card: string; art: string; tag: string; scrim: string }
-> = {
-  KAI_BOX: {
-    card: "bg-cream-deep",
-    art: "text-leaf-deep",
-    tag: "bg-leaf/15 text-leaf-deep",
-    scrim: "var(--ff-cream-deep)",
-  },
-  CONSCIOUS_KITCHEN: {
-    card: "bg-charcoal text-cream",
-    art: "text-tomato",
-    tag: "bg-tomato/20 text-cream",
-    scrim: "var(--ff-charcoal)",
-  },
-  INCLUSIVE: {
-    card: "bg-forest text-cream",
-    art: "text-cream",
-    tag: "bg-cream/15 text-cream",
-    scrim: "var(--ff-forest)",
-  },
-};
+import { programHref } from "@/lib/programs";
+import { programmeTheme } from "@/lib/programme-theme";
 
 export async function ProgramsGrid() {
   const programs = await db.program.findMany({
@@ -51,18 +28,20 @@ export async function ProgramsGrid() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-12">
         {programs.map((p, idx) => {
-          const palette = PALETTES[p.slug] ?? PALETTES.KAI_BOX;
-          // Bento rhythm for 3 cards: a feature pair (7+5) then a full-width band.
+          const palette = programmeTheme(p.theme);
+          // Bento rhythm: a feature pair (7+5) then full-width bands. Cycles so
+          // any number of programmes still reads as an intentional grid.
+          const pos = idx % 3;
           const span =
-            idx === 0
+            pos === 0
               ? "lg:col-span-7"
-              : idx === 1
+              : pos === 1
                 ? "lg:col-span-5"
                 : "lg:col-span-12";
           return (
             <Link
               key={p.id}
-              href={programSlugToHref(p.slug)}
+              href={programHref(p.slug)}
               className={`group relative flex min-h-[22rem] flex-col justify-between overflow-hidden rounded-md p-7 transition-transform hover:-translate-y-0.5 ${palette.card} ${span}`}
             >
               <div className="relative z-10 flex items-start justify-between gap-4">
@@ -85,7 +64,7 @@ export async function ProgramsGrid() {
                     "linear-gradient(to right, transparent 0%, black 35%)",
                 }}
               >
-                <ProgramArt slug={p.slug} />
+                <ProgramArt program={p} />
               </div>
 
               <div
