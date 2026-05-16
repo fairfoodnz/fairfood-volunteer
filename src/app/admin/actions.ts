@@ -71,3 +71,61 @@ export async function cancelShift(formData: FormData) {
   revalidatePath("/shifts");
   redirect("/admin");
 }
+
+// --- Slot blocks: admin-held spots for off-platform groups ---------------
+
+const SlotBlockSchema = z.object({
+  shiftId: z.string().min(1),
+  slots: z.coerce.number().int().min(1).max(500),
+  note: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
+export type SlotBlockState = { error?: string; ok?: boolean };
+
+export async function addSlotBlock(
+  _prev: SlotBlockState,
+  formData: FormData,
+): Promise<SlotBlockState> {
+  await requireAdmin();
+  const parsed = SlotBlockSchema.safeParse({
+    shiftId: formData.get("shiftId"),
+    slots: formData.get("slots"),
+    note: formData.get("note") ?? "",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+  const { shiftId, slots, note } = parsed.data;
+
+  const shift = await db.shift.findUnique({
+    where: { id: shiftId },
+    select: { id: true },
+  });
+  if (!shift) return { error: "That shift no longer exists." };
+
+  await db.slotBlock.create({
+    data: { shiftId, slots, note: note ? note : null },
+  });
+
+  revalidatePath(`/admin/shifts/${shiftId}`);
+  revalidatePath("/admin");
+  revalidatePath("/shifts");
+  revalidatePath(`/shifts/${shiftId}`);
+  return { ok: true };
+}
+
+export async function removeSlotBlock(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("blockId");
+  if (typeof id !== "string" || !id) return;
+  const block = await db.slotBlock.findUnique({
+    where: { id },
+    select: { shiftId: true },
+  });
+  if (!block) return;
+  await db.slotBlock.delete({ where: { id } });
+  revalidatePath(`/admin/shifts/${block.shiftId}`);
+  revalidatePath("/admin");
+  revalidatePath("/shifts");
+  revalidatePath(`/shifts/${block.shiftId}`);
+}

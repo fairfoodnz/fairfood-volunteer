@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
+import { sumBlocks } from "@/lib/shifts";
 import { BookingStatus } from "@/generated/prisma";
 
 const BookSchema = z.object({
@@ -42,11 +43,12 @@ export async function bookShiftAction(
     where: { id: parsed.data.shiftId },
     include: {
       _count: { select: { bookings: { where: { status: BookingStatus.CONFIRMED } } } },
+      blocks: { select: { slots: true } },
     },
   });
   if (!shift) return { error: "Shift not found." };
   if (shift.cancelled) return { error: "Sorry — that shift was cancelled." };
-  if (shift._count.bookings >= shift.capacity) {
+  if (shift._count.bookings + sumBlocks(shift.blocks) >= shift.capacity) {
     return { error: "Sorry — that shift just filled up." };
   }
   if (shift.startsAt < new Date()) {

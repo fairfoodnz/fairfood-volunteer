@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { Button } from "@/components/ui/button";
 import { formatShiftRange } from "@/lib/programs";
+import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { BookingStatus } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export default async function ProgramPage({ params }: Props) {
           _count: {
             select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
           },
+          blocks: { select: { slots: true } },
         },
       },
     },
@@ -105,7 +107,11 @@ export default async function ProgramPage({ params }: Props) {
                   </li>
                 )}
                 {program.shifts.map((s) => {
-                  const free = s.capacity - s._count.bookings;
+                  const { free } = shiftAvailability(
+                    s.capacity,
+                    s._count.bookings,
+                    sumBlocks(s.blocks),
+                  );
                   return (
                     <li key={s.id}>
                       <Link
