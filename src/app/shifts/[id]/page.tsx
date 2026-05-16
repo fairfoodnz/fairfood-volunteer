@@ -5,6 +5,7 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { formatShiftRange } from "@/lib/programs";
+import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { currentUser } from "@/lib/auth";
 import { BookForm } from "./book-form";
 import { CancelBookingDialog } from "./cancel-booking";
@@ -41,6 +42,7 @@ export default async function ShiftPage({ params }: Props) {
           user: { select: { name: true } },
         },
       },
+      blocks: { select: { slots: true } },
     },
   });
   if (!shift) notFound();
@@ -50,8 +52,11 @@ export default async function ShiftPage({ params }: Props) {
     (user && shift.bookings.find((b) => b.userId === user.id)) || null;
 
   const bookedCount = shift.bookings.length;
-  const free = Math.max(0, shift.capacity - bookedCount);
-  const isFull = free === 0;
+  const { free, isFull } = shiftAvailability(
+    shift.capacity,
+    bookedCount,
+    sumBlocks(shift.blocks),
+  );
   const inPast = shift.startsAt < new Date();
   const rosterChips = buildRosterChips(shift.bookings, user?.id ?? null);
 
