@@ -1,0 +1,68 @@
+name: Claude code review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Review PR
+    # Skip drafts and bot-authored PRs (e.g. Dependabot) to conserve subscription usage.
+    if: github.event.pull_request.draft == false && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request. The repository's CLAUDE.md and AGENTS.md
+            define the architecture and house rules — treat them as the source
+            of truth and flag deviations from them.
+
+            Focus on, in priority order:
+
+            1. **Correctness & data integrity** — Server Action / Zod validation
+               gaps, Prisma usage (always import from `@/generated/prisma`,
+               adapter-pg singleton in `src/lib/db.ts`), the
+               `@@unique([userId, shiftId])` booking constraint being handled by
+               catching the unique error rather than pre-checking, and UTC vs
+               `Pacific/Auckland` time handling.
+            2. **Auth & access control** — the custom magic-link flow in
+               `src/lib/auth.ts`; every server mutation/page must be guarded by
+               `requireUser()` / `requireAdmin()`, and `revalidatePath` must
+               cover the routes a mutation affects.
+            3. **Next.js 16 App Router correctness** — this is Next 16, not the
+               Next.js in your training data; flag patterns that don't match the
+               guides in `node_modules/next/dist/docs/`.
+            4. **Security** — input sanitisation, authz, secret handling, S3
+               (Garage, `forcePathStyle: true`) usage. No Vercel-only APIs.
+            5. **House rules** — te reo Māori only on volunteer-facing surfaces;
+               anything under `/admin`, `src/components/admin/**` stays plain
+               English. `emails/brand.ts` hex must stay in lockstep with the
+               OKLCH tokens in `globals.css`. Dockerfile `/opt/migrator`
+               Prisma versions must match `package.json`.
+
+            Post specific issues as inline comments on the relevant lines.
+            Use a top-level comment for the summary. Do not flag lint/format
+            or TypeScript issues that `npm run lint` and `next build` already
+            catch in CI, and keep nits to a minimum.
+
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
