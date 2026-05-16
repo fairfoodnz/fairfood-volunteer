@@ -1,36 +1,37 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
+import { programmeImageSrc } from "@/lib/programs";
 
-const PROGRAM_PHOTOS: Record<string, { src: string; alt: string }> = {
-  KAI_BOX: {
-    src: "/photos/kai-box.webp",
-    alt: "Volunteers packing rescued kai into boxes",
-  },
-  CONSCIOUS_KITCHEN: {
-    src: "/photos/kitchen.webp",
-    alt: "Cooks preparing a meal in the Conscious Kitchen",
-  },
-  INCLUSIVE: {
-    src: "/photos/inclusive.webp",
-    alt: "Volunteers from the inclusive programme working together",
-  },
+type ProgrammeImage = {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  imageKey: string | null;
 };
 
+/**
+ * Renders a programme's image (uploaded → Garage, or a seeded static path).
+ * Returns null when a programme has no image yet so callers can keep their
+ * empty-state styling.
+ */
 export function ProgramArt({
-  slug,
+  program,
   className,
 }: {
-  slug: string;
+  program: ProgrammeImage;
   className?: string;
 }) {
-  const photo = PROGRAM_PHOTOS[slug];
-  if (!photo) return null;
+  const src = programmeImageSrc(program);
+  if (!src) return null;
   return (
     <Image
-      src={photo.src}
-      alt={photo.alt}
+      src={src}
+      alt={program.title}
       fill
+      // imageKey-backed images are arbitrary uploads; skip the optimizer so we
+      // don't need remotePatterns config for the same-origin stream route.
+      unoptimized={Boolean(program.imageKey)}
       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
       className={cn("object-cover", className)}
     />

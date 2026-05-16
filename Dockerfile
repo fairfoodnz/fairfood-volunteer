@@ -72,4 +72,11 @@ ENV PATH="/opt/migrator/node_modules/.bin:$PATH"
 USER nextjs
 EXPOSE 3000
 
+# Liveness probe Coolify can read. Uses node's built-in fetch (always present
+# in the image — alpine has no curl, and this avoids busybox wget quirks).
+# start-period covers `prisma migrate deploy` + Next.js boot before failures
+# count against retries.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
 CMD ["sh", "-c", "NODE_PATH=/opt/migrator/node_modules /opt/migrator/node_modules/.bin/prisma migrate deploy && node server.js"]

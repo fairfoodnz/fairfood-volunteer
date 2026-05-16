@@ -17,12 +17,6 @@ enum Role {
   ADMIN
 }
 
-enum ProgramSlug {
-  KAI_BOX
-  CONSCIOUS_KITCHEN
-  INCLUSIVE
-}
-
 enum BookingStatus {
   CONFIRMED
   CANCELLED
@@ -93,18 +87,30 @@ model Session {
 }
 
 model Program {
-  id          String      @id @default(cuid())
-  slug        ProgramSlug @unique
-  title       String
-  tagline     String
-  description String      @db.Text
-  imageUrl    String?
-  location    String      @default("624 Rosebank Road, Avondale, Tāmaki Makaurau")
-  order       Int         @default(0)
-  active      Boolean     @default(true)
-  shifts      Shift[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String   @id @default(cuid())
+  // URL-friendly identifier (e.g. "kai-box"). Free-form so coordinators can add
+  // their own programmes — no longer constrained to a Prisma enum.
+  slug         String   @unique
+  title        String
+  tagline      String
+  description  String   @db.Text
+  // Static path for seeded programmes (e.g. "/photos/kai-box.webp"). For
+  // uploaded images this is null and imageKey points at the S3/Garage object;
+  // the UI serves those via /api/programmes/[id]/image.
+  imageUrl     String?
+  imageKey     String?
+  location     String   @default("624 Rosebank Road, Avondale, Tāmaki Makaurau")
+  contactEmail String?
+  contactPhone String?
+  // Free-text "where you'll be / getting here" blurb on the detail page.
+  gettingHere  String?  @db.Text
+  // Card theme key — see src/lib/programme-theme.ts.
+  theme        String   @default("cream")
+  order        Int      @default(0)
+  active       Boolean  @default(true)
+  shifts       Shift[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Shift {
