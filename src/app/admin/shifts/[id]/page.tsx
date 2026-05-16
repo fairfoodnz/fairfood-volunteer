@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatShiftRange } from "@/lib/programs";
+import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { Button } from "@/components/ui/button";
 import { CancelShiftDialog } from "@/components/admin/cancel-shift-dialog";
 import { setBookingStatus } from "../../actions";
+import { SlotBlocks } from "./slot-blocks";
 import { BookingStatus } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +24,7 @@ export default async function AdminShiftPage({ params }: Props) {
         orderBy: [{ status: "asc" }, { createdAt: "asc" }],
         include: { user: true },
       },
+      blocks: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!shift) notFound();
@@ -32,6 +35,9 @@ export default async function AdminShiftPage({ params }: Props) {
   const cancelled = shift.bookings.filter(
     (b) => b.status === BookingStatus.CANCELLED || b.status === BookingStatus.NO_SHOW,
   );
+
+  const blocked = sumBlocks(shift.blocks);
+  const { free } = shiftAvailability(shift.capacity, confirmed.length, blocked);
 
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
@@ -50,7 +56,9 @@ export default async function AdminShiftPage({ params }: Props) {
                 {formatShiftRange(shift.startsAt, shift.endsAt)}
               </h1>
               <p className="mt-1 text-sm text-foreground/65">
-                {confirmed.length} of {shift.capacity} spots booked
+                {confirmed.length} booked
+                {blocked > 0 && ` · ${blocked} blocked`} · {free} of{" "}
+                {shift.capacity} open
                 {shift.cancelled && (
                   <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-tomato">
                     Cancelled
@@ -76,6 +84,14 @@ export default async function AdminShiftPage({ params }: Props) {
               {shift.notes}
             </p>
           )}
+
+          <Section title={`Blocked slots (${blocked})`}>
+            <SlotBlocks
+              shiftId={shift.id}
+              blocks={shift.blocks}
+              remaining={free}
+            />
+          </Section>
 
           <Section title={`On the roster (${confirmed.length})`}>
             {confirmed.length === 0 ? (

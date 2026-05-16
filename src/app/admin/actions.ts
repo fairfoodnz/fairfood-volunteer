@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { nzWallTimeToUtc } from "@/lib/schedule";
+import { sumBlocks } from "@/lib/shifts";
 import { BookingStatus } from "@/generated/prisma";
 
 const ShiftFieldsSchema = z.object({
@@ -100,17 +101,26 @@ export async function updateShift(formData: FormData) {
     throw new Error("Shift end time must be after the start time.");
   }
 
-  // Don't let capacity drop below volunteers already holding a spot — that
-  // would silently over-book the roster.
-  const taken = await db.booking.count({
-    where: {
-      shiftId: parsed.shiftId,
-      status: { in: [...ACTIVE_BOOKING_STATUSES] },
-    },
-  });
-  if (parsed.capacity < taken) {
+  // Don't let capacity drop below spots already held — confirmed volunteers
+  // AND admin slot blocks both consume capacity (see src/lib/shifts.ts), so
+  // ignoring either would silently over-hold the roster.
+  const [bookedCount, blocks] = await Promise.all([
+    db.booking.count({
+      where: {
+        shiftId: parsed.shiftId,
+        status: { in: [...ACTIVE_BOOKING_STATUSES] },
+      },
+    }),
+    db.slotBlock.findMany({
+      where: { shiftId: parsed.shiftId },
+      select: { slots: true },
+    }),
+  ]);
+  const blocked = sumBlocks(blocks);
+  const held = bookedCount + blocked;
+  if (parsed.capacity < held) {
     throw new Error(
-      `Capacity can't be lower than the ${taken} volunteer${taken === 1 ? "" : "s"} already booked. Cancel a booking first or pick a higher number.`,
+      `Capacity can't be lower than the ${held} spot${held === 1 ? "" : "s"} already held (${bookedCount} booked${blocked > 0 ? `, ${blocked} blocked` : ""}). Remove a booking or slot block first, or pick a higher number.`,
     );
   }
 
@@ -162,4 +172,62 @@ export async function cancelShift(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/shifts");
   redirect("/admin");
+}
+
+// --- Slot blocks: admin-held spots for off-platform groups ---------------
+
+const SlotBlockSchema = z.object({
+  shiftId: z.string().min(1),
+  slots: z.coerce.number().int().min(1).max(500),
+  note: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
+export type SlotBlockState = { error?: string; ok?: boolean };
+
+export async function addSlotBlock(
+  _prev: SlotBlockState,
+  formData: FormData,
+): Promise<SlotBlockState> {
+  await requireAdmin();
+  const parsed = SlotBlockSchema.safeParse({
+    shiftId: formData.get("shiftId"),
+    slots: formData.get("slots"),
+    note: formData.get("note") ?? "",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+  const { shiftId, slots, note } = parsed.data;
+
+  const shift = await db.shift.findUnique({
+    where: { id: shiftId },
+    select: { id: true },
+  });
+  if (!shift) return { error: "That shift no longer exists." };
+
+  await db.slotBlock.create({
+    data: { shiftId, slots, note: note ? note : null },
+  });
+
+  revalidatePath(`/admin/shifts/${shiftId}`);
+  revalidatePath("/admin");
+  revalidatePath("/shifts");
+  revalidatePath(`/shifts/${shiftId}`);
+  return { ok: true };
+}
+
+export async function removeSlotBlock(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("blockId");
+  if (typeof id !== "string" || !id) return;
+  const block = await db.slotBlock.findUnique({
+    where: { id },
+    select: { shiftId: true },
+  });
+  if (!block) return;
+  await db.slotBlock.delete({ where: { id } });
+  revalidatePath(`/admin/shifts/${block.shiftId}`);
+  revalidatePath("/admin");
+  revalidatePath("/shifts");
+  revalidatePath(`/shifts/${block.shiftId}`);
 }

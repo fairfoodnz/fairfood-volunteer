@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { formatShiftRange } from "@/lib/programs";
+import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { Badge } from "@/components/ui/badge";
 import { BookingStatus } from "@/generated/prisma";
 
@@ -44,6 +45,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
       _count: {
         select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
       },
+      blocks: { select: { slots: true } },
     },
     take: 60,
   });
@@ -104,8 +106,11 @@ export default async function ShiftsPage({ searchParams }: Props) {
                   </div>
                   <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {shifts.map((s) => {
-                      const taken = s._count.bookings;
-                      const free = Math.max(0, s.capacity - taken);
+                      const { free } = shiftAvailability(
+                        s.capacity,
+                        s._count.bookings,
+                        sumBlocks(s.blocks),
+                      );
                       return (
                         <li key={s.id}>
                           <Link
@@ -170,6 +175,7 @@ type ShiftWithCount = Awaited<
   ReturnType<typeof db.shift.findMany>
 >[number] & {
   _count: { bookings: number };
+  blocks: { slots: number }[];
   program: {
     id: string;
     title: string;

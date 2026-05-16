@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { formatShiftRange } from "@/lib/programs";
+import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { BookingStatus } from "@/generated/prisma";
 
 export const metadata = { title: "Admin · Fair Food Volunteer" };
@@ -21,6 +22,7 @@ export default async function AdminPage() {
         _count: {
           select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
         },
+        blocks: { select: { slots: true } },
       },
     }),
     db.user.count({ where: { role: "VOLUNTEER" } }),
@@ -81,7 +83,12 @@ export default async function AdminPage() {
                 </thead>
                 <tbody>
                   {shifts.map((s) => {
-                    const free = s.capacity - s._count.bookings;
+                    const blocked = sumBlocks(s.blocks);
+                    const { free } = shiftAvailability(
+                      s.capacity,
+                      s._count.bookings,
+                      blocked,
+                    );
                     return (
                       <tr key={s.id} className="border-t border-border">
                         <td className="px-4 py-3 font-medium">
@@ -97,6 +104,11 @@ export default async function AdminPage() {
                           <span className="text-foreground/55">
                             {" "}/ {s.capacity}
                           </span>
+                          {blocked > 0 && (
+                            <span className="ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/65">
+                              {blocked} held
+                            </span>
+                          )}
                           {free <= 2 && free > 0 && (
                             <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-tomato">
                               Almost full
