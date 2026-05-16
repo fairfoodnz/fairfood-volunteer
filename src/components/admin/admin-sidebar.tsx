@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarPlus,
+  CalendarRange,
   Boxes,
   AlertCircle,
   Users,
@@ -45,6 +46,11 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { href: "/admin/programmes", label: "Programmes", icon: Boxes },
       { href: "/admin/shifts/new", label: "New shift", icon: CalendarPlus },
+      {
+        href: "/admin/shifts/bulk",
+        label: "Bulk schedule",
+        icon: CalendarRange,
+      },
     ],
   },
   {
