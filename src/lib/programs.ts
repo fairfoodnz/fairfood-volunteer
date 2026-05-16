@@ -1,24 +1,38 @@
-import { ProgramSlug } from "@/generated/prisma";
-
-const SLUG_TO_PATH: Record<ProgramSlug, string> = {
-  KAI_BOX: "/programs/kai-box",
-  CONSCIOUS_KITCHEN: "/programs/conscious-kitchen",
-  INCLUSIVE: "/programs/inclusive",
-};
-
 export const CORPORATE_MAILTO =
   "mailto:volunteering@fairfood.org.nz?subject=Corporate%20volunteering";
 
-const PATH_TO_SLUG: Record<string, ProgramSlug> = Object.fromEntries(
-  Object.entries(SLUG_TO_PATH).map(([slug, path]) => [path.split("/").pop()!, slug as ProgramSlug]),
-);
-
-export function programSlugToHref(slug: ProgramSlug) {
-  return SLUG_TO_PATH[slug];
+/** Public path for a programme detail page. */
+export function programHref(slug: string) {
+  return `/programs/${slug}`;
 }
 
-export function programPathToSlug(path: string): ProgramSlug | null {
-  return PATH_TO_SLUG[path] ?? null;
+/**
+ * Turn a free-form title into a URL-safe slug. Used both client-side (live
+ * preview as the coordinator types) and server-side (source of truth). Strips
+ * accents/macrons so "Pack Kai Boxes" → "pack-kai-boxes".
+ */
+export function slugify(input: string) {
+  return input
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+/**
+ * Display URL for a programme image. Seeded programmes ship a static path in
+ * `imageUrl`; uploaded ones are streamed from Garage via the public route.
+ */
+export function programmeImageSrc(p: {
+  id: string;
+  imageUrl: string | null;
+  imageKey: string | null;
+}): string | null {
+  if (p.imageKey) return `/api/programmes/${p.id}/image`;
+  return p.imageUrl ?? null;
 }
 
 export function formatShiftRange(start: Date, end: Date) {

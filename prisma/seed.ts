@@ -2,7 +2,6 @@ import {
   BookingStatus,
   HeardAbout,
   PrismaClient,
-  ProgramSlug,
   Role,
 } from "../src/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -26,13 +25,18 @@ const WEEKS_FORWARD = 6;
 
 const programs = [
   {
-    slug: ProgramSlug.KAI_BOX,
+    slug: "kai-box",
     title: "Pack Kai Boxes",
     tagline: "Sort, pack, share",
     description:
       "Help sort fresh fruit, vegetables and pantry goods rescued from across Tāmaki Makaurau, then pack them into kai boxes that go straight to whānau, foodbanks and community groups the same day.",
     order: 1,
     image: "/photos/kai-box.webp",
+    theme: "cream",
+    contactEmail: "kiaora@fairfood.org.nz",
+    contactPhone: "(09) 555-1234",
+    gettingHere:
+      "Free street parking. We’re a five-minute walk from Avondale train station.",
     weeklySlots: [
       { day: 1, start: "09:00", end: "12:00", capacity: 12 },
       { day: 1, start: "13:00", end: "16:00", capacity: 12 },
@@ -44,13 +48,18 @@ const programs = [
     ],
   },
   {
-    slug: ProgramSlug.CONSCIOUS_KITCHEN,
+    slug: "conscious-kitchen",
     title: "Conscious Kitchen",
     tagline: "Cook with us",
     description:
       "Roll up your sleeves with our chefs to turn surplus ingredients into beautiful meals. Whether you're a pro in the kitchen or just like to eat, there's a place for you at the bench.",
     order: 2,
     image: "/photos/kitchen.webp",
+    theme: "charcoal",
+    contactEmail: "kiaora@fairfood.org.nz",
+    contactPhone: "(09) 555-1234",
+    gettingHere:
+      "Free street parking. We’re a five-minute walk from Avondale train station.",
     weeklySlots: [
       { day: 2, start: "09:00", end: "12:00", capacity: 6 },
       { day: 3, start: "09:00", end: "12:00", capacity: 6 },
@@ -58,13 +67,18 @@ const programs = [
     ],
   },
   {
-    slug: ProgramSlug.INCLUSIVE,
+    slug: "inclusive",
     title: "Inclusive Volunteering",
     tagline: "Built for every body",
     description:
       "We modify tasks, allow support people to come along, and welcome groups like the Young Onset Dementia Collective every Monday. Tell us what you need on the form — there's nearly always a way.",
     order: 3,
     image: "/photos/inclusive.webp",
+    theme: "forest",
+    contactEmail: "kiaora@fairfood.org.nz",
+    contactPhone: "(09) 555-1234",
+    gettingHere:
+      "Free street parking. We’re a five-minute walk from Avondale train station. Support people are welcome — let us know who’s coming.",
     weeklySlots: [
       {
         day: 1,
@@ -597,25 +611,23 @@ async function wipeSeedData() {
 }
 
 async function seedPrograms() {
-  const programIds: Record<ProgramSlug, string> = {} as Record<ProgramSlug, string>;
+  const programIds: Record<string, string> = {};
   for (const p of programs) {
+    const fields = {
+      title: p.title,
+      tagline: p.tagline,
+      description: p.description,
+      imageUrl: p.image,
+      order: p.order,
+      theme: p.theme,
+      contactEmail: p.contactEmail,
+      contactPhone: p.contactPhone,
+      gettingHere: p.gettingHere,
+    };
     const program = await prisma.program.upsert({
       where: { slug: p.slug },
-      update: {
-        title: p.title,
-        tagline: p.tagline,
-        description: p.description,
-        imageUrl: p.image,
-        order: p.order,
-      },
-      create: {
-        slug: p.slug,
-        title: p.title,
-        tagline: p.tagline,
-        description: p.description,
-        imageUrl: p.image,
-        order: p.order,
-      },
+      update: fields,
+      create: { slug: p.slug, ...fields },
     });
     programIds[p.slug] = program.id;
   }
@@ -624,13 +636,13 @@ async function seedPrograms() {
 
 type CreatedShift = {
   id: string;
-  programSlug: ProgramSlug;
+  programSlug: string;
   startsAt: Date;
   endsAt: Date;
   capacity: number;
 };
 
-async function seedShifts(programIds: Record<ProgramSlug, string>) {
+async function seedShifts(programIds: Record<string, string>) {
   const created: CreatedShift[] = [];
   for (const p of programs) {
     for (let week = -WEEKS_BACK; week < WEEKS_FORWARD; week++) {
@@ -659,10 +671,10 @@ async function seedShifts(programIds: Record<ProgramSlug, string>) {
   return created;
 }
 
-const PREF_TO_SLUG: Record<ProgramPref, ProgramSlug> = {
-  kai: ProgramSlug.KAI_BOX,
-  kitchen: ProgramSlug.CONSCIOUS_KITCHEN,
-  inclusive: ProgramSlug.INCLUSIVE,
+const PREF_TO_SLUG: Record<ProgramPref, string> = {
+  kai: "kai-box",
+  kitchen: "conscious-kitchen",
+  inclusive: "inclusive",
 };
 
 async function seedUsers() {
@@ -750,10 +762,10 @@ async function seedBookings(
 ) {
   const now = new Date();
   // Bucket shifts by program for quick preference-based sampling.
-  const byProgram: Record<ProgramSlug, CreatedShift[]> = {
-    KAI_BOX: [],
-    CONSCIOUS_KITCHEN: [],
-    INCLUSIVE: [],
+  const byProgram: Record<string, CreatedShift[]> = {
+    "kai-box": [],
+    "conscious-kitchen": [],
+    inclusive: [],
   };
   for (const s of shifts) byProgram[s.programSlug].push(s);
 
