@@ -109,8 +109,32 @@ model Program {
   order        Int      @default(0)
   active       Boolean  @default(true)
   shifts       Shift[]
+  templates    ShiftTemplate[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// Reusable per-programme shift definition. Coordinators bulk-generate Shift rows
+// from these over a date range + selected weekdays. startTime/endTime are NZ
+// local wall-clock "HH:MM" (24h); each generated date is converted to a UTC
+// instant DST-aware (see src/lib/schedule.ts), so a 9am template stays 9am
+// across the daylight-saving boundary. Generated shifts carry no FK back here —
+// templates are purely a creation convenience.
+model ShiftTemplate {
+  id        String   @id @default(cuid())
+  programId String
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  label     String
+  startTime String
+  endTime   String
+  capacity  Int      @default(8)
+  notes     String?  @db.Text
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([programId, order])
 }
 
 model Shift {

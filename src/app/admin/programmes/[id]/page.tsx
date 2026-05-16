@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { ProgrammeForm } from "@/components/admin/programme-form";
+import { ProgrammeTemplates } from "@/components/admin/programme-templates";
 import { DeleteProgrammeButton } from "@/components/admin/delete-programme-button";
 
 export const metadata = { title: "Edit programme · Admin" };
@@ -18,11 +19,14 @@ export default async function EditProgrammePage({ params, searchParams }: Props)
 
   const program = await db.program.findUnique({
     where: { id },
-    include: { _count: { select: { shifts: true } } },
+    include: {
+      _count: { select: { shifts: true } },
+      templates: { orderBy: [{ order: "asc" }, { startTime: "asc" }] },
+    },
   });
   if (!program) notFound();
 
-  const { _count, ...record } = program;
+  const { _count, templates, ...record } = program;
 
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
@@ -49,6 +53,20 @@ export default async function EditProgrammePage({ params, searchParams }: Props)
         )}
 
         <ProgrammeForm program={record} />
+
+        <ProgrammeTemplates
+          programId={program.id}
+          templates={templates.map((t) => ({
+            id: t.id,
+            label: t.label,
+            startTime: t.startTime,
+            endTime: t.endTime,
+            capacity: t.capacity,
+            notes: t.notes,
+            active: t.active,
+            order: t.order,
+          }))}
+        />
 
         <div className="mt-10 rounded-md border border-destructive/30 bg-destructive/5 p-6">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-destructive">
