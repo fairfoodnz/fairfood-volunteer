@@ -5,7 +5,7 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { Button } from "@/components/ui/button";
-import { formatShiftRange, programPathToSlug } from "@/lib/programs";
+import { formatShiftRange } from "@/lib/programs";
 import { BookingStatus } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -14,19 +14,15 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const enumSlug = programPathToSlug(slug);
-  if (!enumSlug) return {};
-  const program = await db.program.findUnique({ where: { slug: enumSlug } });
+  const program = await db.program.findUnique({ where: { slug } });
   return program ? { title: `${program.title} · Fair Food Volunteer` } : {};
 }
 
 export default async function ProgramPage({ params }: Props) {
   const { slug } = await params;
-  const enumSlug = programPathToSlug(slug);
-  if (!enumSlug) notFound();
 
-  const program = await db.program.findUnique({
-    where: { slug: enumSlug },
+  const program = await db.program.findFirst({
+    where: { slug, active: true },
     include: {
       shifts: {
         where: { startsAt: { gte: new Date() }, cancelled: false },
@@ -41,6 +37,14 @@ export default async function ProgramPage({ params }: Props) {
     },
   });
   if (!program) notFound();
+
+  // Coordinators can leave these blank — fall back to the org defaults so the
+  // page never shows a hole.
+  const contactEmail = program.contactEmail || "kiaora@fairfood.org.nz";
+  const contactPhone = program.contactPhone || "(09) 555-1234";
+  const gettingHere =
+    program.gettingHere ||
+    "Free street parking. We’re a five-minute walk from Avondale train station.";
 
   return (
     <>
@@ -76,7 +80,7 @@ export default async function ProgramPage({ params }: Props) {
               </div>
             </div>
             <div className="relative h-72 overflow-hidden rounded-md bg-leaf/10 md:h-96">
-              <ProgramArt slug={program.slug} />
+              <ProgramArt program={program} />
             </div>
           </div>
         </section>
@@ -92,10 +96,10 @@ export default async function ProgramPage({ params }: Props) {
                   <li className="p-6 text-center text-sm text-foreground/65">
                     No upcoming shifts listed. Email{" "}
                     <a
-                      href="mailto:kiaora@fairfood.org.nz"
+                      href={`mailto:${contactEmail}`}
                       className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
                     >
-                      kiaora@fairfood.org.nz
+                      {contactEmail}
                     </a>{" "}
                     and we&rsquo;ll find a fit.
                   </li>
@@ -128,9 +132,8 @@ export default async function ProgramPage({ params }: Props) {
                 Where you&rsquo;ll be
               </p>
               <p className="font-semibold">{program.location}</p>
-              <p className="text-foreground/75">
-                Free street parking. We&rsquo;re a five-minute walk from
-                Avondale train station.
+              <p className="whitespace-pre-line text-foreground/75">
+                {gettingHere}
               </p>
               <hr className="my-4 border-foreground/10" />
               <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
@@ -139,12 +142,12 @@ export default async function ProgramPage({ params }: Props) {
               <p>
                 Email{" "}
                 <a
-                  href="mailto:kiaora@fairfood.org.nz"
+                  href={`mailto:${contactEmail}`}
                   className="font-semibold text-leaf-deep underline underline-offset-4"
                 >
-                  kiaora@fairfood.org.nz
+                  {contactEmail}
                 </a>{" "}
-                or call (09) 555-1234.
+                or call {contactPhone}.
               </p>
             </aside>
           </div>

@@ -5,10 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { BookingStatus, ProgramSlug } from "@/generated/prisma";
+import { BookingStatus } from "@/generated/prisma";
 
 const NewShiftSchema = z.object({
-  programSlug: z.nativeEnum(ProgramSlug),
+  programSlug: z.string().min(1),
   startsAt: z.string().min(1),
   endsAt: z.string().min(1),
   capacity: z.coerce.number().int().min(1).max(200),

@@ -5,32 +5,38 @@ import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { formatShiftRange } from "@/lib/programs";
 import { Badge } from "@/components/ui/badge";
-import { BookingStatus, type ProgramSlug } from "@/generated/prisma";
+import { BookingStatus } from "@/generated/prisma";
 
 export const metadata = { title: "Open shifts · Fair Food Volunteer" };
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<{ programme?: string }> };
 
-const SLUG_FILTERS: { label: string; slug: ProgramSlug | "ALL" }[] = [
-  { label: "All", slug: "ALL" },
-  { label: "Pack Kai Boxes", slug: "KAI_BOX" },
-  { label: "Conscious Kitchen", slug: "CONSCIOUS_KITCHEN" },
-  { label: "Inclusive", slug: "INCLUSIVE" },
-];
-
 export default async function ShiftsPage({ searchParams }: Props) {
   const sp = await searchParams;
+
+  const programmes = await db.program.findMany({
+    where: { active: true },
+    orderBy: { order: "asc" },
+    select: { slug: true, title: true },
+  });
+
+  // Only honour ?programme= when it points at a real, active programme.
   const filter =
-    SLUG_FILTERS.find((f) => f.slug === sp.programme)?.slug ?? "ALL";
+    sp.programme && programmes.some((p) => p.slug === sp.programme)
+      ? sp.programme
+      : "ALL";
+
+  const filters: { label: string; slug: string }[] = [
+    { label: "All", slug: "ALL" },
+    ...programmes.map((p) => ({ label: p.title, slug: p.slug })),
+  ];
 
   const shifts = await db.shift.findMany({
     where: {
       cancelled: false,
       startsAt: { gte: new Date() },
-      ...(filter !== "ALL"
-        ? { program: { slug: filter as ProgramSlug } }
-        : {}),
+      ...(filter !== "ALL" ? { program: { slug: filter } } : {}),
     },
     orderBy: { startsAt: "asc" },
     include: {
@@ -60,7 +66,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
             </p>
 
             <div className="mt-7 flex flex-wrap gap-2">
-              {SLUG_FILTERS.map((f) => {
+              {filters.map((f) => {
                 const active = filter === f.slug;
                 const href = f.slug === "ALL" ? "/shifts" : `/shifts?programme=${f.slug}`;
                 return (
@@ -116,7 +122,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
                                 </p>
                               </div>
                               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-cream-deep transition-transform group-hover:scale-[1.03]">
-                                <ProgramArt slug={s.program.slug} />
+                                <ProgramArt program={s.program} />
                               </div>
                             </div>
                             <div className="mt-auto flex items-center justify-between">
@@ -162,7 +168,16 @@ export default async function ShiftsPage({ searchParams }: Props) {
 
 type ShiftWithCount = Awaited<
   ReturnType<typeof db.shift.findMany>
->[number] & { _count: { bookings: number }; program: { title: string; slug: ProgramSlug } };
+>[number] & {
+  _count: { bookings: number };
+  program: {
+    id: string;
+    title: string;
+    slug: string;
+    imageUrl: string | null;
+    imageKey: string | null;
+  };
+};
 
 function groupByDay(shifts: ShiftWithCount[]) {
   const map = new Map<string, ShiftWithCount[]>();

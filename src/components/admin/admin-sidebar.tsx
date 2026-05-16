@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarPlus,
+  Boxes,
   AlertCircle,
   Users,
   FileText,
@@ -42,6 +43,7 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
     label: "Rosters",
     links: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { href: "/admin/programmes", label: "Programmes", icon: Boxes },
       { href: "/admin/shifts/new", label: "New shift", icon: CalendarPlus },
     ],
   },
