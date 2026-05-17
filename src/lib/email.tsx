@@ -3,6 +3,8 @@ import * as React from "react";
 import { render } from "@react-email/render";
 import { Resend } from "resend";
 import ForgotPasswordEmail from "../../emails/forgot-password";
+import VerifyEmail from "../../emails/verify-email";
+import WelcomeEmail from "../../emails/welcome";
 
 /**
  * Transactional email via Resend.
@@ -57,6 +59,39 @@ export async function sendEmail({ to, subject, react }: SendArgs) {
     throw new Error(`Resend send failed: ${error.name}: ${error.message}`);
   }
   return data;
+}
+
+/** Renders and sends the `emails/verify-email.tsx` template. */
+export async function sendVerificationEmail(opts: {
+  to: string;
+  verifyUrl: string;
+  userName?: string;
+  expiresInHours?: number;
+}) {
+  const expiresInHours = opts.expiresInHours ?? 24;
+  return sendEmail({
+    to: opts.to,
+    subject: `Confirm your email to finish setting up your Fair Food NZ account`,
+    react: (
+      <VerifyEmail
+        verifyUrl={opts.verifyUrl}
+        userName={opts.userName}
+        expiresInHours={expiresInHours}
+      />
+    ),
+  });
+}
+
+/** Renders and sends the `emails/welcome.tsx` template (post-verification). */
+export async function sendWelcomeEmail(opts: {
+  to: string;
+  userName?: string;
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `You're in — welcome to the Fair Food NZ volunteer whānau`,
+    react: <WelcomeEmail userName={opts.userName} />,
+  });
 }
 
 /** Renders and sends the existing `emails/forgot-password.tsx` template. */
