@@ -6,7 +6,11 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { sumBlocks } from "@/lib/shifts";
+import { formatShiftRange } from "@/lib/programs";
+import { buildICS, calendarLinks } from "@/lib/calendar";
+import { sendBookingConfirmationEmail } from "@/lib/email";
 import { BookingStatus } from "@/generated/prisma";
+import { appUrl } from "../../../emails/brand";
 
 const BookSchema = z.object({
   shiftId: z.string().min(1),
@@ -50,6 +54,7 @@ export async function bookShiftAction(
     include: {
       _count: { select: { bookings: { where: { status: BookingStatus.CONFIRMED } } } },
       blocks: { select: { slots: true } },
+      program: { select: { title: true, location: true } },
     },
   });
   if (!shift) return { error: "Shift not found." };
@@ -61,8 +66,9 @@ export async function bookShiftAction(
     return { error: "That shift has already started." };
   }
 
+  let booking;
   try {
-    await db.booking.create({
+    booking = await db.booking.create({
       data: {
         userId: user.id,
         shiftId: shift.id,
@@ -76,6 +82,44 @@ export async function bookShiftAction(
     }
     throw e;
   }
+
+  // Confirmation email is best-effort: the booking is already committed and is
+  // the source of truth, so a Resend hiccup must not surface as a booking
+  // failure. (Contrast password reset, where a dropped email breaks the
+  // feature and so is allowed to throw.)
+  try {
+    const whenLabel = formatShiftRange(shift.startsAt, shift.endsAt);
+    const manageUrl = `${appUrl}/me`;
+    const calendarEvent = {
+      uid: `booking-${booking.id}@volunteer.fairfood.org.nz`,
+      title: `${shift.program.title} shift — Fair Food NZ`,
+      description: [
+        `You're volunteering with Fair Food NZ on the ${shift.program.title} programme.`,
+        parsed.data.notes ? `Your note: ${parsed.data.notes}` : null,
+        `Manage your booking: ${manageUrl}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      location: shift.program.location,
+      start: shift.startsAt,
+      end: shift.endsAt,
+      url: `${appUrl}/shifts/${shift.id}`,
+    };
+    await sendBookingConfirmationEmail({
+      to: user.email,
+      userName: user.name || undefined,
+      programTitle: shift.program.title,
+      whenLabel,
+      location: shift.program.location,
+      notes: parsed.data.notes,
+      manageUrl,
+      calendar: calendarLinks(calendarEvent),
+      ics: buildICS(calendarEvent),
+    });
+  } catch (e) {
+    console.error("Booking confirmation email failed to send:", e);
+  }
+
   revalidatePath(`/shifts/${shift.id}`);
   revalidatePath(`/me`);
   redirect(`/me?booked=${shift.id}`);
