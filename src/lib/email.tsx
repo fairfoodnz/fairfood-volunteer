@@ -3,6 +3,8 @@ import * as React from "react";
 import { render } from "@react-email/render";
 import { Resend } from "resend";
 import ForgotPasswordEmail from "../../emails/forgot-password";
+import BookingConfirmationEmail from "../../emails/booking-confirmation";
+import type { CalendarLinks } from "@/lib/calendar";
 
 /**
  * Transactional email via Resend.
@@ -21,14 +23,22 @@ const FROM = process.env.EMAIL_FROM ?? "Fair Food NZ <noreply@fairfood.org.nz>";
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
 
+/** A file to attach. `content` is the raw bytes; Resend base64-encodes it. */
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer | string;
+  contentType?: string;
+};
+
 type SendArgs = {
   to: string;
   subject: string;
   /** A react-email document, e.g. <ForgotPasswordEmail … />. */
   react: React.ReactElement;
+  attachments?: EmailAttachment[];
 };
 
-export async function sendEmail({ to, subject, react }: SendArgs) {
+export async function sendEmail({ to, subject, react, attachments }: SendArgs) {
   const html = await render(react);
   const text = await render(react, { plainText: true });
 
@@ -38,8 +48,11 @@ export async function sendEmail({ to, subject, react }: SendArgs) {
         "RESEND_API_KEY is not set — refusing to drop a transactional email in production.",
       );
     }
+    const attachLine = attachments?.length
+      ? `  attachments: ${attachments.map((a) => a.filename).join(", ")}\n`
+      : "";
     console.log(
-      `\n📧 [email:dev] would send via Resend\n  to: ${to}\n  subject: ${subject}\n  from: ${FROM}\n--- text body ---\n${text}\n-----------------\n`,
+      `\n📧 [email:dev] would send via Resend\n  to: ${to}\n  subject: ${subject}\n  from: ${FROM}\n${attachLine}--- text body ---\n${text}\n-----------------\n`,
     );
     return { id: "dev-noop" };
   }
@@ -50,6 +63,7 @@ export async function sendEmail({ to, subject, react }: SendArgs) {
     subject,
     html,
     text,
+    attachments,
   });
 
   if (error) {
@@ -77,5 +91,46 @@ export async function sendPasswordResetEmail(opts: {
         expiresInHours={expiresInHours}
       />
     ),
+  });
+}
+
+/**
+ * Renders and sends the booking confirmation, with the shift's `.ics` as an
+ * attachment so native calendars (Apple Mail, etc.) get a one-tap add. The
+ * `method=PUBLISH` content type tells clients it's an event to save, not a
+ * meeting invite to RSVP to.
+ */
+export async function sendBookingConfirmationEmail(opts: {
+  to: string;
+  userName?: string;
+  programTitle: string;
+  whenLabel: string;
+  location: string;
+  notes?: string;
+  manageUrl: string;
+  calendar: CalendarLinks;
+  ics: string;
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `You're booked in — ${opts.programTitle}, ${opts.whenLabel}`,
+    react: (
+      <BookingConfirmationEmail
+        userName={opts.userName}
+        programTitle={opts.programTitle}
+        whenLabel={opts.whenLabel}
+        location={opts.location}
+        notes={opts.notes}
+        manageUrl={opts.manageUrl}
+        calendar={opts.calendar}
+      />
+    ),
+    attachments: [
+      {
+        filename: "fairfood-shift.ics",
+        content: Buffer.from(opts.ics, "utf8"),
+        contentType: "text/calendar; method=PUBLISH; charset=utf-8",
+      },
+    ],
   });
 }
