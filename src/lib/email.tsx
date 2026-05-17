@@ -21,7 +21,8 @@ import type { CalendarLinks } from "@/lib/calendar";
  * `EMAIL_FROM` must be an address on a domain verified in Resend
  * (fairfood.org.nz). Format: `Name <addr@domain>` or a bare address.
  */
-const FROM = process.env.EMAIL_FROM ?? "Fair Food NZ <noreply@fairfood.org.nz>";
+const FROM =
+  process.env.EMAIL_FROM ?? "Fair Food NZ <volunteer@fairfood.org.nz>";
 
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
@@ -53,14 +54,14 @@ export async function sendEmail({ to, subject, react, attachments }: SendArgs) {
   if (!resend) {
     if (process.env.NODE_ENV === "production") {
       throw new Error(
-        "RESEND_API_KEY is not set — refusing to drop a transactional email in production.",
+        "RESEND_API_KEY is not set — refusing to drop a transactional email in production."
       );
     }
     const attachLine = attachments?.length
       ? `  attachments: ${attachments.map((a) => a.filename).join(", ")}\n`
       : "";
     console.log(
-      `\n📧 [email:dev] would send via Resend\n  to: ${to}\n  subject: ${subject}\n  from: ${FROM}\n${attachLine}--- text body ---\n${text}\n-----------------\n`,
+      `\n📧 [email:dev] would send via Resend\n  to: ${to}\n  subject: ${subject}\n  from: ${FROM}\n${attachLine}--- text body ---\n${text}\n-----------------\n`
     );
     return { id: "dev-noop" };
   }
