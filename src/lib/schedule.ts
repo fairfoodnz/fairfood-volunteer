@@ -55,6 +55,28 @@ export function nzWallTimeToUtc(dateISO: string, time: string): Date {
   return result;
 }
 
+/**
+ * Inverse of `nzWallTimeToUtc` for form prefills: render a stored UTC instant
+ * as the `YYYY-MM-DDTHH:MM` string an `<input type="datetime-local">` expects,
+ * read in NZ wall-clock so the editor shows the same time volunteers see.
+ */
+export function toNzDateTimeLocal(d: Date): string {
+  const dtf = new Intl.DateTimeFormat("en-CA", {
+    timeZone: NZ_TZ,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const p: Record<string, string> = {};
+  for (const part of dtf.formatToParts(d)) {
+    if (part.type !== "literal") p[part.type] = part.value;
+  }
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
 // JS `getUTCDay()` convention: 0 = Sunday … 6 = Saturday. Mon-first for display.
 export const WEEKDAYS = [
   { value: 1, short: "Mon", label: "Monday" },
