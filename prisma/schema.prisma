@@ -72,6 +72,7 @@ model User {
   updatedAt       DateTime            @updatedAt
   bookings        Booking[]
   sessions        Session[]
+  passwordResets  PasswordResetToken[]
   uploadedDocs    Document[]          @relation("DocumentUploader")
 }
 
@@ -84,6 +85,22 @@ model Session {
   createdAt DateTime @default(now())
 
   @@index([token])
+}
+
+// Single-use password reset tokens. We store only a SHA-256 hash of the
+// token, never the raw value: a leaked row must not be redeemable, since a
+// reset grants full account takeover. (Session.token is stored raw by
+// contrast — lower value, and resets wipe all sessions anyway.)
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Program {

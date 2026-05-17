@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -9,8 +10,22 @@ import {
   signOut,
   verifyPassword,
 } from "@/lib/auth";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const PASSWORD_MIN = 8;
+const RESET_TTL_HOURS = 24;
+
+/** SHA-256 of the raw reset token — only this is ever stored or queried. */
+function hashToken(raw: string) {
+  return createHash("sha256").update(raw).digest("hex");
+}
+
+/** Absolute origin reset links resolve against (mirrors emails/brand.ts). */
+function appOrigin() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://volunteer.fairfood.org.nz"
+  ).replace(/\/$/, "");
+}
 
 const SignInSchema = z.object({
   email: z.string().email(),
@@ -134,6 +149,138 @@ const DEV_SEED_EMAILS = {
   admin: "admin@fairfood.test",
   volunteer: "volunteer@fairfood.test",
 } as const;
+
+// ---------------------------------------------------------------------------
+// Password reset
+// ---------------------------------------------------------------------------
+
+const ForgotPasswordSchema = z.object({ email: z.string().email() });
+
+const ResetPasswordSchema = z
+  .object({
+    token: z.string().min(1),
+    password: z.string().min(PASSWORD_MIN),
+    confirm: z.string().min(PASSWORD_MIN),
+  })
+  .refine((d) => d.password === d.confirm, {
+    message: "Passwords don't match.",
+    path: ["confirm"],
+  });
+
+export type ForgotPasswordState = { error?: string; sent?: boolean };
+export type ResetPasswordState = {
+  error?: string;
+  fieldErrors?: Partial<Record<"password" | "confirm", string>>;
+};
+
+export async function requestPasswordResetAction(
+  _prev: ForgotPasswordState,
+  formData: FormData,
+): Promise<ForgotPasswordState> {
+  const parsed = ForgotPasswordSchema.safeParse({
+    email: formData.get("email"),
+  });
+  if (!parsed.success) {
+    return { error: "Enter a valid email address." };
+  }
+
+  const email = parsed.data.email.trim().toLowerCase();
+  const user = await db.user.findUnique({ where: { email } });
+
+  if (user) {
+    // One live token per user — drop any unredeemed ones before issuing.
+    await db.passwordResetToken.deleteMany({
+      where: { userId: user.id, usedAt: null },
+    });
+    const raw = randomBytes(32).toString("hex");
+    await db.passwordResetToken.create({
+      data: {
+        tokenHash: hashToken(raw),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + RESET_TTL_HOURS * 3_600_000),
+      },
+    });
+    const resetUrl = `${appOrigin()}/auth/reset-password?token=${raw}`;
+    try {
+      await sendPasswordResetEmail({
+        to: user.email,
+        resetUrl,
+        userName: user.name.split(" ")[0] || undefined,
+        expiresInHours: RESET_TTL_HOURS,
+      });
+    } catch (err) {
+      // Never leak account existence through a delivery error — log for ops
+      // and still return the generic "if it exists, we sent it" response.
+      console.error("[password-reset] email send failed", err);
+    }
+  }
+
+  // Identical response whether or not the account exists (no enumeration).
+  return { sent: true };
+}
+
+export async function resetPasswordAction(
+  _prev: ResetPasswordState,
+  formData: FormData,
+): Promise<ResetPasswordState> {
+  const parsed = ResetPasswordSchema.safeParse({
+    token: formData.get("token"),
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) {
+    const fieldErrors: ResetPasswordState["fieldErrors"] = {};
+    let tokenInvalid = false;
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (key === "token") tokenInvalid = true;
+      else if (key === "password" || key === "confirm") {
+        fieldErrors[key] ??= issue.message;
+      }
+    }
+    if (tokenInvalid) {
+      return {
+        error:
+          "This reset link is invalid or has expired. Request a new one.",
+      };
+    }
+    return Object.keys(fieldErrors).length
+      ? { fieldErrors }
+      : { error: "Choose a password of at least 8 characters." };
+  }
+
+  const record = await db.passwordResetToken.findUnique({
+    where: { tokenHash: hashToken(parsed.data.token) },
+  });
+  if (!record || record.usedAt || record.expiresAt < new Date()) {
+    return {
+      error: "This reset link is invalid or has expired. Request a new one.",
+    };
+  }
+
+  const passwordHash = await hashPassword(parsed.data.password);
+  await db.$transaction([
+    db.user.update({
+      where: { id: record.userId },
+      data: { passwordHash },
+    }),
+    db.passwordResetToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    }),
+    // A reset revokes every existing session and any sibling reset tokens.
+    db.session.deleteMany({ where: { userId: record.userId } }),
+    db.passwordResetToken.deleteMany({
+      where: { userId: record.userId, usedAt: null },
+    }),
+  ]);
+
+  const user = await db.user.findUniqueOrThrow({
+    where: { id: record.userId },
+  });
+  await createSession(user.id);
+  redirect(user.profileCompletedAt ? "/me" : "/me/profile/complete");
+}
 
 export async function devSignInAction(formData: FormData) {
   const role = formData.get("role");
