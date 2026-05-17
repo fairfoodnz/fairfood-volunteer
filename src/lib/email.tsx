@@ -1,8 +1,10 @@
 import "server-only";
 import * as React from "react";
 import { render } from "@react-email/render";
-import { Resend } from "resend";
+import { Resend, type Attachment } from "resend";
 import ForgotPasswordEmail from "../../emails/forgot-password";
+import VerifyEmail from "../../emails/verify-email";
+import WelcomeEmail from "../../emails/welcome";
 import BookingConfirmationEmail from "../../emails/booking-confirmation";
 import type { CalendarLinks } from "@/lib/calendar";
 
@@ -23,11 +25,16 @@ const FROM = process.env.EMAIL_FROM ?? "Fair Food NZ <noreply@fairfood.org.nz>";
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
 
-/** A file to attach. `content` is the raw bytes; Resend base64-encodes it. */
-export type EmailAttachment = {
+/**
+ * A file to attach. Derived from Resend's own `Attachment` so a field rename
+ * in a future Resend major (e.g. `contentType`) fails the build here rather
+ * than silently dropping the MIME header. We narrow `filename`/`content` to
+ * required (Resend types them optional); `content` is the raw bytes, which
+ * Resend base64-encodes.
+ */
+export type EmailAttachment = Pick<Attachment, "contentType"> & {
   filename: string;
   content: Buffer | string;
-  contentType?: string;
 };
 
 type SendArgs = {
@@ -71,6 +78,39 @@ export async function sendEmail({ to, subject, react, attachments }: SendArgs) {
     throw new Error(`Resend send failed: ${error.name}: ${error.message}`);
   }
   return data;
+}
+
+/** Renders and sends the `emails/verify-email.tsx` template. */
+export async function sendVerificationEmail(opts: {
+  to: string;
+  verifyUrl: string;
+  userName?: string;
+  expiresInHours?: number;
+}) {
+  const expiresInHours = opts.expiresInHours ?? 24;
+  return sendEmail({
+    to: opts.to,
+    subject: `Confirm your email to finish setting up your Fair Food NZ account`,
+    react: (
+      <VerifyEmail
+        verifyUrl={opts.verifyUrl}
+        userName={opts.userName}
+        expiresInHours={expiresInHours}
+      />
+    ),
+  });
+}
+
+/** Renders and sends the `emails/welcome.tsx` template (post-verification). */
+export async function sendWelcomeEmail(opts: {
+  to: string;
+  userName?: string;
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `You're in — welcome to the Fair Food NZ volunteer whānau`,
+    react: <WelcomeEmail userName={opts.userName} />,
+  });
 }
 
 /** Renders and sends the existing `emails/forgot-password.tsx` template. */

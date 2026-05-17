@@ -38,21 +38,36 @@ function escapeICSText(value: string): string {
 }
 
 /**
- * RFC 5545 §3.1 content-line folding: lines longer than 75 octets are split,
- * each continuation prefixed with a single space. We fold on character count —
- * the field values here are ASCII-dominant, so octet ≈ char and the rare
- * multibyte char only makes us fold marginally early, which is spec-legal.
+ * RFC 5545 §3.1 content-line folding: a content line longer than 75 octets is
+ * split, each continuation prefixed with a single space. The limit is in
+ * *octets*, not characters — a te reo macron (e.g. ā, U+0101) is one JS char
+ * but two UTF-8 bytes, so a char-count fold runs late and can emit an
+ * over-long line that strict parsers reject. We measure with
+ * Buffer.byteLength and only ever fold on a code-point boundary, since §3.1
+ * forbids splitting a multi-octet character across a fold.
  */
 function foldICSLine(line: string): string {
-  if (line.length <= 75) return line;
-  const chunks: string[] = [line.slice(0, 75)];
-  let rest = line.slice(75);
-  while (rest.length > 74) {
-    chunks.push(" " + rest.slice(0, 74));
-    rest = rest.slice(74);
+  if (Buffer.byteLength(line, "utf8") <= 75) return line;
+  const chunks: string[] = [];
+  let cur = "";
+  let curBytes = 0;
+  // First line gets the full 75; continuations spend one octet on the leading
+  // space, so their own content caps at 74.
+  let limit = 75;
+  for (const ch of line) {
+    const chBytes = Buffer.byteLength(ch, "utf8");
+    if (curBytes + chBytes > limit) {
+      chunks.push(cur);
+      cur = ch;
+      curBytes = chBytes;
+      limit = 74;
+    } else {
+      cur += ch;
+      curBytes += chBytes;
+    }
   }
-  chunks.push(" " + rest);
-  return chunks.join("\r\n");
+  chunks.push(cur);
+  return chunks[0] + chunks.slice(1).map((c) => "\r\n " + c).join("");
 }
 
 /** UTC basic format `YYYYMMDDTHHMMSSZ` — the iCalendar / Google / Yahoo shape. */
@@ -92,7 +107,10 @@ export function buildICS(event: CalendarEvent): string {
     "END:VEVENT",
     "END:VCALENDAR",
   ];
-  return lines.map(foldICSLine).join("\r\n");
+  // RFC 5545 §3.1 requires *every* content line, including the last, to end
+  // with CRLF. Lenient clients (Apple Calendar) cope without the trailing one;
+  // Google's server-side importer and other strict parsers reject the file.
+  return lines.map(foldICSLine).join("\r\n") + "\r\n";
 }
 
 /** Deep links for the web calendars that ignore .ics attachments. */

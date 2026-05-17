@@ -42,6 +42,12 @@ export async function bookShiftAction(
       `/me/profile/complete?next=${encodeURIComponent(`/shifts/${parsed.data.shiftId}`)}`,
     );
   }
+  if (!user.emailVerifiedAt) {
+    return {
+      error:
+        "Please verify your email before booking — check your inbox for the link, or resend it from your dashboard.",
+    };
+  }
 
   const shift = await db.shift.findUnique({
     where: { id: parsed.data.shiftId },
