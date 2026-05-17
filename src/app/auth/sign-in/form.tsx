@@ -31,7 +31,7 @@ export function SignInForm({ next }: { next?: string }) {
         <div className="flex items-baseline justify-between">
           <Label htmlFor="password">Password</Label>
           <Link
-            href="mailto:volunteering@fairfood.org.nz?subject=Volunteer%20password%20reset"
+            href="/auth/forgot-password"
             className="text-xs text-foreground/60 underline-offset-4 hover:text-foreground hover:underline"
           >
             Forgot?
