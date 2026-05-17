@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { nzWallTimeToUtc } from "@/lib/schedule";
 import { sumBlocks } from "@/lib/shifts";
+import { formatShiftRange } from "@/lib/programs";
+import { sendBookingCancellationEmail } from "@/lib/email";
 import { BookingStatus } from "@/generated/prisma";
 
 const ShiftFieldsSchema = z.object({
@@ -157,10 +159,47 @@ export async function setBookingStatus(formData: FormData) {
     bookingId: formData.get("bookingId"),
     status: formData.get("status"),
   });
+  const existing = await db.booking.findUnique({
+    where: { id: parsed.bookingId },
+    include: {
+      user: { select: { email: true, name: true } },
+      shift: {
+        include: { program: { select: { title: true, location: true } } },
+      },
+    },
+  });
+  if (!existing) return;
+
   const booking = await db.booking.update({
     where: { id: parsed.bookingId },
     data: { status: parsed.status },
   });
+
+  // Tell the volunteer when an admin cancels their booking — they didn't do
+  // it themselves, so they need to know their spot is gone. Only on the
+  // transition *into* cancelled (re-cancelling an already-cancelled booking
+  // shouldn't re-send). Best-effort: the status change is already committed,
+  // so a Resend hiccup must not surface as a failed admin action.
+  if (
+    parsed.status === BookingStatus.CANCELLED &&
+    existing.status !== BookingStatus.CANCELLED
+  ) {
+    try {
+      await sendBookingCancellationEmail({
+        to: existing.user.email,
+        userName: existing.user.name || undefined,
+        programTitle: existing.shift.program.title,
+        whenLabel: formatShiftRange(
+          existing.shift.startsAt,
+          existing.shift.endsAt,
+        ),
+        location: existing.shift.program.location,
+      });
+    } catch (e) {
+      console.error("Booking cancellation email failed to send:", e);
+    }
+  }
+
   revalidatePath(`/admin/shifts/${booking.shiftId}`);
 }
 

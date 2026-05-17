@@ -6,6 +6,7 @@ import ForgotPasswordEmail from "../../emails/forgot-password";
 import VerifyEmail from "../../emails/verify-email";
 import WelcomeEmail from "../../emails/welcome";
 import BookingConfirmationEmail from "../../emails/booking-confirmation";
+import BookingCancelledEmail from "../../emails/booking-cancelled";
 import type { CalendarLinks } from "@/lib/calendar";
 
 /**
@@ -172,5 +173,33 @@ export async function sendBookingConfirmationEmail(opts: {
         contentType: "text/calendar; method=PUBLISH; charset=utf-8",
       },
     ],
+  });
+}
+
+/**
+ * Renders and sends the `emails/booking-cancelled.tsx` template — notifies a
+ * volunteer that an admin cancelled their booking (the volunteer's own
+ * self-cancel doesn't email; they did it themselves). No `.ics` is attached:
+ * there's nothing to add to a calendar, and clients have no reliable
+ * cross-vendor "cancel this event" payload for a PUBLISH event.
+ */
+export async function sendBookingCancellationEmail(opts: {
+  to: string;
+  userName?: string;
+  programTitle: string;
+  whenLabel: string;
+  location: string;
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Cancelled — your ${opts.programTitle} shift on ${opts.whenLabel}`,
+    react: (
+      <BookingCancelledEmail
+        userName={opts.userName}
+        programTitle={opts.programTitle}
+        whenLabel={opts.whenLabel}
+        location={opts.location}
+      />
+    ),
   });
 }
