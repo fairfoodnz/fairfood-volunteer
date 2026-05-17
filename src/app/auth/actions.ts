@@ -6,14 +6,20 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import {
   createSession,
+  currentUser,
   hashPassword,
   signOut,
   verifyPassword,
 } from "@/lib/auth";
-import { sendPasswordResetEmail } from "@/lib/email";
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "@/lib/email";
 
 const PASSWORD_MIN = 8;
 const RESET_TTL_HOURS = 24;
+const VERIFY_TTL_HOURS = 24;
 
 /** SHA-256 of the raw reset token — only this is ever stored or queried. */
 function hashToken(raw: string) {
@@ -130,6 +136,9 @@ export async function signUpAction(
       passwordHash,
     },
   });
+  // Soft gate: they're signed in immediately and can fill the questionnaire,
+  // but bookShiftAction stays blocked until they click the emailed link.
+  await issueEmailVerification(user);
   await createSession(user.id);
   // New accounts always start at the questionnaire. `next` is preserved through it.
   const back = parsed.data.next ? safeNext(parsed.data.next) : "/me";
@@ -264,6 +273,12 @@ export async function resetPasswordAction(
       where: { id: record.userId },
       data: { passwordHash },
     }),
+    // Receiving the reset email proves control of the inbox — verify it if it
+    // wasn't already (updateMany leaves an existing timestamp untouched).
+    db.user.updateMany({
+      where: { id: record.userId, emailVerifiedAt: null },
+      data: { emailVerifiedAt: new Date() },
+    }),
     db.passwordResetToken.update({
       where: { id: record.id },
       data: { usedAt: new Date() },
@@ -280,6 +295,130 @@ export async function resetPasswordAction(
   });
   await createSession(user.id);
   redirect(user.profileCompletedAt ? "/me" : "/me/profile/complete");
+}
+
+// ---------------------------------------------------------------------------
+// Email verification
+// ---------------------------------------------------------------------------
+
+/**
+ * Issue a fresh verification token for `user` and email the link. One live
+ * token per user — drop any unredeemed ones first (mirrors password reset).
+ * Best-effort: a send failure is logged, never thrown, so sign-up itself
+ * still succeeds (the user can resend from the dashboard banner).
+ */
+async function issueEmailVerification(user: {
+  id: string;
+  email: string;
+  name: string;
+}) {
+  await db.emailVerificationToken.deleteMany({
+    where: { userId: user.id, usedAt: null },
+  });
+  const raw = randomBytes(32).toString("hex");
+  await db.emailVerificationToken.create({
+    data: {
+      tokenHash: hashToken(raw),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + VERIFY_TTL_HOURS * 3_600_000),
+    },
+  });
+  const verifyUrl = `${appOrigin()}/auth/verify-email?token=${raw}`;
+  try {
+    await sendVerificationEmail({
+      to: user.email,
+      verifyUrl,
+      userName: user.name.split(" ")[0] || undefined,
+      expiresInHours: VERIFY_TTL_HOURS,
+    });
+  } catch (err) {
+    console.error("[email-verification] send failed", err);
+  }
+}
+
+const VerifyEmailSchema = z.object({ token: z.string().min(1) });
+
+export type VerifyEmailState = { error?: string };
+export type ResendVerificationState = { error?: string; sent?: boolean };
+
+export async function verifyEmailAction(
+  _prev: VerifyEmailState,
+  formData: FormData,
+): Promise<VerifyEmailState> {
+  const parsed = VerifyEmailSchema.safeParse({ token: formData.get("token") });
+  if (!parsed.success) {
+    return {
+      error:
+        "This verification link is invalid or has expired. Request a new one.",
+    };
+  }
+
+  const record = await db.emailVerificationToken.findUnique({
+    where: { tokenHash: hashToken(parsed.data.token) },
+  });
+  if (!record || record.usedAt || record.expiresAt < new Date()) {
+    return {
+      error:
+        "This verification link is invalid or has expired. Request a new one.",
+    };
+  }
+
+  const [verified] = await db.$transaction([
+    // Leave an existing timestamp untouched (e.g. already verified via a
+    // password reset) — updateMany no-ops instead of clobbering it. Its
+    // `count` is how we know whether this click actually verified anything.
+    db.user.updateMany({
+      where: { id: record.userId, emailVerifiedAt: null },
+      data: { emailVerifiedAt: new Date() },
+    }),
+    db.emailVerificationToken.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    }),
+    db.emailVerificationToken.deleteMany({
+      where: { userId: record.userId, usedAt: null },
+    }),
+  ]);
+
+  const user = await db.user.findUniqueOrThrow({
+    where: { id: record.userId },
+  });
+  // The link may be opened on a device where they're not signed in — drop them
+  // straight into a session (mirrors the password-reset tail).
+  await createSession(user.id);
+  // Only a first-time verification gets the warm welcome. If the account was
+  // already verified (e.g. via the password-reset path) the updateMany
+  // no-ops, so a still-valid older token must not re-trigger the email.
+  if (verified.count > 0) {
+    try {
+      await sendWelcomeEmail({
+        to: user.email,
+        userName: user.name.split(" ")[0] || undefined,
+      });
+    } catch (err) {
+      console.error("[welcome-email] send failed", err);
+    }
+  }
+  redirect(user.profileCompletedAt ? "/me" : "/me/profile/complete");
+}
+
+export async function resendVerificationAction(
+  _prev: ResendVerificationState,
+  _formData: FormData,
+): Promise<ResendVerificationState> {
+  // useActionState supplies (prevState, formData); this action needs neither —
+  // the user comes from the session. Mark consumed so lint stays clean.
+  void _formData;
+  const user = await currentUser();
+  if (!user) {
+    return { error: "Please sign in, then resend your verification email." };
+  }
+  // Idempotent: an already-verified account gets the same calm "sent" reply
+  // rather than a confusing error.
+  if (!user.emailVerifiedAt) {
+    await issueEmailVerification(user);
+  }
+  return { sent: true };
 }
 
 export async function devSignInAction(formData: FormData) {

@@ -727,6 +727,7 @@ async function seedUsers() {
       role: Role.ADMIN,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),
+      emailVerifiedAt: new Date(),
     },
     create: {
       email: "admin@fairfood.test",
@@ -734,6 +735,7 @@ async function seedUsers() {
       role: Role.ADMIN,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),
+      emailVerifiedAt: new Date(),
     },
   });
 
@@ -743,6 +745,7 @@ async function seedUsers() {
       role: Role.VOLUNTEER,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),
+      emailVerifiedAt: new Date(),
     },
     create: {
       email: "volunteer@fairfood.test",
@@ -750,6 +753,7 @@ async function seedUsers() {
       role: Role.VOLUNTEER,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),
+      emailVerifiedAt: new Date(),
     },
   });
 
@@ -778,6 +782,7 @@ async function seedUsers() {
         healthConditions: v.healthConditions,
         healthDetails: v.healthDetails,
         profileCompletedAt: v.profileComplete ? new Date() : null,
+        emailVerifiedAt: new Date(),
         flagReviewedAt: v.reviewed ? new Date() : null,
       },
     });

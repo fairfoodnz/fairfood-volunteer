@@ -44,6 +44,11 @@ enum DocumentCategory {
 model User {
   id              String              @id @default(cuid())
   email           String              @unique
+  // Null until the volunteer clicks the verification link emailed at sign-up.
+  // Soft gate: an unverified account can browse + fill the questionnaire but
+  // bookShiftAction refuses until this is set. Existing accounts were
+  // grandfathered (backfilled to createdAt) in the adding migration.
+  emailVerifiedAt DateTime?
   passwordHash    String
   name            String
   phone           String?
@@ -70,10 +75,11 @@ model User {
 
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  bookings        Booking[]
-  sessions        Session[]
-  passwordResets  PasswordResetToken[]
-  uploadedDocs    Document[]          @relation("DocumentUploader")
+  bookings           Booking[]
+  sessions           Session[]
+  passwordResets     PasswordResetToken[]
+  emailVerifications EmailVerificationToken[]
+  uploadedDocs       Document[]          @relation("DocumentUploader")
 }
 
 model Session {
@@ -92,6 +98,22 @@ model Session {
 // reset grants full account takeover. (Session.token is stored raw by
 // contrast — lower value, and resets wipe all sessions anyway.)
 model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// Single-use email-verification tokens. Same threat model as
+// PasswordResetToken: only the SHA-256 hash is stored, never the raw value, so
+// a leaked row can't be redeemed. One live token per user (the issuer drops
+// prior unredeemed ones). 24h TTL.
+model EmailVerificationToken {
   id        String    @id @default(cuid())
   tokenHash String    @unique
   userId    String
