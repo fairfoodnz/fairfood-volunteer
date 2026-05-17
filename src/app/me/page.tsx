@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
+import { VerifyEmailBanner } from "@/components/site/verify-email-banner";
 import { formatShiftRange } from "@/lib/programs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,7 @@ export default async function MePage({ searchParams }: Props) {
       <SiteNav />
       <main className="flex-1 py-12 md:py-16">
         <div className="container-x">
+          {!user.emailVerifiedAt && <VerifyEmailBanner email={user.email} />}
           {booked && (
             <div className="mb-8 rounded-md border border-leaf/30 bg-leaf/10 px-5 py-4">
               <p className="font-semibold text-leaf-deep">Ka pai — you&rsquo;re booked.</p>
