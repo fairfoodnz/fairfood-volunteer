@@ -363,9 +363,10 @@ export async function verifyEmailAction(
     };
   }
 
-  await db.$transaction([
+  const [verified] = await db.$transaction([
     // Leave an existing timestamp untouched (e.g. already verified via a
-    // password reset) — updateMany no-ops instead of clobbering it.
+    // password reset) — updateMany no-ops instead of clobbering it. Its
+    // `count` is how we know whether this click actually verified anything.
     db.user.updateMany({
       where: { id: record.userId, emailVerifiedAt: null },
       data: { emailVerifiedAt: new Date() },
@@ -385,14 +386,18 @@ export async function verifyEmailAction(
   // The link may be opened on a device where they're not signed in — drop them
   // straight into a session (mirrors the password-reset tail).
   await createSession(user.id);
-  // A brand-new verified volunteer gets the warm welcome.
-  try {
-    await sendWelcomeEmail({
-      to: user.email,
-      userName: user.name.split(" ")[0] || undefined,
-    });
-  } catch (err) {
-    console.error("[welcome-email] send failed", err);
+  // Only a first-time verification gets the warm welcome. If the account was
+  // already verified (e.g. via the password-reset path) the updateMany
+  // no-ops, so a still-valid older token must not re-trigger the email.
+  if (verified.count > 0) {
+    try {
+      await sendWelcomeEmail({
+        to: user.email,
+        userName: user.name.split(" ")[0] || undefined,
+      });
+    } catch (err) {
+      console.error("[welcome-email] send failed", err);
+    }
   }
   redirect(user.profileCompletedAt ? "/me" : "/me/profile/complete");
 }
