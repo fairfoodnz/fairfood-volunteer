@@ -8,7 +8,7 @@ import { VerifyEmailBanner } from "@/components/site/verify-email-banner";
 import { formatShiftRange } from "@/lib/programs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cancelBookingAction } from "../shifts/actions";
+import { CancelBookingDialog } from "../shifts/[id]/cancel-booking";
 import { BookingStatus } from "@/generated/prisma";
 
 export const metadata = { title: "My shifts · Fair Food Volunteer" };
@@ -113,17 +113,10 @@ export default async function MePage({ searchParams }: Props) {
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/shifts/${b.shiftId}`}>Details</Link>
                       </Button>
-                      <form action={cancelBookingAction}>
-                        <input type="hidden" name="bookingId" value={b.id} />
-                        <Button
-                          type="submit"
-                          variant="outline"
-                          size="sm"
-                          className="border-tomato/40 text-tomato hover:bg-tomato/10 hover:text-tomato"
-                        >
-                          Cancel
-                        </Button>
-                      </form>
+                      <CancelBookingDialog
+                        bookingId={b.id}
+                        triggerLabel="Cancel"
+                      />
                     </div>
                   </li>
                 ))}

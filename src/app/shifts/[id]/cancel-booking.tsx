@@ -13,7 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { cancelBookingAction } from "../actions";
 
-export function CancelBookingDialog({ bookingId }: { bookingId: string }) {
+export function CancelBookingDialog({
+  bookingId,
+  triggerLabel = "Cancel shift",
+}: {
+  bookingId: string;
+  triggerLabel?: string;
+}) {
   return (
     <Dialog>
       <DialogTrigger
@@ -24,7 +30,7 @@ export function CancelBookingDialog({ bookingId }: { bookingId: string }) {
             size="sm"
             className="border-tomato/40 text-tomato hover:bg-tomato/10 hover:text-tomato"
           >
-            Cancel shift
+            {triggerLabel}
           </Button>
         }
       />
