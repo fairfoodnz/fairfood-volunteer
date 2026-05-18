@@ -49,7 +49,11 @@ model User {
   // bookShiftAction refuses until this is set. Existing accounts were
   // grandfathered (backfilled to createdAt) in the adding migration.
   emailVerifiedAt DateTime?
-  passwordHash    String
+  // Null for accounts that only ever signed in with Google or a passkey — they
+  // never set a password. signInAction must treat null as "no password login"
+  // (still timing-safe). A password reset can later populate it (the user
+  // controls the inbox), which simply adds password login as another option.
+  passwordHash    String?
   name            String
   phone           String?
   role            Role                @default(VOLUNTEER)
@@ -79,7 +83,50 @@ model User {
   sessions           Session[]
   passwordResets     PasswordResetToken[]
   emailVerifications EmailVerificationToken[]
+  oauthAccounts      OAuthAccount[]
+  passkeys           Passkey[]
   uploadedDocs       Document[]          @relation("DocumentUploader")
+}
+
+// A linked third-party identity (currently only Google). One row per
+// (provider, providerAccountId) — re-logins match deterministically on the
+// provider's stable subject id, not the email (emails can change/transfer).
+// A User can have several (e.g. Google + a future provider). Auto-linked to an
+// existing password account when Google reports the email as verified.
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String
+  providerAccountId String
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// A registered WebAuthn credential (passkey). Discoverable/resident credentials
+// so the sign-in page can offer usernameless login. publicKey is the raw COSE
+// key bytes; counter is the signature counter (0 for most platform passkeys).
+// credentialId is the base64url credential id returned by the authenticator.
+model Passkey {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String    @unique
+  publicKey    Bytes
+  counter      Int       @default(0)
+  // CSV of AuthenticatorTransport values ("internal,hybrid", "usb" …) — used to
+  // hint the browser on subsequent ceremonies.
+  transports   String?
+  deviceType   String?
+  backedUp     Boolean   @default(false)
+  // User-facing label so they can tell devices apart ("MacBook", "iPhone").
+  name         String
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
 }
 
 model Session {

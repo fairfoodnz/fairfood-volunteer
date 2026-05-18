@@ -1,21 +1,36 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import { SignInForm } from "./form";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { GoogleButton } from "@/components/auth/google-button";
+import { PasskeySignInButton } from "@/components/auth/passkey-sign-in-button";
+import { AuthDivider } from "@/components/auth/auth-divider";
 import { currentUser } from "@/lib/auth";
+import { googleConfigured } from "@/lib/oauth";
 import { devSignInAction } from "../actions";
 
 export const metadata = {
   title: "Sign in · Fair Food Volunteer",
 };
 
-type Props = { searchParams: Promise<{ next?: string }> };
+const SIGN_IN_ERRORS: Record<string, string> = {
+  google_unavailable: "Google sign-in isn’t available right now.",
+  google_cancelled: "Google sign-in was cancelled.",
+  google_unverified:
+    "Your Google email isn’t verified, so we can’t link it. Sign in with your password instead.",
+  google_failed: "We couldn’t complete Google sign-in. Please try again.",
+};
+
+type Props = { searchParams: Promise<{ next?: string; error?: string }> };
 
 export default async function SignInPage({ searchParams }: Props) {
   const user = await currentUser();
-  const { next } = await searchParams;
+  const { next, error } = await searchParams;
   if (user) redirect(next || "/me");
+  const errorMsg = error ? SIGN_IN_ERRORS[error] : undefined;
+  const showGoogle = googleConfigured();
 
   return (
     <>
@@ -49,6 +64,20 @@ export default async function SignInPage({ searchParams }: Props) {
 
           <div className="relative">
             <div className="rounded-md border border-border bg-card p-7 shadow-sm md:p-9">
+              {errorMsg && (
+                <div
+                  role="alert"
+                  className="mb-5 flex items-start gap-3 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-tomato"
+                >
+                  <AlertCircle className="mt-0.5 size-5 shrink-0" aria-hidden />
+                  <p className="text-sm font-medium">{errorMsg}</p>
+                </div>
+              )}
+              <div className="space-y-3">
+                {showGoogle && <GoogleButton next={next} />}
+                <PasskeySignInButton next={next} />
+              </div>
+              <AuthDivider label="or with email" />
               <SignInForm next={next} />
             </div>
             <p className="mt-4 text-sm text-foreground/65">

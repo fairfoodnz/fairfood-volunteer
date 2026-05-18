@@ -8,6 +8,7 @@ import {
   createSession,
   currentUser,
   hashPassword,
+  safeNextPath,
   signOut,
   verifyPassword,
 } from "@/lib/auth";
@@ -58,12 +59,6 @@ export type SignUpState = {
   fieldErrors?: Partial<Record<"email" | "name" | "password" | "confirm", string>>;
 };
 
-function safeNext(next: string | undefined, fallback = "/me") {
-  // Only allow same-origin relative paths.
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return fallback;
-  return next;
-}
-
 export async function signInAction(
   _prev: SignInState,
   formData: FormData,
@@ -78,7 +73,10 @@ export async function signInAction(
   }
   const lower = parsed.data.email.trim().toLowerCase();
   const user = await db.user.findUnique({ where: { email: lower } });
-  // Run bcrypt even when the user doesn't exist, to avoid leaking which emails are registered.
+  // Run bcrypt even when the user doesn't exist, to avoid leaking which emails
+  // are registered. A null passwordHash (Google-/passkey-only account that
+  // never set one) coalesces to the same dummy hash, so password sign-in fails
+  // generically and in constant time rather than 500ing on a null.
   const validHash = user?.passwordHash ?? "$2b$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvali";
   const ok = await verifyPassword(parsed.data.password, validHash);
   if (!user || !ok) {
@@ -86,14 +84,14 @@ export async function signInAction(
   }
   await createSession(user.id);
   if (!user.profileCompletedAt) {
-    const back = safeNext(parsed.data.next);
+    const back = safeNextPath(parsed.data.next);
     redirect(
       back === "/me"
         ? "/me/profile/complete"
         : `/me/profile/complete?next=${encodeURIComponent(back)}`,
     );
   }
-  redirect(safeNext(parsed.data.next));
+  redirect(safeNextPath(parsed.data.next));
 }
 
 export async function signUpAction(
@@ -141,7 +139,7 @@ export async function signUpAction(
   await issueEmailVerification(user);
   await createSession(user.id);
   // New accounts always start at the questionnaire. `next` is preserved through it.
-  const back = parsed.data.next ? safeNext(parsed.data.next) : "/me";
+  const back = parsed.data.next ? safeNextPath(parsed.data.next) : "/me";
   redirect(
     back === "/me"
       ? "/me/profile/complete"

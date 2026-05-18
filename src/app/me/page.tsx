@@ -68,6 +68,9 @@ export default async function MePage({ searchParams }: Props) {
               <Button asChild variant="outline">
                 <Link href="/me/profile">Edit profile</Link>
               </Button>
+              <Button asChild variant="outline">
+                <Link href="/me/security">Sign-in &amp; security</Link>
+              </Button>
             </div>
           </header>
 
