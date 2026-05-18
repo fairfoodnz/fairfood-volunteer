@@ -175,12 +175,20 @@ export async function setBookingStatus(formData: FormData) {
     data: { status: parsed.status },
   });
 
+  // The cancel-booking confirmation dialog sends a "notify" checkbox (default
+  // checked); admins can untick it for a silent cancellation. Absent field
+  // (e.g. the other status buttons) counts as "don't notify" — those never
+  // transition into cancelled anyway, so the email path stays unreached.
+  const notify = formData.get("notify") != null;
+
   // Tell the volunteer when an admin cancels their booking — they didn't do
   // it themselves, so they need to know their spot is gone. Only on the
   // transition *into* cancelled (re-cancelling an already-cancelled booking
-  // shouldn't re-send). Best-effort: the status change is already committed,
-  // so a Resend hiccup must not surface as a failed admin action.
+  // shouldn't re-send), and only when the admin chose to notify them.
+  // Best-effort: the status change is already committed, so a Resend hiccup
+  // must not surface as a failed admin action.
   if (
+    notify &&
     parsed.status === BookingStatus.CANCELLED &&
     existing.status !== BookingStatus.CANCELLED
   ) {
