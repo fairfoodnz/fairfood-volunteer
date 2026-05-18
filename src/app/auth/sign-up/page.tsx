@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 import { SignUpForm } from "./form";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { GoogleButton } from "@/components/auth/google-button";
+import { AuthDivider } from "@/components/auth/auth-divider";
 import { currentUser } from "@/lib/auth";
+import { googleConfigured } from "@/lib/oauth";
 
 export const metadata = {
   title: "Create your account · Fair Food Volunteer",
@@ -15,6 +18,7 @@ export default async function SignUpPage({ searchParams }: Props) {
   const user = await currentUser();
   const { next } = await searchParams;
   if (user) redirect(next || "/me");
+  const showGoogle = googleConfigured();
 
   return (
     <>
@@ -43,6 +47,12 @@ export default async function SignUpPage({ searchParams }: Props) {
 
           <div className="relative">
             <div className="rounded-md border border-border bg-card p-7 shadow-sm md:p-9">
+              {showGoogle && (
+                <>
+                  <GoogleButton label="Sign up with Google" next={next} />
+                  <AuthDivider label="or with email" />
+                </>
+              )}
               <SignUpForm next={next} />
             </div>
             <p className="mt-4 text-sm text-foreground/65">
