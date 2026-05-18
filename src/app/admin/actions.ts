@@ -164,7 +164,9 @@ export async function setBookingStatus(formData: FormData) {
     include: {
       user: { select: { email: true, name: true } },
       shift: {
-        include: { program: { select: { title: true, location: true } } },
+        include: {
+          program: { select: { title: true, location: true, slug: true } },
+        },
       },
     },
   });
@@ -200,7 +202,15 @@ export async function setBookingStatus(formData: FormData) {
     }
   }
 
+  // Every status transition (cancel / attended / no-show / reinstate) changes
+  // the shift's effective availability, so refresh the volunteer-facing views
+  // too — the same routes src/app/shifts/actions.ts revalidates after a
+  // booking mutation, plus the programme detail page that lists the shift.
   revalidatePath(`/admin/shifts/${booking.shiftId}`);
+  revalidatePath("/shifts");
+  revalidatePath(`/shifts/${booking.shiftId}`);
+  revalidatePath("/me");
+  revalidatePath(`/programs/${existing.shift.program.slug}`);
 }
 
 export async function cancelShift(formData: FormData) {
