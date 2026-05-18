@@ -44,7 +44,13 @@ export function PasskeySignInButton({ next }: { next?: string }) {
         return;
       }
       // Full navigation so server components re-read the new session.
-      window.location.assign(finish.redirectTo);
+      // `redirectTo` is already constrained server-side by safeNextPath, but
+      // re-assert it's a same-origin relative path at the sink (defence in
+      // depth + lets static analysis see the guard).
+      const dest = finish.redirectTo;
+      const safeDest =
+        dest.startsWith("/") && !/^\/[/\\]/.test(dest) ? dest : "/me";
+      window.location.assign(safeDest);
     } finally {
       setPending(false);
     }

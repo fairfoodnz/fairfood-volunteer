@@ -102,6 +102,10 @@ model OAuthAccount {
   createdAt         DateTime @default(now())
 
   @@unique([provider, providerAccountId])
+  // One identity per (provider, account) AND at most one account per provider
+  // per user — backs the "one Google per user" rule at the DB level so a
+  // concurrent double-connect can't slip past the application guard (TOCTOU).
+  @@unique([userId, provider])
   @@index([userId])
 }
 

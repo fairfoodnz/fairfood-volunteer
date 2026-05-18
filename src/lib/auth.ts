@@ -70,7 +70,11 @@ export function safeNextPath(
   next: string | null | undefined,
   fallback = "/me",
 ) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return fallback;
+  if (!next || !next.startsWith("/")) return fallback;
+  // Reject anything whose second char is "/" or "\": "//host" and "/\host"
+  // (and "/\/host") are protocol-relative once a browser normalises "\"→"/",
+  // which would be an off-site open redirect.
+  if (/^\/[/\\]/.test(next)) return fallback;
   return next;
 }
 

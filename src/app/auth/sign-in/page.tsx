@@ -19,9 +19,8 @@ const SIGN_IN_ERRORS: Record<string, string> = {
   google_unavailable: "Google sign-in isn’t available right now.",
   google_cancelled: "Google sign-in was cancelled.",
   google_unverified:
-    "Your Google email isn’t verified, so we can’t link it. Sign in with your password instead.",
-  google_unverified:
-    "Your Google email isn't verified, so we can't link it automatically. Sign in with another method instead.",
+    "Your Google email isn’t verified, so we can’t link it automatically. Sign in with another method instead.",
+  google_failed: "We couldn’t complete Google sign-in. Please try again.",
 };
 
 type Props = { searchParams: Promise<{ next?: string; error?: string }> };

@@ -54,13 +54,31 @@ async function resolveDestination(
         where: { userId: sessionUser.id, provider: GOOGLE_PROVIDER },
       });
       if (hasGoogle > 0) return "/me/security?error=google_exists";
-      await db.oAuthAccount.create({
-        data: {
-          userId: sessionUser.id,
-          provider: GOOGLE_PROVIDER,
-          providerAccountId: identity.sub,
-        },
-      });
+      try {
+        await db.oAuthAccount.create({
+          data: {
+            userId: sessionUser.id,
+            provider: GOOGLE_PROVIDER,
+            providerAccountId: identity.sub,
+          },
+        });
+      } catch (err) {
+        // Lost a concurrent connect race — the @@unique constraints are the
+        // backstop. Re-derive the right message instead of 500ing.
+        if (!(err instanceof Error && err.message.includes("Unique"))) throw err;
+        const now = await db.oAuthAccount.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: GOOGLE_PROVIDER,
+              providerAccountId: identity.sub,
+            },
+          },
+        });
+        if (now && now.userId !== sessionUser.id) {
+          return "/me/security?error=google_taken";
+        }
+        return "/me/security?error=google_exists";
+      }
     }
     return "/me/security?connected=google";
   }
@@ -81,20 +99,26 @@ async function resolveDestination(
     // Only auto-link when Google vouches for the email — otherwise a Google
     // account with an unverified address could seize a password account.
     if (!identity.emailVerified) throw new OAuthError("email_unverified");
-    await db.oAuthAccount.create({
-      data: {
-        userId: byEmail.id,
-        provider: GOOGLE_PROVIDER,
-        providerAccountId: identity.sub,
-      },
-    });
-    // A verified Google email also proves inbox control — verify if it wasn't.
-    if (!byEmail.emailVerifiedAt) {
-      await db.user.update({
-        where: { id: byEmail.id },
-        data: { emailVerifiedAt: new Date() },
-      });
-    }
+    // Link + (if needed) mark the email verified in one atomic step so an
+    // interruption can't leave the account half-linked. A verified Google
+    // email also proves inbox control, hence the emailVerifiedAt backfill.
+    await db.$transaction([
+      db.oAuthAccount.create({
+        data: {
+          userId: byEmail.id,
+          provider: GOOGLE_PROVIDER,
+          providerAccountId: identity.sub,
+        },
+      }),
+      ...(byEmail.emailVerifiedAt
+        ? []
+        : [
+            db.user.update({
+              where: { id: byEmail.id },
+              data: { emailVerifiedAt: new Date() },
+            }),
+          ]),
+    ]);
     await createSession(byEmail.id);
     return postAuthDestination(byEmail, next);
   }
