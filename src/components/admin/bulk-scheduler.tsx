@@ -13,7 +13,7 @@ import { WEEKDAYS } from "@/lib/schedule";
 import { formatShiftRange } from "@/lib/programs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 
 type TemplateLite = {
@@ -230,28 +230,26 @@ export function BulkScheduler({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="startDate">From</Label>
-            <Input
+            <DatePicker
               id="startDate"
-              type="date"
               value={startDate}
               min={today}
-              onChange={(e) => {
+              onValueChange={(v) => {
                 invalidate();
-                setStartDate(e.target.value);
+                setStartDate(v);
               }}
               className="h-11"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="endDate">Until</Label>
-            <Input
+            <DatePicker
               id="endDate"
-              type="date"
               value={endDate}
               min={startDate || today}
-              onChange={(e) => {
+              onValueChange={(v) => {
                 invalidate();
-                setEndDate(e.target.value);
+                setEndDate(v);
               }}
               className="h-11"
             />

@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo } from "react";
+import { format, subYears } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +46,15 @@ export function QuestionnaireForm({
     {},
   );
   const fe = state.fieldErrors ?? {};
+  // UX guardrails only — the action authoritatively enforces the 13–120 age
+  // window (see completeProfileAction). Keep the bounds in lockstep with it.
+  const birthdayBounds = useMemo(() => {
+    const now = new Date();
+    return {
+      min: format(subYears(now, 120), "yyyy-MM-dd"),
+      max: format(subYears(now, 13), "yyyy-MM-dd"),
+    };
+  }, []);
 
   return (
     <form action={action} className="space-y-8" noValidate>
@@ -71,15 +82,18 @@ export function QuestionnaireForm({
           <Label htmlFor="birthday">
             Birthday <Req />
           </Label>
-          <Input
+          <DatePicker
             id="birthday"
             name="birthday"
-            type="date"
             defaultValue={defaults.birthday}
+            min={birthdayBounds.min}
+            max={birthdayBounds.max}
+            captionLayout="dropdown"
+            placeholder="Select your birthday"
             aria-invalid={fe.birthday ? true : undefined}
             className="h-11"
           />
-          <Helper>We bake a little extra on your kai day.</Helper>
+          <Helper>Just to check you&rsquo;re 13 or over — that&rsquo;s all we use it for.</Helper>
           <Err>{fe.birthday}</Err>
         </FieldRow>
 
