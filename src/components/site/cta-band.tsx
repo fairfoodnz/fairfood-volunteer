@@ -31,7 +31,7 @@ export function CtaBand() {
               variant="outline"
               className="h-12 border-cream/40 bg-transparent px-7 text-cream hover:bg-cream/10 hover:text-cream"
             >
-              <Link href="mailto:kiaora@fairfood.org.nz">Email us</Link>
+              <Link href="mailto:volunteering@fairfood.org.nz">Email us</Link>
             </Button>
           </div>
         </div>
