@@ -65,7 +65,15 @@ export function SiteFooter() {
           <span>
             © {new Date().getFullYear()} Fair Food Aotearoa. Built with aroha.
           </span>
-          <span>Thank you to all our volunteers.</span>
+          <span className="flex items-center gap-4">
+            <Link
+              href="/privacy"
+              className="text-cream/60 underline-offset-4 hover:text-cream hover:underline"
+            >
+              Privacy policy
+            </Link>
+            <span>Thank you to all our volunteers.</span>
+          </span>
         </div>
       </div>
     </footer>
