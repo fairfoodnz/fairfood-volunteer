@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   browserSupportsWebAuthn,
   startAuthentication,
@@ -14,6 +15,7 @@ import {
 } from "@/app/auth/passkey/actions";
 
 export function PasskeySignInButton({ next }: { next?: string }) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
 
   async function signIn() {
@@ -43,14 +45,16 @@ export function PasskeySignInButton({ next }: { next?: string }) {
         toast.error(finish.error);
         return;
       }
-      // Full navigation so server components re-read the new session.
-      // `redirectTo` is already constrained server-side by safeNextPath, but
-      // re-assert it's a same-origin relative path at the sink (defence in
-      // depth + lets static analysis see the guard).
+      // `redirectTo` is already constrained server-side by safeNextPath; we
+      // also re-assert it's a same-origin relative path here (defence in
+      // depth) and navigate via the App Router rather than a raw
+      // window.location sink. refresh() makes server components re-read the
+      // new session cookie.
       const dest = finish.redirectTo;
       const safeDest =
         dest.startsWith("/") && !/^\/[/\\]/.test(dest) ? dest : "/me";
-      window.location.assign(safeDest);
+      router.push(safeDest);
+      router.refresh();
     } finally {
       setPending(false);
     }
