@@ -159,6 +159,13 @@ export async function setBookingStatus(formData: FormData) {
     bookingId: formData.get("bookingId"),
     status: formData.get("status"),
   });
+
+  // The cancel-booking confirmation dialog sends a "notify" checkbox (default
+  // checked); admins can untick it for a silent cancellation. Absent field
+  // (e.g. the other status buttons) counts as "don't notify" — those never
+  // transition into cancelled anyway, so the email path stays unreached.
+  const notify = formData.get("notify") != null;
+
   const existing = await db.booking.findUnique({
     where: { id: parsed.bookingId },
     include: {
@@ -174,12 +181,6 @@ export async function setBookingStatus(formData: FormData) {
     where: { id: parsed.bookingId },
     data: { status: parsed.status },
   });
-
-  // The cancel-booking confirmation dialog sends a "notify" checkbox (default
-  // checked); admins can untick it for a silent cancellation. Absent field
-  // (e.g. the other status buttons) counts as "don't notify" — those never
-  // transition into cancelled anyway, so the email path stays unreached.
-  const notify = formData.get("notify") != null;
 
   // Tell the volunteer when an admin cancels their booking — they didn't do
   // it themselves, so they need to know their spot is gone. Only on the
