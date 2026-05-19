@@ -743,6 +743,8 @@ async function seedUsers() {
   const admin = await prisma.user.upsert({
     where: { email: "admin@fairfood.test" },
     update: {
+      firstName: "Admin",
+      lastName: "Coordinator",
       role: Role.ADMIN,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),
@@ -762,6 +764,8 @@ async function seedUsers() {
   const mainVolunteer = await prisma.user.upsert({
     where: { email: "volunteer@fairfood.test" },
     update: {
+      firstName: "Aroha",
+      lastName: "Williams",
       role: Role.VOLUNTEER,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),

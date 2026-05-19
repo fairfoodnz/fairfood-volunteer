@@ -54,13 +54,24 @@ export default async function VolunteersPage({
   const conditions: Prisma.UserWhereInput[] = [];
 
   if (search) {
-    conditions.push({
-      OR: [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ],
-    });
+    const or: Prisma.UserWhereInput[] = [
+      { firstName: { contains: search, mode: "insensitive" } },
+      { lastName: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
+    // A full-name query like "John Smith" matches neither column alone now
+    // that the name is split, so also try first token → firstName and the
+    // remainder → lastName.
+    const [first, ...rest] = search.split(/\s+/);
+    if (first && rest.length > 0) {
+      or.push({
+        AND: [
+          { firstName: { contains: first, mode: "insensitive" } },
+          { lastName: { contains: rest.join(" "), mode: "insensitive" } },
+        ],
+      });
+    }
+    conditions.push({ OR: or });
   }
   if (filter === "complete") conditions.push({ profileCompletedAt: { not: null } });
   if (filter === "pending") conditions.push({ profileCompletedAt: null });

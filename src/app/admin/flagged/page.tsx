@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { fullName } from "@/lib/users";
+import { fullName, type PersonName } from "@/lib/users";
 import {
   markFlagReviewedAction,
   clearFlagReviewedAction,
@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 type FlaggedUser = {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string | null;
   email: string;
   phone: string | null;
   createdAt: Date;
@@ -44,7 +45,8 @@ export default async function FlaggedPage() {
 
   const users: FlaggedUser[] = rows.map((u) => ({
     id: u.id,
-    name: fullName(u),
+    firstName: u.firstName,
+    lastName: u.lastName,
     email: u.email,
     phone: u.phone,
     createdAt: u.profileCompletedAt ?? u.createdAt,
@@ -121,7 +123,7 @@ function FlagSection({
 function FlaggedCard({ user, field }: { user: FlaggedUser; field: "arrest" | "health" }) {
   const notes = field === "arrest" ? user.arrestDetails : user.healthDetails;
   const reviewed = user.flagReviewedAt !== null;
-  const firstInitial = lastInitial(user.name);
+  const firstInitial = lastInitial(user);
   const joinedFmt = formatDateNZ(user.createdAt);
   const lastBookedFmt = user.lastBookingAt
     ? formatDateNZ(user.lastBookingAt)
@@ -138,7 +140,7 @@ function FlaggedCard({ user, field }: { user: FlaggedUser; field: "arrest" | "he
         <div className="min-w-0">
           <p className="font-semibold">
             <span className="group-open:hidden">{firstInitial}</span>
-            <span className="hidden group-open:inline">{user.name}</span>
+            <span className="hidden group-open:inline">{fullName(user)}</span>
             {reviewed && (
               <span className="ml-2 rounded-full bg-leaf/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-leaf-deep">
                 Reviewed
@@ -205,10 +207,12 @@ function FlaggedCard({ user, field }: { user: FlaggedUser; field: "arrest" | "he
   );
 }
 
-function lastInitial(fullName: string) {
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0];
-  return `${parts[0]} ${parts[parts.length - 1]![0]!.toUpperCase()}.`;
+// Abbreviated form for the collapsed card: first name + last initial.
+// Reads lastName directly so compound names ("Ariana Te Whata" → "Ariana T.")
+// stay correct rather than re-splitting an assembled string.
+function lastInitial(person: PersonName) {
+  const lastInit = person.lastName?.charAt(0).toUpperCase();
+  return lastInit ? `${person.firstName} ${lastInit}.` : person.firstName;
 }
 
 function formatDateNZ(d: Date) {
