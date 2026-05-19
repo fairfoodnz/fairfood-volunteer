@@ -90,6 +90,15 @@ describe("formatShiftRange", () => {
     expect(out).toContain("–");
     expect(out).not.toContain("·");
   });
+
+  it("treats a shift crossing NZ midnight as multi-day even within one UTC day", () => {
+    const start = new Date("2026-01-15T10:00:00Z"); // Thu 15 Jan 23:00 NZDT
+    const end = new Date("2026-01-15T11:30:00Z"); // Fri 16 Jan 00:30 NZDT
+    const out = formatShiftRange(start, end);
+    expect(out).toContain("15 Jan");
+    expect(out).toContain("16 Jan");
+    expect(out).toContain("–");
+  });
 });
 
 describe("dayOfWeek", () => {

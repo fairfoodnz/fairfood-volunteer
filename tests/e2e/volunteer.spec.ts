@@ -23,10 +23,12 @@ async function bookFirstAvailableShift(page: Page): Promise<string> {
       ),
     );
 
-  for (const href of hrefs.slice(0, 15)) {
+  let tried = 0;
+  for (const href of hrefs) {
     await page.goto(href);
     const confirm = page.getByRole("button", { name: /Confirm booking/i });
     if (!(await confirm.isVisible().catch(() => false))) continue;
+    tried++;
 
     await confirm.click();
     const outcome = await Promise.race([
@@ -47,7 +49,9 @@ async function bookFirstAvailableShift(page: Page): Promise<string> {
     }
     // blocked (or inconclusive) — try the next shift.
   }
-  throw new Error("No shift could be booked from the seeded roster");
+  throw new Error(
+    `No shift could be booked from the seeded roster (${hrefs.length} shifts on /shifts, ${tried} had a booking form but were blocked)`,
+  );
 }
 
 test.describe("volunteer booking", () => {

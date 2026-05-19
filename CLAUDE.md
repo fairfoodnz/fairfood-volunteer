@@ -23,7 +23,8 @@ This is not conditional on the task — load them at the start of every session 
 - `docker compose up -d db` — starts the Postgres 17 dev DB on **localhost:5434** (DB `fairfood`, user/pass `postgres`).
 - `docker compose up -d garage` — starts the local Garage S3 on **localhost:3900** (admin API on 3903). Config is `garage/garage.toml`. After first start run `./scripts/garage-init.sh` to assign the layout, create the `fairfood` bucket + access key, and print the `S3_*` env vars to drop into `.env`. Script is idempotent — safe to re-run.
 - `npx prisma migrate dev` / `npx prisma migrate deploy` / `npx prisma db seed` — migrations and seeding. Seed is `tsx prisma/seed.ts` (configured in `prisma.config.ts`, not `package.json`).
-- No test framework is configured.
+- `npm test` / `npm run test:unit` — Vitest unit tests (`tests/unit/`, pure `src/lib` logic; `npm run test:watch` for watch mode). **`npm test` is unit-only by design** — it needs no server.
+- `npm run test:e2e` — Playwright e2e (`tests/e2e/`). Needs the seeded dev DB up; runs its own server (set `PORT=` to avoid a busy 3000). CI runs both in the `unit` and `e2e` jobs.
 
 ## Architecture
 
