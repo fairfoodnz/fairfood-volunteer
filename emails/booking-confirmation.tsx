@@ -190,7 +190,7 @@ export default function BookingConfirmationEmail({
             <Text className={text}>
               Plans change — kei te pai. You can cancel any time from your
               dashboard so we can offer the spot to someone else. If something
-              comes up last minute, flick us a line and we&apos;ll sort it.
+              comes up last minute, get in touch and we&apos;ll sort it.
             </Text>
 
             <Text className={`${text} mb-0`}>

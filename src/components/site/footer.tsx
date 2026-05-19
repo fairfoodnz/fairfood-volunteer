@@ -54,7 +54,7 @@ export function SiteFooter() {
         <FooterCol
           title="Get in touch"
           items={[
-            { label: "kiaora@fairfood.org.nz", href: "mailto:kiaora@fairfood.org.nz" },
+            { label: "volunteering@fairfood.org.nz", href: "mailto:volunteering@fairfood.org.nz" },
             { label: "Instagram", href: "https://instagram.com/fairfoodnz" },
             { label: "Facebook", href: "https://facebook.com/fairfoodnz" },
           ]}

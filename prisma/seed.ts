@@ -33,7 +33,7 @@ const programs = [
     order: 1,
     image: "/photos/kai-box.webp",
     theme: "cream",
-    contactEmail: "kiaora@fairfood.org.nz",
+    contactEmail: "volunteering@fairfood.org.nz",
     contactPhone: "(09) 555-1234",
     gettingHere:
       "Free street parking. We’re a five-minute walk from Avondale train station.",
@@ -61,7 +61,7 @@ const programs = [
     order: 2,
     image: "/photos/kitchen.webp",
     theme: "charcoal",
-    contactEmail: "kiaora@fairfood.org.nz",
+    contactEmail: "volunteering@fairfood.org.nz",
     contactPhone: "(09) 555-1234",
     gettingHere:
       "Free street parking. We’re a five-minute walk from Avondale train station.",
@@ -83,7 +83,7 @@ const programs = [
     order: 3,
     image: "/photos/inclusive.webp",
     theme: "forest",
-    contactEmail: "kiaora@fairfood.org.nz",
+    contactEmail: "volunteering@fairfood.org.nz",
     contactPhone: "(09) 555-1234",
     gettingHere:
       "Free street parking. We’re a five-minute walk from Avondale train station. Support people are welcome — let us know who’s coming.",
