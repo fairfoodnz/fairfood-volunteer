@@ -56,20 +56,24 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
   // shifts (bulkCancelShifts filters `cancelled: false`, so those are no-ops
   // and must not inflate the dialog's volunteer count); `deleteStats` covers
   // every selected shift since deleteMany has no such guard.
-  const { cancelStats, deleteStats } = useMemo(() => {
+  const { cancelStats, cancelCount, deleteStats } = useMemo(() => {
     const cancel = { withVolunteers: 0, volunteers: 0 };
     const del = { volunteers: 0, blockedSlots: 0 };
+    let cancelable = 0;
     for (const id of selected) {
       const s = byId.get(id);
       if (!s) continue;
       del.volunteers += s.confirmed;
       del.blockedSlots += s.blockedSlots;
-      if (!s.cancelled && s.confirmed > 0) {
-        cancel.withVolunteers += 1;
-        cancel.volunteers += s.confirmed;
+      if (!s.cancelled) {
+        cancelable += 1;
+        if (s.confirmed > 0) {
+          cancel.withVolunteers += 1;
+          cancel.volunteers += s.confirmed;
+        }
       }
     }
-    return { cancelStats: cancel, deleteStats: del };
+    return { cancelStats: cancel, cancelCount: cancelable, deleteStats: del };
   }, [selected, byId]);
 
   function toggle(id: string) {
@@ -263,10 +267,15 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
               <CalendarX2 className="size-5" />
             </span>
             <DialogTitle>
-              Cancel {count} {plural(count, "shift")}?
+              Cancel {cancelCount} {plural(cancelCount, "shift")}?
             </DialogTitle>
             <DialogDescription>
-              {cancelStats.withVolunteers > 0 ? (
+              {cancelCount === 0 ? (
+                <>
+                  Every selected shift is already cancelled — there&rsquo;s
+                  nothing to do here.
+                </>
+              ) : cancelStats.withVolunteers > 0 ? (
                 <>
                   {cancelStats.withVolunteers} of these have volunteers booked (
                   {cancelStats.volunteers} in total). They keep their booking
@@ -288,16 +297,18 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
-              Keep {plural(count, "shift")}
+              {cancelCount === 0 ? "Close" : `Keep ${plural(cancelCount, "shift")}`}
             </DialogClose>
             <Button
               className="bg-tomato text-cream hover:bg-tomato/90"
-              disabled={pending}
+              disabled={pending || cancelCount === 0}
               onClick={() =>
                 run(bulkCancelShifts, "Cancelled", () => setCancelOpen(false))
               }
             >
-              {pending ? "Cancelling…" : `Cancel ${count} ${plural(count, "shift")}`}
+              {pending
+                ? "Cancelling…"
+                : `Cancel ${cancelCount} ${plural(cancelCount, "shift")}`}
             </Button>
           </DialogFooter>
         </DialogContent>
