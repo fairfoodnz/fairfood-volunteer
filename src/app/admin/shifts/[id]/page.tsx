@@ -5,6 +5,7 @@ import { formatShiftRange } from "@/lib/programs";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { Button } from "@/components/ui/button";
 import { CancelShiftDialog } from "@/components/admin/cancel-shift-dialog";
+import { CancelBookingDialog } from "@/components/admin/cancel-booking-dialog";
 import { setBookingStatus } from "../../actions";
 import { SlotBlocks } from "./slot-blocks";
 import { BookingStatus } from "@/generated/prisma";
@@ -124,9 +125,10 @@ export default async function AdminShiftPage({ params }: Props) {
                       <StatusForm bookingId={b.id} status={BookingStatus.NO_SHOW}>
                         No-show
                       </StatusForm>
-                      <StatusForm bookingId={b.id} status={BookingStatus.CANCELLED}>
-                        Cancel
-                      </StatusForm>
+                      <CancelBookingDialog
+                        bookingId={b.id}
+                        volunteerName={b.user.name}
+                      />
                     </div>
                   </li>
                 ))}
