@@ -9,6 +9,7 @@ import {
   completeGoogleAuthorization,
   type GoogleIdentity,
 } from "@/lib/oauth";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,13 @@ async function resolveDestination(
     const user = await db.user.findUnique({ where: { id: linked.userId } });
     if (!user) throw new OAuthError("orphaned_link");
     await createSession(user.id);
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: user.id,
+      event: "google_sign_in",
+      properties: { is_new_user: false },
+    });
+    await posthog.flush();
     return postAuthDestination(user, next);
   }
 
@@ -120,6 +128,13 @@ async function resolveDestination(
           ]),
     ]);
     await createSession(byEmail.id);
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: byEmail.id,
+      event: "google_sign_in",
+      properties: { is_new_user: false },
+    });
+    await posthog.flush();
     return postAuthDestination(byEmail, next);
   }
 
@@ -148,6 +163,13 @@ async function resolveDestination(
     }
   }
   await createSession(created.id);
+  const posthogNew = getPostHogClient();
+  posthogNew.capture({
+    distinctId: created.id,
+    event: "google_sign_in",
+    properties: { is_new_user: true, name: created.name, email: created.email },
+  });
+  await posthogNew.flush();
   // New account has no profileCompletedAt → routed to the questionnaire.
   return postAuthDestination(created, next);
 }
