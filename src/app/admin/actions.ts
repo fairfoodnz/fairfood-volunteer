@@ -228,6 +228,7 @@ export async function cancelShift(formData: FormData) {
   if (typeof id !== "string") return;
   await db.shift.update({ where: { id }, data: { cancelled: true } });
   revalidatePath("/admin");
+  revalidatePath("/admin/shifts");
   revalidatePath("/shifts");
   redirect("/admin");
 }
