@@ -78,7 +78,6 @@ export default async function ManageShiftsPage({
     capacity: s.capacity,
     confirmed: s._count.bookings,
     blockedSlots: sumBlocks(s.blocks),
-    blockCount: s.blocks.length,
     cancelled: s.cancelled,
   }));
 
