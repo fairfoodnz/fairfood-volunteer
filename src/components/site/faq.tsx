@@ -12,11 +12,11 @@ const faqs = [
   },
   {
     q: "How old do I need to be?",
-    a: "Most shifts are for volunteers aged 16+. For younger rangatahi, get in touch — we run school groups under supervision, and the Work Skills programme welcomes people from age 18.",
+    a: "Most shifts are for volunteers aged 16+. For younger rangatahi, get in touch — we run school groups under supervision.",
   },
   {
     q: "What should I wear and bring?",
-    a: "Closed-toe shoes (the warehouse floor can get slippery), clothes you don&rsquo;t mind getting a little messy, and a refillable water bottle. We&rsquo;ll provide aprons, gloves, hairnets and a cuppa.",
+    a: "Closed-toe shoes, clothes you don&rsquo;t mind getting a little messy and your hair tied back. We&rsquo;ll provide aprons, gloves and hi-vis.",
   },
   {
     q: "Can I come as a walk-in?",
@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: "I want to bring my workplace — how does that work?",
-    a: "Email volunteering@fairfood.org.nz or use the &ldquo;Bring your team&rdquo; page. We&rsquo;ve hosted 150+ companies and tailor the half-day around your group&rsquo;s size and interests.",
+    a: "Email volunteering@fairfood.org.nz or use the &ldquo;Bring your team&rdquo; page. We&rsquo;ve hosted 150+ companies and tailor the session around your group&rsquo;s size and interests.",
   },
   {
     q: "What if I need to cancel?",

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { slugify } from "@/lib/programs";
+import { slugify, INCLUSIVE_SLUG } from "@/lib/programs";
 import { isThemeKey, DEFAULT_THEME } from "@/lib/programme-theme";
 import { deleteObject, putObject } from "@/lib/s3";
 
@@ -34,6 +34,7 @@ const FieldsSchema = z.object({
     .trim()
     .min(1, "Add a description.")
     .max(2000),
+  schedule: z.string().trim().max(40).optional().or(z.literal("")),
   location: z.string().trim().max(200).optional().or(z.literal("")),
   contactEmail: z
     .string()
@@ -55,6 +56,7 @@ function parseFields(formData: FormData) {
     title: formData.get("title"),
     tagline: formData.get("tagline"),
     description: formData.get("description"),
+    schedule: formData.get("schedule") ?? "",
     location: formData.get("location") ?? "",
     contactEmail: formData.get("contactEmail") ?? "",
     contactPhone: formData.get("contactPhone") ?? "",
@@ -108,6 +110,7 @@ function dataFromFields(f: Fields) {
     title: f.title,
     tagline: f.tagline,
     description: f.description,
+    schedule: f.schedule || null,
     location: f.location ? f.location : DEFAULT_LOCATION,
     contactEmail: f.contactEmail || null,
     contactPhone: f.contactPhone || null,
@@ -176,10 +179,15 @@ export async function updateProgramme(
 
   // Keep the slug stable once published so existing links don't break; only
   // re-derive it if the title changed and nothing currently points at it.
+  // The inclusive slug is referenced in application code (the enquiry-only
+  // gate keys off `slug === INCLUSIVE_SLUG`), so it must never be re-derived
+  // by a title change — that would silently re-enable self-serve booking.
   const slug =
-    parsed.data.title !== existing.title
-      ? await uniqueSlug(parsed.data.title, id)
-      : existing.slug;
+    existing.slug === INCLUSIVE_SLUG
+      ? existing.slug
+      : parsed.data.title !== existing.title
+        ? await uniqueSlug(parsed.data.title, id)
+        : existing.slug;
 
   try {
     await db.program.update({

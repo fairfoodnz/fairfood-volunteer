@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
-import { formatShiftRange } from "@/lib/programs";
+import { formatShiftRange, INCLUSIVE_SLUG, INCLUSIVE_MAILTO } from "@/lib/programs";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { currentUser } from "@/lib/auth";
 import { BookForm } from "./book-form";
@@ -58,6 +58,7 @@ export default async function ShiftPage({ params }: Props) {
     sumBlocks(shift.blocks),
   );
   const inPast = shift.startsAt < new Date();
+  const isInclusive = shift.program.slug === INCLUSIVE_SLUG;
   const rosterChips = buildRosterChips(shift.bookings, user?.id ?? null);
 
   return (
@@ -164,7 +165,25 @@ export default async function ShiftPage({ params }: Props) {
 
             <aside className="lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-md border border-border bg-card p-6 shadow-sm md:p-8">
-                {inPast ? (
+                {isInclusive ? (
+                  <div className="space-y-4">
+                    <p className="eyebrow text-leaf-deep">By arrangement</p>
+                    <h3 className="display text-xl font-semibold leading-snug">
+                      Inclusive volunteering is set up with our team.
+                    </h3>
+                    <p className="text-sm text-foreground/75">
+                      We run this with pre-registered groups so we can tailor
+                      the mahi, support and pace. Tell us about your group and
+                      we&rsquo;ll find a time that works.
+                    </p>
+                    <Link
+                      href={INCLUSIVE_MAILTO}
+                      className="inline-flex h-10 items-center rounded bg-leaf px-4 text-sm font-semibold text-cream transition-colors hover:bg-leaf-deep"
+                    >
+                      Email volunteering@fairfood.org.nz →
+                    </Link>
+                  </div>
+                ) : inPast ? (
                   <Note title="That shift has passed">
                     Want to come along to the next one?
                     <Link

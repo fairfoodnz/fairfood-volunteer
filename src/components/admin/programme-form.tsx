@@ -24,6 +24,7 @@ type ProgrammeRecord = {
   title: string;
   tagline: string;
   description: string;
+  schedule: string | null;
   location: string;
   contactEmail: string | null;
   contactPhone: string | null;
@@ -149,6 +150,22 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
             />
             <p className="text-xs text-foreground/55">
               Short eyebrow shown on every programme card.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="schedule">Schedule</Label>
+            <Input
+              id="schedule"
+              name="schedule"
+              maxLength={40}
+              defaultValue={program?.schedule ?? ""}
+              placeholder="Mon – Fri"
+              className="h-11"
+            />
+            <p className="text-xs text-foreground/55">
+              Optional day-range shown under the title on cards. Leave blank to
+              hide it.
             </p>
           </div>
 

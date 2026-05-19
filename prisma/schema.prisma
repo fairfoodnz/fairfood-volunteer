@@ -194,6 +194,10 @@ model Program {
   contactPhone String?
   // Free-text "where you'll be / getting here" blurb on the detail page.
   gettingHere  String?  @db.Text
+  // Editorial day-range shown under the title on programme cards (e.g.
+  // "Mon – Fri"). Not derived from shifts — it's a human summary the
+  // coordinator controls; null hides the line.
+  schedule     String?
   // Card theme key — see src/lib/programme-theme.ts.
   theme        String   @default("cream")
   order        Int      @default(0)

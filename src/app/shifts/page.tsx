@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
-import { formatShiftRange } from "@/lib/programs";
+import { formatShiftRange, INCLUSIVE_SLUG } from "@/lib/programs";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { Badge } from "@/components/ui/badge";
 import { BookingStatus } from "@/generated/prisma";
@@ -16,8 +16,10 @@ type Props = { searchParams: Promise<{ programme?: string }> };
 export default async function ShiftsPage({ searchParams }: Props) {
   const sp = await searchParams;
 
+  // Inclusive volunteering is enquiry-only (arranged with pre-registered
+  // groups), so it never appears as a filter chip or in the bookable roster.
   const programmes = await db.program.findMany({
-    where: { active: true },
+    where: { active: true, slug: { not: INCLUSIVE_SLUG } },
     orderBy: { order: "asc" },
     select: { slug: true, title: true },
   });
@@ -37,7 +39,10 @@ export default async function ShiftsPage({ searchParams }: Props) {
     where: {
       cancelled: false,
       startsAt: { gte: new Date() },
-      ...(filter !== "ALL" ? { program: { slug: filter } } : {}),
+      program:
+        filter !== "ALL"
+          ? { slug: filter }
+          : { slug: { not: INCLUSIVE_SLUG } },
     },
     orderBy: { startsAt: "asc" },
     include: {

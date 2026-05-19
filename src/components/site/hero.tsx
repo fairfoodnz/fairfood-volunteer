@@ -23,9 +23,10 @@ export function Hero() {
           </h1>
 
           <p className="max-w-xl text-lg leading-relaxed text-foreground/80 md:text-xl">
-            Every day in Avondale we sort, cook and share over 2,400 kilos of
-            rescued kai. Whether you&rsquo;re a pro in the kitchen or you just
-            like to eat — we&rsquo;d love to have you at our tables.
+            Every day at our Hub in Avondale we sort, cook and share over 2
+            tonnes of rescued kai. Whether you&rsquo;re a pro in the kitchen or
+            want to save kai from going to landfill — we&rsquo;d love to have
+            you at our tables.
           </p>
 
           <div className="flex flex-wrap items-center gap-3">

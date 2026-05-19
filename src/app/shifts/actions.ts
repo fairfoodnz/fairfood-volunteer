@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { sumBlocks } from "@/lib/shifts";
-import { formatShiftRange } from "@/lib/programs";
+import { formatShiftRange, INCLUSIVE_SLUG } from "@/lib/programs";
 import { buildICS, calendarLinks } from "@/lib/calendar";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { BookingStatus } from "@/generated/prisma";
@@ -54,11 +54,17 @@ export async function bookShiftAction(
     include: {
       _count: { select: { bookings: { where: { status: BookingStatus.CONFIRMED } } } },
       blocks: { select: { slots: true } },
-      program: { select: { title: true, location: true } },
+      program: { select: { title: true, location: true, slug: true } },
     },
   });
   if (!shift) return { error: "Shift not found." };
   if (shift.cancelled) return { error: "Sorry — that shift was cancelled." };
+  if (shift.program.slug === INCLUSIVE_SLUG) {
+    return {
+      error:
+        "Inclusive volunteering is arranged directly with our team — email volunteering@fairfood.org.nz and we’ll set it up.",
+    };
+  }
   if (shift._count.bookings + sumBlocks(shift.blocks) >= shift.capacity) {
     return { error: "Sorry — that shift just filled up." };
   }
