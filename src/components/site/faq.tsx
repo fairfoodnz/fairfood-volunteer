@@ -45,9 +45,9 @@ export function Faq() {
             Still got pātai? Flick us an email at{" "}
             <a
               className="font-semibold text-leaf-deep underline underline-offset-4"
-              href="mailto:kiaora@fairfood.org.nz"
+              href="mailto:volunteering@fairfood.org.nz"
             >
-              kiaora@fairfood.org.nz
+              volunteering@fairfood.org.nz
             </a>
             .
           </p>

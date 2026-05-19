@@ -139,9 +139,17 @@ export default function BookingConfirmationEmail({
                 <Text className={detailLabel}>When</Text>
                 <Text className={detailValue}>{whenLabel}</Text>
               </Section>
-              <Section className={notes ? "mb-[16px]" : ""}>
+              <Section className="mb-[16px]">
                 <Text className={detailLabel}>Where</Text>
                 <Text className={detailValue}>{location}</Text>
+              </Section>
+              <Section className={notes ? "mb-[16px]" : ""}>
+                <Text className={detailLabel}>What to wear</Text>
+                <Text className={detailValue}>
+                  Please ensure you&apos;re wearing closed toed shoes, hair tied
+                  back and comfortable clothes you don&apos;t mind getting food
+                  on.
+                </Text>
               </Section>
               {notes ? (
                 <Section>
@@ -190,7 +198,7 @@ export default function BookingConfirmationEmail({
             <Text className={text}>
               Plans change — kei te pai. You can cancel any time from your
               dashboard so we can offer the spot to someone else. If something
-              comes up last minute, flick us a line and we&apos;ll sort it.
+              comes up last minute, get in touch and we&apos;ll sort it.
             </Text>
 
             <Text className={`${text} mb-0`}>

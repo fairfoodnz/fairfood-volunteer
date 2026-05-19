@@ -51,7 +51,7 @@ export default async function ProgramPage({ params }: Props) {
 
   // Coordinators can leave these blank — fall back to the org defaults so the
   // page never shows a hole.
-  const contactEmail = program.contactEmail || "kiaora@fairfood.org.nz";
+  const contactEmail = program.contactEmail || "volunteering@fairfood.org.nz";
   const contactPhone = program.contactPhone || "(09) 555-1234";
   const gettingHere =
     program.gettingHere ||
@@ -86,7 +86,7 @@ export default async function ProgramPage({ params }: Props) {
                   </Button>
                 ) : (
                   <Button asChild size="lg" className="bg-leaf hover:bg-leaf-deep">
-                    <Link href="mailto:kiaora@fairfood.org.nz?subject=Volunteering">
+                    <Link href="mailto:volunteering@fairfood.org.nz?subject=Volunteering">
                       Email us to plan a day
                     </Link>
                   </Button>

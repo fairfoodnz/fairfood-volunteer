@@ -10,7 +10,7 @@ export const metadata = {
 
 // Bump this whenever the substance of the policy changes.
 const LAST_UPDATED = "18 May 2026";
-const PRIVACY_CONTACT = "kiaora@fairfood.org.nz";
+const PRIVACY_CONTACT = "volunteering@fairfood.org.nz";
 
 export default function PrivacyPage() {
   return (
@@ -150,7 +150,7 @@ export default function PrivacyPage() {
                 Your information is seen by Fair Food coordinators who need it
                 to roster and look after volunteers. We also rely on a small
                 number of service providers who process information on our
-                behalf, only to operate this service:
+                behalf:
               </p>
               <ul className="ml-5 list-disc space-y-2 marker:text-leaf">
                 <li>
@@ -162,15 +162,24 @@ export default function PrivacyPage() {
                   emails.
                 </li>
                 <li>
+                  <strong>Squarespace</strong> — the platform our website and
+                  volunteer newsletter run on. From time to time we add
+                  volunteers’ names and email addresses to Squarespace so we
+                  can send our monthly volunteer newsletter and run volunteer
+                  reports. You can unsubscribe from the newsletter at any time
+                  using the link in any newsletter email.
+                </li>
+                <li>
                   <strong>Our hosting and storage providers</strong> — who run
                   the servers and file storage the portal operates on.
                 </li>
               </ul>
               <p>
                 These providers may process information outside New Zealand. We
-                share information with them only as needed to run the portal,
-                and otherwise disclose personal information only where the law
-                requires or allows it (for example a serious safety concern).
+                share information with them only as needed to run the portal
+                and keep volunteers informed, and otherwise disclose personal
+                information only where the law requires or allows it (for
+                example a serious safety concern).
               </p>
             </Section>
 

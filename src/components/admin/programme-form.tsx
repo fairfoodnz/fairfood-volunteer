@@ -218,7 +218,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
                 type="email"
                 maxLength={160}
                 defaultValue={program?.contactEmail ?? ""}
-                placeholder="kiaora@fairfood.org.nz"
+                placeholder="volunteering@fairfood.org.nz"
                 className="h-11"
               />
             </div>

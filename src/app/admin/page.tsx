@@ -70,7 +70,15 @@ export default async function AdminPage() {
           </div>
 
           <section className="mt-10">
-            <h2 className="display mb-4 text-2xl font-semibold">Upcoming shifts</h2>
+            <div className="mb-4 flex items-end justify-between">
+              <h2 className="display text-2xl font-semibold">Upcoming shifts</h2>
+              <Link
+                href="/admin/shifts"
+                className="text-sm font-semibold text-leaf-deep hover:underline"
+              >
+                Manage shifts →
+              </Link>
+            </div>
             <div className="overflow-hidden rounded-md border border-border bg-card">
               <table className="w-full text-sm">
                 <thead className="bg-cream-deep text-left text-foreground/65">
