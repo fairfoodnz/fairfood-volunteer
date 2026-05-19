@@ -12,20 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOutAction } from "@/app/auth/actions";
+import { fullName, initials, type PersonName } from "@/lib/users";
 
 export function UserMenu({
   user,
 }: {
-  user: { name: string; email: string; role: string };
+  user: PersonName & { email: string; role: string };
 }) {
   const [pending, start] = useTransition();
-  const initials =
-    user.name
-      ?.split(" ")
-      .map((p) => p[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() ?? "K";
+  const displayName = fullName(user);
 
   return (
     <DropdownMenu>
@@ -34,14 +29,14 @@ export function UserMenu({
         className="inline-flex items-center gap-2 rounded-full border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-foreground/80 outline-none transition-colors hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
       >
         <span className="grid h-8 w-8 place-items-center rounded-full bg-leaf text-cream text-xs font-semibold">
-          {initials}
+          {initials(user)}
         </span>
-        <span className="hidden md:inline">{user.name.split(" ")[0]}</span>
+        <span className="hidden md:inline">{user.firstName}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="space-y-0.5">
-            <div className="text-sm font-semibold">{user.name}</div>
+            <div className="text-sm font-semibold">{displayName}</div>
             <div className="text-xs font-normal text-muted-foreground">
               {user.email}
             </div>

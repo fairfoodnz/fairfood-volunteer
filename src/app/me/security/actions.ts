@@ -13,6 +13,7 @@ import {
 import { Prisma } from "@/generated/prisma";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { fullName } from "@/lib/users";
 import { GOOGLE_PROVIDER } from "@/lib/oauth";
 import {
   RP_NAME,
@@ -73,7 +74,7 @@ export async function beginPasskeyRegistration(): Promise<RegisterBeginState> {
       rpID: rpID(),
       userName: user.email,
       userID: new TextEncoder().encode(user.id),
-      userDisplayName: user.name,
+      userDisplayName: fullName(user),
       attestationType: "none",
       excludeCredentials: existing.map((c) => ({
         id: c.credentialId,

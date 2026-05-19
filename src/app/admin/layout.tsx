@@ -31,7 +31,11 @@ export default async function AdminLayout({
   return (
     <SidebarProvider>
       <AdminSidebar
-        user={{ name: user.name, email: user.email }}
+        user={{
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        }}
         unreviewedCount={unreviewedCount}
       />
       <SidebarInset className="bg-background">

@@ -34,7 +34,14 @@ export async function SiteNav() {
         </nav>
         <div className="flex items-center gap-2">
           {user ? (
-            <UserMenu user={{ name: user.name, email: user.email, role: user.role }} />
+            <UserMenu
+              user={{
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,
+              }}
+            />
           ) : (
             <>
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">

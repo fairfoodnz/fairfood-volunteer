@@ -5,7 +5,8 @@ import { expect, test } from "@playwright/test";
 test.describe("sign up", () => {
   test("rejects mismatched passwords", async ({ page }) => {
     await page.goto("/auth/sign-up");
-    await page.locator("#name").fill("Test Volunteer");
+    await page.locator("#firstName").fill("Test");
+    await page.locator("#lastName").fill("Volunteer");
     await page.locator("#email").fill(`e2e-mismatch-${Date.now()}@example.com`);
     await page.locator("#password").fill("password123");
     await page.locator("#confirm").fill("different123");
@@ -20,7 +21,8 @@ test.describe("sign up", () => {
   }) => {
     const email = `e2e-signup-${Date.now()}@example.com`;
     await page.goto("/auth/sign-up");
-    await page.locator("#name").fill("E2E New Volunteer");
+    await page.locator("#firstName").fill("E2E");
+    await page.locator("#lastName").fill("New Volunteer");
     await page.locator("#email").fill(email);
     await page.locator("#password").fill("supersecret1");
     await page.locator("#confirm").fill("supersecret1");
