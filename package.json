@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "email:dev": "email dev --dir ./emails --port 3001"
   },
   "dependencies": {
@@ -36,6 +40,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@react-email/ui": "^6.1.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^25",
@@ -48,6 +53,7 @@
     "react-email": "^6.1.4",
     "tailwindcss": "^4",
     "tsx": "^4.22.1",
-    "typescript": "^6"
+    "typescript": "^6",
+    "vitest": "^4.1.6"
   }
 }

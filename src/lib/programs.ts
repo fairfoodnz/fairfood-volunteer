@@ -47,7 +47,17 @@ export function programmeImageSrc(p: {
 }
 
 export function formatShiftRange(start: Date, end: Date) {
-  const sameDay = start.toDateString() === end.toDateString();
+  // Compare the NZ calendar date, not `toDateString()` — the latter uses the
+  // process's ambient zone (UTC on CI / in the Docker image), so a shift that
+  // crosses NZ midnight while staying within one UTC day would otherwise be
+  // mislabelled as single-day. "en-CA" yields a sortable "YYYY-MM-DD".
+  const nzDay = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Pacific/Auckland",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const sameDay = nzDay.format(start) === nzDay.format(end);
   const dateFmt = new Intl.DateTimeFormat("en-NZ", {
     weekday: "short",
     day: "numeric",
