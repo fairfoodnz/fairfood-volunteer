@@ -50,3 +50,4 @@ next-env.d.ts
 
 # react-email preview server
 .react-email/
+.env

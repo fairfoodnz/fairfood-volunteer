@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { HeardAbout } from "@/generated/prisma";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 const HeardAboutValues = [
   HeardAbout.FRIEND,
@@ -143,6 +144,14 @@ export async function completeProfileAction(
       flagReviewedAt: null,
     },
   });
+
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: user.id,
+    event: "profile_completed",
+    properties: { heard_about: parsed.data.heardAbout },
+  });
+  await posthog.flush();
 
   revalidatePath("/me");
   revalidatePath("/admin/flagged");
