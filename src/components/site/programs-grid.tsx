@@ -8,7 +8,14 @@ export async function ProgramsGrid() {
   const programs = await db.program.findMany({
     where: { active: true },
     orderBy: { order: "asc" },
-    include: { _count: { select: { shifts: true } } },
+    include: {
+      _count: {
+        select: {
+          // "{n} upcoming shifts" must not count past or cancelled shifts.
+          shifts: { where: { cancelled: false, startsAt: { gte: new Date() } } },
+        },
+      },
+    },
   });
 
   return (

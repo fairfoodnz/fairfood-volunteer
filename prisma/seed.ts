@@ -81,7 +81,7 @@ const programs = [
     title: "Inclusive Volunteering",
     tagline: "Built for every body",
     description:
-      "We modify tasks, allow support people to come along, and welcome groups like the Young Onset Dementia Collective every Monday. Tell us what you need on the form — there's nearly always a way.",
+      "We modify tasks, allow support people to come along, and welcome groups like the Young Onset Dementia Collective every Monday. We arrange these sessions directly with your group — tell us what you need when you get in touch. There's nearly always a way.",
     schedule: null,
     order: 3,
     image: "/photos/inclusive.webp",

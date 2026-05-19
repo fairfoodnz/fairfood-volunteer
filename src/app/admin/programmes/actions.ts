@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { slugify } from "@/lib/programs";
+import { slugify, INCLUSIVE_SLUG } from "@/lib/programs";
 import { isThemeKey, DEFAULT_THEME } from "@/lib/programme-theme";
 import { deleteObject, putObject } from "@/lib/s3";
 
@@ -179,10 +179,15 @@ export async function updateProgramme(
 
   // Keep the slug stable once published so existing links don't break; only
   // re-derive it if the title changed and nothing currently points at it.
+  // The inclusive slug is referenced in application code (the enquiry-only
+  // gate keys off `slug === INCLUSIVE_SLUG`), so it must never be re-derived
+  // by a title change — that would silently re-enable self-serve booking.
   const slug =
-    parsed.data.title !== existing.title
-      ? await uniqueSlug(parsed.data.title, id)
-      : existing.slug;
+    existing.slug === INCLUSIVE_SLUG
+      ? existing.slug
+      : parsed.data.title !== existing.title
+        ? await uniqueSlug(parsed.data.title, id)
+        : existing.slug;
 
   try {
     await db.program.update({
