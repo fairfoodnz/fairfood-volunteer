@@ -33,8 +33,9 @@ export function InclusiveBand() {
           </h2>
           <p className="max-w-md text-foreground/75">
             We modify tasks, allow support people to come along, and welcome
-            groups like the Young Onset Dementia Collective every Monday. Tell
-            us what you need on the form. There&rsquo;s nearly always a way.
+            groups like the Young Onset Dementia Collective every Monday. We
+            arrange these sessions directly with your group — tell us what you
+            need when you get in touch. There&rsquo;s nearly always a way.
           </p>
           <Link
             href="/programs/inclusive"

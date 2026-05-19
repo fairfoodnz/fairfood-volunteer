@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { ProgramArt } from "./illustrations";
-import { programHref } from "@/lib/programs";
+import { programHref, INCLUSIVE_SLUG } from "@/lib/programs";
 import { programmeTheme } from "@/lib/programme-theme";
 
 export async function ProgramsGrid() {
@@ -79,11 +79,18 @@ export async function ProgramsGrid() {
                 <h3 className="display text-3xl font-semibold leading-tight md:text-[2.4rem]">
                   {p.title}
                 </h3>
+                {p.schedule && (
+                  <p className="font-mono text-xs uppercase tracking-[0.18em] opacity-65">
+                    {p.schedule}
+                  </p>
+                )}
                 <p className="text-sm leading-relaxed opacity-85 md:text-[0.95rem]">
                   {p.description}
                 </p>
                 <div className="flex items-center gap-2 pt-2 text-sm font-semibold">
-                  {p._count.shifts > 0 ? (
+                  {p.slug === INCLUSIVE_SLUG ? (
+                    <span>Enquire to volunteer</span>
+                  ) : p._count.shifts > 0 ? (
                     <span>{p._count.shifts} upcoming shifts</span>
                   ) : (
                     <span>Get in touch →</span>

@@ -1,6 +1,17 @@
 export const CORPORATE_MAILTO =
   "mailto:volunteering@fairfood.org.nz?subject=Corporate%20volunteering";
 
+/**
+ * Inclusive volunteering runs by arrangement with pre-registered groups, so it
+ * is shown but never self-serve bookable: every public surface routes enquiries
+ * to volunteering@fairfood.org.nz instead of the booking flow. Identified by
+ * this stable seed slug; keep in lockstep with `prisma/seed.ts`.
+ */
+export const INCLUSIVE_SLUG = "inclusive";
+
+export const INCLUSIVE_MAILTO =
+  "mailto:volunteering@fairfood.org.nz?subject=Inclusive%20volunteering%20enquiry";
+
 /** Public path for a programme detail page. */
 export function programHref(slug: string) {
   return `/programs/${slug}`;

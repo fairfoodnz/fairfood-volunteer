@@ -5,7 +5,11 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { Button } from "@/components/ui/button";
-import { formatShiftRange } from "@/lib/programs";
+import {
+  formatShiftRange,
+  INCLUSIVE_SLUG,
+  INCLUSIVE_MAILTO,
+} from "@/lib/programs";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { BookingStatus } from "@/generated/prisma";
 
@@ -40,6 +44,11 @@ export default async function ProgramPage({ params }: Props) {
   });
   if (!program) notFound();
 
+  // Inclusive volunteering runs by arrangement with pre-registered groups: the
+  // page stays so people can see we offer it, but it routes to email rather
+  // than the self-serve booking flow.
+  const isInclusive = program.slug === INCLUSIVE_SLUG;
+
   // Coordinators can leave these blank — fall back to the org defaults so the
   // page never shows a hole.
   const contactEmail = program.contactEmail || "kiaora@fairfood.org.nz";
@@ -63,7 +72,13 @@ export default async function ProgramPage({ params }: Props) {
                 {program.description}
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
-                {program.shifts.length > 0 ? (
+                {isInclusive ? (
+                  <Button asChild size="lg" className="bg-leaf hover:bg-leaf-deep">
+                    <Link href={INCLUSIVE_MAILTO}>
+                      Enquire about inclusive volunteering →
+                    </Link>
+                  </Button>
+                ) : program.shifts.length > 0 ? (
                   <Button asChild size="lg" className="bg-leaf hover:bg-leaf-deep">
                     <Link href={`/shifts?programme=${program.slug}`}>
                       See {program.shifts.length} open shifts →
@@ -89,6 +104,29 @@ export default async function ProgramPage({ params }: Props) {
 
         <section className="container-x py-16 md:py-20">
           <div className="grid gap-10 md:grid-cols-[1.2fr_1fr]">
+            {isInclusive ? (
+              <div className="rounded-md border border-border bg-card p-7 md:p-9">
+                <h2 className="display text-2xl font-bold md:text-3xl">
+                  How to join
+                </h2>
+                <p className="mt-3 max-w-prose text-foreground/75">
+                  Inclusive volunteering runs by arrangement with
+                  pre-registered groups, so we can tailor the tasks, support
+                  and pace to your crew. Tell us a little about your group and
+                  we&rsquo;ll plan a session together — there&rsquo;s nearly
+                  always a way.
+                </p>
+                <Button
+                  asChild
+                  size="lg"
+                  className="mt-6 bg-leaf hover:bg-leaf-deep"
+                >
+                  <Link href={INCLUSIVE_MAILTO}>
+                    Email volunteering@fairfood.org.nz →
+                  </Link>
+                </Button>
+              </div>
+            ) : (
             <div>
               <h2 className="display text-2xl font-bold md:text-3xl">
                 Next available shifts
@@ -133,6 +171,7 @@ export default async function ProgramPage({ params }: Props) {
                 })}
               </ul>
             </div>
+            )}
             <aside className="space-y-3 rounded-md bg-cream-deep p-6 text-sm md:p-8">
               <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
                 Where you&rsquo;ll be

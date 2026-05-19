@@ -26,10 +26,11 @@ const WEEKS_FORWARD = 6;
 const programs = [
   {
     slug: "kai-box",
-    title: "Pack Kai Boxes",
+    title: "Kai Sorting",
     tagline: "Sort, pack, share",
     description:
       "Help sort fresh fruit, vegetables and pantry goods rescued from across Tāmaki Makaurau, then pack them into kai boxes that go straight to whānau, foodbanks and community groups the same day.",
+    schedule: "Mon – Fri",
     order: 1,
     image: "/photos/kai-box.webp",
     theme: "cream",
@@ -58,6 +59,7 @@ const programs = [
     tagline: "Cook with us",
     description:
       "Roll up your sleeves with our chefs to turn surplus ingredients into beautiful meals. Whether you're a pro in the kitchen or just like to eat, there's a place for you at the bench.",
+    schedule: "Tues – Thurs",
     order: 2,
     image: "/photos/kitchen.webp",
     theme: "charcoal",
@@ -80,6 +82,7 @@ const programs = [
     tagline: "Built for every body",
     description:
       "We modify tasks, allow support people to come along, and welcome groups like the Young Onset Dementia Collective every Monday. Tell us what you need on the form — there's nearly always a way.",
+    schedule: null,
     order: 3,
     image: "/photos/inclusive.webp",
     theme: "forest",
@@ -659,6 +662,7 @@ async function seedPrograms() {
       title: p.title,
       tagline: p.tagline,
       description: p.description,
+      schedule: p.schedule,
       imageUrl: p.image,
       order: p.order,
       theme: p.theme,
