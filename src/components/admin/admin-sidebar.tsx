@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   CalendarPlus,
   CalendarRange,
+  ListChecks,
   Boxes,
   AlertCircle,
   Users,
@@ -45,6 +46,12 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
     links: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
       { href: "/admin/programmes", label: "Programmes", icon: Boxes },
+      {
+        href: "/admin/shifts",
+        label: "Manage shifts",
+        icon: ListChecks,
+        exact: true,
+      },
       { href: "/admin/shifts/new", label: "New shift", icon: CalendarPlus },
       {
         href: "/admin/shifts/bulk",
