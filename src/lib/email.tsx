@@ -22,7 +22,7 @@ import type { CalendarLinks } from "@/lib/calendar";
  * (fairfood.org.nz). Format: `Name <addr@domain>` or a bare address.
  */
 const FROM =
-  process.env.EMAIL_FROM ?? "Fair Food NZ <volunteer@fairfood.org.nz>";
+  process.env.EMAIL_FROM ?? "Fair Food <volunteering@fairfood.org.nz>";
 
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
