@@ -723,6 +723,21 @@ const PREF_TO_SLUG: Record<ProgramPref, string> = {
   inclusive: "inclusive",
 };
 
+/**
+ * Demo data carries full names as one string; the model stores them split.
+ * First whitespace token -> firstName, remainder -> lastName (null if absent).
+ */
+function splitName(full: string): {
+  firstName: string;
+  lastName: string | null;
+} {
+  const parts = full.trim().split(/\s+/);
+  return {
+    firstName: parts[0] || full,
+    lastName: parts.length > 1 ? parts.slice(1).join(" ") : null,
+  };
+}
+
 async function seedUsers() {
   // Test logins — keep stable so devs can sign in.
   const admin = await prisma.user.upsert({
@@ -735,7 +750,8 @@ async function seedUsers() {
     },
     create: {
       email: "admin@fairfood.test",
-      name: "Admin Coordinator",
+      firstName: "Admin",
+      lastName: "Coordinator",
       role: Role.ADMIN,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),
@@ -753,7 +769,8 @@ async function seedUsers() {
     },
     create: {
       email: "volunteer@fairfood.test",
-      name: "Aroha Williams",
+      firstName: "Aroha",
+      lastName: "Williams",
       role: Role.VOLUNTEER,
       passwordHash: SEED_PASSWORD_HASH,
       profileCompletedAt: new Date(),
@@ -768,7 +785,7 @@ async function seedUsers() {
     const created = await prisma.user.create({
       data: {
         email: v.email,
-        name: v.name,
+        ...splitName(v.name),
         role: Role.VOLUNTEER,
         passwordHash: SEED_PASSWORD_HASH,
         phone: v.phone,
@@ -796,7 +813,9 @@ async function seedUsers() {
   // Treat the main test volunteer as a regular Kai Box volunteer so they get bookings too.
   const mainAsVolunteer: Volunteer = {
     email: mainVolunteer.email,
-    name: mainVolunteer.name,
+    name: [mainVolunteer.firstName, mainVolunteer.lastName]
+      .filter(Boolean)
+      .join(" "),
     phone: "",
     profileComplete: true,
     cadence: "regular",

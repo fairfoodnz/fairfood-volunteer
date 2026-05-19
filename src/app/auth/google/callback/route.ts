@@ -127,7 +127,8 @@ async function resolveDestination(
   const created = await db.user.create({
     data: {
       email: identity.email,
-      name: identity.name ?? identity.email.split("@")[0],
+      firstName: identity.firstName || identity.email.split("@")[0],
+      lastName: identity.lastName || null,
       emailVerifiedAt: identity.emailVerified ? new Date() : null,
       oauthAccounts: {
         create: {
@@ -141,7 +142,7 @@ async function resolveDestination(
     try {
       await sendWelcomeEmail({
         to: created.email,
-        userName: created.name.split(" ")[0] || undefined,
+        userName: created.firstName || undefined,
       });
     } catch (err) {
       console.error("[google-oauth] welcome email failed", err);

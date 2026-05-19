@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { fullName } from "@/lib/users";
 import {
   markFlagReviewedAction,
   clearFlagReviewedAction,
@@ -43,7 +44,7 @@ export default async function FlaggedPage() {
 
   const users: FlaggedUser[] = rows.map((u) => ({
     id: u.id,
-    name: u.name,
+    name: fullName(u),
     email: u.email,
     phone: u.phone,
     createdAt: u.profileCompletedAt ?? u.createdAt,

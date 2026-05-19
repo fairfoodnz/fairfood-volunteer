@@ -3,6 +3,7 @@ import { Search, Users, ShieldAlert, UserCheck } from "lucide-react";
 import { db } from "@/lib/db";
 import { Input } from "@/components/ui/input";
 import { Prisma, BookingStatus, Role } from "@/generated/prisma";
+import { fullName } from "@/lib/users";
 
 export const metadata = { title: "Volunteers · Admin" };
 export const dynamic = "force-dynamic";
@@ -55,7 +56,8 @@ export default async function VolunteersPage({
   if (search) {
     conditions.push({
       OR: [
-        { name: { contains: search, mode: "insensitive" } },
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
       ],
     });
@@ -69,7 +71,7 @@ export default async function VolunteersPage({
 
   const orderBy: Prisma.UserOrderByWithRelationInput[] =
     sort === "name"
-      ? [{ name: "asc" }]
+      ? [{ firstName: "asc" }, { lastName: "asc" }]
       : sort === "active"
         ? [{ bookings: { _count: "desc" } }, { createdAt: "desc" }]
         : [{ createdAt: "desc" }];
@@ -294,7 +296,7 @@ export default async function VolunteersPage({
                             className="group inline-flex flex-col gap-1"
                           >
                             <span className="font-semibold group-hover:text-leaf-deep">
-                              {u.name}
+                              {fullName(u)}
                             </span>
                             <span className="flex flex-wrap items-center gap-1">
                               {isAdmin && <Pill tone="leaf">Admin</Pill>}
@@ -333,7 +335,7 @@ export default async function VolunteersPage({
                           <Link
                             href={`/admin/volunteers/${u.id}`}
                             className="font-semibold text-leaf-deep hover:underline"
-                            aria-label={`Open ${u.name}`}
+                            aria-label={`Open ${fullName(u)}`}
                           >
                             Open →
                           </Link>

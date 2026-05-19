@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sidebar";
 import { LogoMark } from "@/components/site/logo";
 import { signOutAction } from "@/app/auth/actions";
+import { fullName, type PersonName } from "@/lib/users";
 
 type NavLink = {
   href: string;
@@ -84,7 +85,7 @@ export function AdminSidebar({
   user,
   unreviewedCount = 0,
 }: {
-  user: { name: string; email: string };
+  user: PersonName & { email: string };
   unreviewedCount?: number;
 }) {
   const pathname = usePathname();
@@ -199,7 +200,7 @@ export function AdminSidebar({
             <form action={signOutAction} className="w-full">
               <SidebarMenuButton
                 type="submit"
-                tooltip={`Sign out ${user.name.split(" ")[0]}`}
+                tooltip={`Sign out ${user.firstName}`}
               >
                 <LogOut className="size-4" />
                 <span>Sign out</span>
@@ -208,7 +209,7 @@ export function AdminSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
         <div className="px-2 pt-1 pb-2 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-xs font-medium">{user.name}</p>
+          <p className="truncate text-xs font-medium">{fullName(user)}</p>
           <p className="truncate text-[11px] text-foreground/55">{user.email}</p>
         </div>
       </SidebarFooter>

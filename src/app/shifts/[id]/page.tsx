@@ -39,7 +39,7 @@ export default async function ShiftPage({ params }: Props) {
         select: {
           id: true,
           userId: true,
-          user: { select: { name: true } },
+          user: { select: { firstName: true, lastName: true } },
         },
       },
       blocks: { select: { slots: true } },
@@ -219,7 +219,15 @@ export default async function ShiftPage({ params }: Props) {
                 ) : (
                   <BookForm
                     shiftId={shift.id}
-                    user={user ? { name: user.name, email: user.email } : null}
+                    user={
+                      user
+                        ? {
+                            firstName: user.firstName,
+                            lastName: user.lastName,
+                            email: user.email,
+                          }
+                        : null
+                    }
                   />
                 )}
               </div>
@@ -274,15 +282,18 @@ function Note({ title, children }: { title: string; children: React.ReactNode })
 type RosterChip = { key: string; label: string; isYou: boolean };
 
 function buildRosterChips(
-  bookings: { id: string; userId: string; user: { name: string } }[],
+  bookings: {
+    id: string;
+    userId: string;
+    user: { firstName: string; lastName: string | null };
+  }[],
   currentUserId: string | null,
 ): RosterChip[] {
   // First names only, disambiguate duplicates with a last initial.
   const firsts = bookings.map((b) => {
-    const parts = b.user.name.trim().split(/\s+/);
-    const first = parts[0] ?? "";
-    const lastInitial = parts.length > 1
-      ? parts[parts.length - 1]!.charAt(0).toUpperCase()
+    const first = b.user.firstName;
+    const lastInitial = b.user.lastName
+      ? b.user.lastName.charAt(0).toUpperCase()
       : "";
     return { ...b, first, lastInitial };
   });
