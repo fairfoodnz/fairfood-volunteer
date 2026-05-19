@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: "I want to bring my workplace — how does that work?",
-    a: "Email kiaora@fairfood.org.nz or use the &ldquo;Bring your team&rdquo; page. We&rsquo;ve hosted 150+ companies and tailor the half-day around your group&rsquo;s size and interests.",
+    a: "Email volunteering@fairfood.org.nz or use the &ldquo;Bring your team&rdquo; page. We&rsquo;ve hosted 150+ companies and tailor the half-day around your group&rsquo;s size and interests.",
   },
   {
     q: "What if I need to cancel?",
@@ -45,9 +45,9 @@ export function Faq() {
             Still got pātai? Flick us an email at{" "}
             <a
               className="font-semibold text-leaf-deep underline underline-offset-4"
-              href="mailto:kiaora@fairfood.org.nz"
+              href="mailto:volunteering@fairfood.org.nz"
             >
-              kiaora@fairfood.org.nz
+              volunteering@fairfood.org.nz
             </a>
             .
           </p>

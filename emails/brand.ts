@@ -42,7 +42,7 @@ export const appUrl =
 
 /** Public-facing Fair Food details used across email footers. */
 export const org = {
-  name: "Fair Food NZ",
+  name: "Fair Food",
   address: "624 Rosebank Road, Avondale, Auckland 1026",
   site: "https://fairfood.org.nz",
   logo: "https://images.squarespace-cdn.com/content/v1/6722a260432d004478253a07/4f095930-9d9c-4693-ba84-29faf3e333d2/FF_Website_Logo.png",

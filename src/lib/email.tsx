@@ -22,7 +22,7 @@ import type { CalendarLinks } from "@/lib/calendar";
  * (fairfood.org.nz). Format: `Name <addr@domain>` or a bare address.
  */
 const FROM =
-  process.env.EMAIL_FROM ?? "Fair Food NZ <volunteer@fairfood.org.nz>";
+  process.env.EMAIL_FROM ?? "Fair Food <volunteering@fairfood.org.nz>";
 
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
@@ -92,7 +92,7 @@ export async function sendVerificationEmail(opts: {
   const expiresInHours = opts.expiresInHours ?? 24;
   return sendEmail({
     to: opts.to,
-    subject: `Confirm your email to finish setting up your Fair Food NZ account`,
+    subject: `Confirm your email to finish setting up your Fair Food account`,
     react: (
       <VerifyEmail
         verifyUrl={opts.verifyUrl}
@@ -110,7 +110,7 @@ export async function sendWelcomeEmail(opts: {
 }) {
   return sendEmail({
     to: opts.to,
-    subject: `You're in — welcome to the Fair Food NZ volunteer whānau`,
+    subject: `You're in — welcome to the Fair Food volunteer whānau`,
     react: <WelcomeEmail userName={opts.userName} />,
   });
 }
@@ -125,7 +125,7 @@ export async function sendPasswordResetEmail(opts: {
   const expiresInHours = opts.expiresInHours ?? 24;
   return sendEmail({
     to: opts.to,
-    subject: `Reset your Fair Food NZ password — link valid for ${expiresInHours} hours`,
+    subject: `Reset your Fair Food password — link valid for ${expiresInHours} hours`,
     react: (
       <ForgotPasswordEmail
         resetUrl={opts.resetUrl}

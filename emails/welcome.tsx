@@ -96,7 +96,8 @@ export default function WelcomeEmail({ userName }: WelcomeEmailProps) {
             <Text className={text}>
               Your email is confirmed and you&apos;re officially part of the
               {` ${org.name} `} volunteer whānau. Every shift you give helps us
-              rescue good kai and get it to the people who need it.
+              rescue good kai and get it to the people who need it the most in
+              our home community.
             </Text>
 
             <Text className={text}>
