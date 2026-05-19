@@ -9,6 +9,7 @@ import {
 } from "@simplewebauthn/server";
 import { createSession, postAuthDestination } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getPostHogClient } from "@/lib/posthog-server";
 import {
   decodeTransports,
   rpID,
@@ -106,5 +107,8 @@ export async function finishPasskeyLogin(
     },
   });
   await createSession(passkey.userId);
+  const posthog = getPostHogClient();
+  posthog.capture({ distinctId: passkey.userId, event: "passkey_sign_in" });
+  await posthog.flush();
   return { ok: true, redirectTo: postAuthDestination(passkey.user, next) };
 }
