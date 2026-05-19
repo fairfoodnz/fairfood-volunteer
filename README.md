@@ -2,7 +2,7 @@
 
 Volunteer management for [Fair Food](https://volunteer.fairfood.org.nz) — programmes, shifts, and bookings.
 
-Built with Next.js 16 (App Router) + React 19, Prisma 7 over Postgres, Tailwind CSS v4 with shadcn/ui, and a custom magic-link auth flow. Deployed on Coolify with Garage S3 for object storage (not Vercel).
+Built with Next.js 16 (App Router) + React 19, Prisma 7 over Postgres, Tailwind CSS v4 with shadcn/ui, and custom password auth (plus Google sign-in and passkeys). Deployed on Coolify with Garage S3 for object storage (not Vercel).
 
 ## Getting started
 
@@ -21,7 +21,7 @@ npx prisma db seed
 npm run dev                    # http://localhost:3000
 ```
 
-In dev there is no mailer wired up — the magic-link sign-in URL is printed to the server console.
+In dev, with `RESEND_API_KEY` unset, transactional emails (email verification, password reset) are printed to the server console instead of being sent.
 
 ### Environment
 
@@ -38,8 +38,10 @@ See `.env.example`. Required: `DATABASE_URL`, `AUTH_SECRET`, `NEXT_PUBLIC_APP_UR
 | `npm run email:dev` | react-email preview on port 3001 (`emails/`) |
 | `npx prisma migrate dev` | Apply migrations locally |
 | `npx prisma db seed` | Seed the database (`prisma/seed.ts`) |
+| `npm test` / `npm run test:unit` | Vitest unit tests (`tests/unit/`) |
+| `npm run test:e2e` | Playwright e2e tests (`tests/e2e/`; needs the seeded dev DB) |
 
-No test framework is configured.
+Tests run in CI via the `unit` and `e2e` jobs in `.github/workflows/ci.yaml`.
 
 ## Architecture
 
@@ -47,7 +49,7 @@ See [CLAUDE.md](./CLAUDE.md) and [AGENTS.md](./AGENTS.md) for the full architect
 
 - **Next.js 16 App Router** — conventions differ from older Next.js; consult `node_modules/next/dist/docs/` before writing routing/caching code.
 - **Prisma 7.8** over Postgres via the `@prisma/adapter-pg` driver adapter. Import the generated client from `@/generated/prisma`, never `@prisma/client`.
-- **Custom magic-link auth** (`src/lib/auth.ts`) — guard server work with `requireUser()` / `requireAdmin()`.
+- **Custom auth** — password, Google sign-in, and passkeys (`src/lib/auth.ts`); guard server work with `requireUser()` / `requireAdmin()`.
 - **Mutations are Server Actions** validated with Zod, followed by `revalidatePath`.
 - **Te reo Māori is for volunteer-facing surfaces only.** Admin/coordinator pages stay in plain English.
 
