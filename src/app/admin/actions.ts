@@ -232,6 +232,77 @@ export async function cancelShift(formData: FormData) {
   redirect("/admin");
 }
 
+// --- Bulk shift operations -----------------------------------------------
+
+const BulkShiftIdsSchema = z.object({
+  shiftIds: z.array(z.string().min(1)).min(1).max(500),
+});
+
+export type BulkShiftResult = { ok?: boolean; error?: string; count?: number };
+
+// Program slugs touched by these shifts, gathered *before* a destructive
+// mutation so /programs/[slug] can still be revalidated after the rows (and
+// their program link) are gone.
+async function affectedProgramSlugs(shiftIds: string[]): Promise<string[]> {
+  const rows = await db.shift.findMany({
+    where: { id: { in: shiftIds } },
+    select: { program: { select: { slug: true } } },
+  });
+  return [...new Set(rows.map((r) => r.program.slug))];
+}
+
+function revalidateShiftLists(slugs: string[]) {
+  revalidatePath("/admin");
+  revalidatePath("/admin/shifts");
+  revalidatePath("/shifts");
+  revalidatePath("/me");
+  for (const slug of slugs) revalidatePath(`/programs/${slug}`);
+}
+
+/**
+ * Soft-cancel many shifts at once — the same `cancelled: true` flip as the
+ * single-shift dialog, just batched. Already-cancelled shifts are skipped, so
+ * the returned count is the number actually taken off the schedule.
+ */
+export async function bulkCancelShifts(
+  shiftIds: string[],
+): Promise<BulkShiftResult> {
+  await requireAdmin();
+  const parsed = BulkShiftIdsSchema.safeParse({ shiftIds });
+  if (!parsed.success) return { error: "Select at least one shift." };
+
+  const slugs = await affectedProgramSlugs(parsed.data.shiftIds);
+  const { count } = await db.shift.updateMany({
+    where: { id: { in: parsed.data.shiftIds }, cancelled: false },
+    data: { cancelled: true },
+  });
+
+  revalidateShiftLists(slugs);
+  return { ok: true, count };
+}
+
+/**
+ * Permanently delete many shifts. Each shift's Booking and SlotBlock rows
+ * cascade away with it (see prisma/schema.prisma) — irreversible, which is why
+ * the UI guards it behind a typed confirmation.
+ */
+export async function bulkDeleteShifts(
+  shiftIds: string[],
+): Promise<BulkShiftResult> {
+  await requireAdmin();
+  const parsed = BulkShiftIdsSchema.safeParse({ shiftIds });
+  if (!parsed.success) return { error: "Select at least one shift." };
+
+  // Resolve slugs before the delete — afterwards the rows no longer exist.
+  const slugs = await affectedProgramSlugs(parsed.data.shiftIds);
+  const { count } = await db.shift.deleteMany({
+    where: { id: { in: parsed.data.shiftIds } },
+  });
+
+  revalidateShiftLists(slugs);
+  return { ok: true, count };
+}
+
 // --- Slot blocks: admin-held spots for off-platform groups ---------------
 
 const SlotBlockSchema = z.object({
