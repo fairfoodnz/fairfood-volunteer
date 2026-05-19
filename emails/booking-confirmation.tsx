@@ -146,7 +146,7 @@ export default function BookingConfirmationEmail({
               <Section className={notes ? "mb-[16px]" : ""}>
                 <Text className={detailLabel}>What to wear</Text>
                 <Text className={detailValue}>
-                  Please ensure you&apos;re wearing closed toed shoes, hair tied
+                  Please ensure you&apos;re wearing closed-toe shoes, hair tied
                   back and comfortable clothes you don&apos;t mind getting food
                   on.
                 </Text>
