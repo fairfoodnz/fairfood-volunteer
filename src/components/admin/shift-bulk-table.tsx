@@ -31,7 +31,6 @@ export type ShiftRow = {
   /** CONFIRMED + ATTENDED bookings — volunteers actually holding a spot. */
   confirmed: number;
   blockedSlots: number;
-  blockCount: number;
   cancelled: boolean;
 };
 
@@ -53,20 +52,28 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
   );
   const allSelected = shifts.length > 0 && selected.size === shifts.length;
 
-  const stats = useMemo(() => {
-    let withVolunteers = 0;
-    let volunteers = 0;
-    let blocks = 0;
+  // Two views of the selection: `cancelStats` excludes already-cancelled
+  // shifts (bulkCancelShifts filters `cancelled: false`, so those are no-ops
+  // and must not inflate the dialog's volunteer count); `deleteStats` covers
+  // every selected shift since deleteMany has no such guard.
+  const { cancelStats, cancelCount, deleteStats } = useMemo(() => {
+    const cancel = { withVolunteers: 0, volunteers: 0 };
+    const del = { volunteers: 0, blockedSlots: 0 };
+    let cancelable = 0;
     for (const id of selected) {
       const s = byId.get(id);
       if (!s) continue;
-      if (s.confirmed > 0) {
-        withVolunteers += 1;
-        volunteers += s.confirmed;
+      del.volunteers += s.confirmed;
+      del.blockedSlots += s.blockedSlots;
+      if (!s.cancelled) {
+        cancelable += 1;
+        if (s.confirmed > 0) {
+          cancel.withVolunteers += 1;
+          cancel.volunteers += s.confirmed;
+        }
       }
-      blocks += s.blockCount;
     }
-    return { withVolunteers, volunteers, blocks };
+    return { cancelStats: cancel, cancelCount: cancelable, deleteStats: del };
   }, [selected, byId]);
 
   function toggle(id: string) {
@@ -260,14 +267,20 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
               <CalendarX2 className="size-5" />
             </span>
             <DialogTitle>
-              Cancel {count} {plural(count, "shift")}?
+              Cancel {cancelCount} {plural(cancelCount, "shift")}?
             </DialogTitle>
             <DialogDescription>
-              {stats.withVolunteers > 0 ? (
+              {cancelCount === 0 ? (
                 <>
-                  {stats.withVolunteers} of these have volunteers booked (
-                  {stats.volunteers} in total). They keep their booking history
-                  but lose their {plural(stats.volunteers, "spot")} —{" "}
+                  Every selected shift is already cancelled — there&rsquo;s
+                  nothing to do here.
+                </>
+              ) : cancelStats.withVolunteers > 0 ? (
+                <>
+                  {cancelStats.withVolunteers} of these have volunteers booked (
+                  {cancelStats.volunteers} in total). They keep their booking
+                  history but lose their{" "}
+                  {plural(cancelStats.volunteers, "spot")} —{" "}
                   <strong className="font-semibold text-foreground">
                     no emails are sent
                   </strong>
@@ -284,16 +297,18 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>
-              Keep {plural(count, "shift")}
+              {cancelCount === 0 ? "Close" : `Keep ${plural(cancelCount, "shift")}`}
             </DialogClose>
             <Button
               className="bg-tomato text-cream hover:bg-tomato/90"
-              disabled={pending}
+              disabled={pending || cancelCount === 0}
               onClick={() =>
                 run(bulkCancelShifts, "Cancelled", () => setCancelOpen(false))
               }
             >
-              {pending ? "Cancelling…" : `Cancel ${count} ${plural(count, "shift")}`}
+              {pending
+                ? "Cancelling…"
+                : `Cancel ${cancelCount} ${plural(cancelCount, "shift")}`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -314,19 +329,23 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
             </DialogTitle>
             <DialogDescription>
               This erases the {plural(count, "shift")} for good
-              {stats.volunteers > 0 || stats.blocks > 0 ? (
+              {deleteStats.volunteers > 0 || deleteStats.blockedSlots > 0 ? (
                 <>
                   {" "}
                   along with{" "}
-                  {stats.volunteers > 0 && (
+                  {deleteStats.volunteers > 0 && (
                     <strong className="font-semibold text-foreground">
-                      {stats.volunteers} {plural(stats.volunteers, "booking")}
+                      {deleteStats.volunteers}{" "}
+                      {plural(deleteStats.volunteers, "booking")}
                     </strong>
                   )}
-                  {stats.volunteers > 0 && stats.blocks > 0 && " and "}
-                  {stats.blocks > 0 && (
+                  {deleteStats.volunteers > 0 &&
+                    deleteStats.blockedSlots > 0 &&
+                    " and "}
+                  {deleteStats.blockedSlots > 0 && (
                     <strong className="font-semibold text-foreground">
-                      {stats.blocks} slot {plural(stats.blocks, "block")}
+                      {deleteStats.blockedSlots} blocked{" "}
+                      {plural(deleteStats.blockedSlots, "slot")}
                     </strong>
                   )}
                 </>
