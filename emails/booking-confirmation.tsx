@@ -139,9 +139,17 @@ export default function BookingConfirmationEmail({
                 <Text className={detailLabel}>When</Text>
                 <Text className={detailValue}>{whenLabel}</Text>
               </Section>
-              <Section className={notes ? "mb-[16px]" : ""}>
+              <Section className="mb-[16px]">
                 <Text className={detailLabel}>Where</Text>
                 <Text className={detailValue}>{location}</Text>
+              </Section>
+              <Section className={notes ? "mb-[16px]" : ""}>
+                <Text className={detailLabel}>What to wear</Text>
+                <Text className={detailValue}>
+                  Please ensure you&apos;re wearing closed toed shoes, hair tied
+                  back and comfortable clothes you don&apos;t mind getting food
+                  on.
+                </Text>
               </Section>
               {notes ? (
                 <Section>
