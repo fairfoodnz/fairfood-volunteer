@@ -481,8 +481,11 @@ export type ClaimInviteState = {
 };
 
 /** Look up a raw invite token and return the invitee, or null if the token is
- *  bunk / expired / used. Used by the page server-component to render a
- *  "this link is no longer valid" view before showing the form. */
+ *  bunk / expired / used / already-claimed. Used by the page server-component
+ *  to render a "this link is no longer valid" view before showing the form.
+ *  Accounts whose `importedAt` has been cleared have already redeemed an
+ *  earlier invite — re-claiming would overwrite the password and revoke any
+ *  Google/passkey they've since added, so an old invite link must not work. */
 export async function findInviteByToken(rawToken: string): Promise<{
   user: {
     id: string;
@@ -497,11 +500,18 @@ export async function findInviteByToken(rawToken: string): Promise<{
     where: { tokenHash: hashToken(rawToken) },
     include: {
       user: {
-        select: { id: true, email: true, firstName: true, lastName: true },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          importedAt: true,
+        },
       },
     },
   });
   if (!record || record.usedAt || record.expiresAt < new Date()) return null;
+  if (!record.user.importedAt) return null;
   return { user: record.user, expiresAt: record.expiresAt };
 }
 
@@ -544,11 +554,24 @@ export async function claimInviteAction(
 
   const record = await db.volunteerInvite.findUnique({
     where: { tokenHash: hashToken(parsed.data.token) },
+    include: { user: { select: { importedAt: true } } },
   });
   if (!record || record.usedAt || record.expiresAt < new Date()) {
     return {
       error:
         "This invite link is invalid or has expired. Ask your coordinator to resend it.",
+    };
+  }
+  // Single-use was enforced via usedAt, but the 7-day TTL means an old invite
+  // link (forwarded email, archived inbox, shared device) could otherwise
+  // re-claim an account that has since signed in, set a passkey, or linked
+  // Google — wiping their sessions and resetting the password. Once the
+  // volunteer has claimed any earlier invite, importedAt is cleared; refuse
+  // redemption from that point on and route them through password reset.
+  if (!record.user.importedAt) {
+    return {
+      error:
+        "This account has already been set up. Use the sign-in page — or reset your password if you've forgotten it.",
     };
   }
 
