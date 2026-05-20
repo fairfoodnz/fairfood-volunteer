@@ -6,6 +6,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { HeardAbout } from "@/generated/prisma";
+import { getPostHogClient } from "@/lib/posthog-server";
+import { fullName } from "@/lib/users";
 
 const HeardAboutValues = [
   HeardAbout.FRIEND,
@@ -143,6 +145,30 @@ export async function completeProfileAction(
       flagReviewedAt: null,
     },
   });
+
+  const posthog = getPostHogClient();
+  // Google sign-ups create a passwordless account but never fire
+  // `sign_up_completed` (email sign-ups fire it at the sign-up form). Treat
+  // finishing the onboarding questionnaire as their sign-up completion so a
+  // single `sign_up_completed → profile_completed → shift_booked` funnel
+  // covers every channel. `user` is the pre-update session row, so a null
+  // `profileCompletedAt` means this is the first completion (profile edits
+  // don't re-fire it); a null `passwordHash` means a passwordless account —
+  // only the Google callback creates those (passkeys require an existing
+  // logged-in account), so email sign-ups are never double-counted.
+  if (!user.profileCompletedAt && user.passwordHash === null) {
+    posthog.capture({
+      distinctId: user.id,
+      event: "sign_up_completed",
+      properties: { method: "google", name: fullName(user), email: user.email },
+    });
+  }
+  posthog.capture({
+    distinctId: user.id,
+    event: "profile_completed",
+    properties: { heard_about: parsed.data.heardAbout },
+  });
+  await posthog.flush();
 
   revalidatePath("/me");
   revalidatePath("/admin/flagged");

@@ -11,6 +11,7 @@ import { buildICS, calendarLinks } from "@/lib/calendar";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { BookingStatus } from "@/generated/prisma";
 import { appUrl } from "../../../emails/brand";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 const BookSchema = z.object({
   shiftId: z.string().min(1),
@@ -126,6 +127,19 @@ export async function bookShiftAction(
     console.error("Booking confirmation email failed to send:", e);
   }
 
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: user.id,
+    event: "shift_booked",
+    properties: {
+      shift_id: shift.id,
+      program_title: shift.program.title,
+      program_slug: shift.program.slug,
+      booking_id: booking.id,
+    },
+  });
+  await posthog.flush();
+
   revalidatePath(`/shifts/${shift.id}`);
   revalidatePath(`/me`);
   redirect(`/me?booked=${shift.id}`);
@@ -145,6 +159,15 @@ export async function cancelBookingAction(formData: FormData) {
     where: { id: booking.id },
     data: { status: BookingStatus.CANCELLED },
   });
+
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: user.id,
+    event: "booking_cancelled",
+    properties: { booking_id: booking.id, shift_id: booking.shiftId },
+  });
+  await posthog.flush();
+
   revalidatePath("/me");
   revalidatePath(`/shifts/${booking.shiftId}`);
 }

@@ -17,6 +17,8 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "@/lib/email";
+import { getPostHogClient } from "@/lib/posthog-server";
+import { fullName } from "@/lib/users";
 
 const PASSWORD_MIN = 8;
 const RESET_TTL_HOURS = 24;
@@ -143,6 +145,15 @@ export async function signUpAction(
   // but bookShiftAction stays blocked until they click the emailed link.
   await issueEmailVerification(user);
   await createSession(user.id);
+
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: user.id,
+    event: "sign_up_completed",
+    properties: { method: "email", name: fullName(user), email: user.email },
+  });
+  await posthog.flush();
+
   // New accounts always start at the questionnaire. `next` is preserved through it.
   const back = parsed.data.next ? safeNextPath(parsed.data.next) : "/me";
   redirect(
@@ -297,6 +308,11 @@ export async function resetPasswordAction(
     where: { id: record.userId },
   });
   await createSession(user.id);
+
+  const posthog = getPostHogClient();
+  posthog.capture({ distinctId: user.id, event: "password_reset" });
+  await posthog.flush();
+
   redirect(user.profileCompletedAt ? "/me" : "/me/profile/complete");
 }
 
@@ -401,6 +417,10 @@ export async function verifyEmailAction(
     } catch (err) {
       console.error("[welcome-email] send failed", err);
     }
+
+    const posthog = getPostHogClient();
+    posthog.capture({ distinctId: user.id, event: "email_verified" });
+    await posthog.flush();
   }
   redirect(user.profileCompletedAt ? "/me" : "/me/profile/complete");
 }

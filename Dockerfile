@@ -25,6 +25,13 @@ ENV AUTH_SECRET=build-placeholder-not-used-at-runtime
 # as a build argument, not just a runtime env var).
 ARG NEXT_PUBLIC_APP_URL=https://volunteer.fairfood.org.nz
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+# PostHog analytics — same NEXT_PUBLIC_* build-time-inlining rule as above.
+# KEY has no safe default (analytics is silently disabled if unset at build);
+# pass `--build-arg NEXT_PUBLIC_POSTHOG_KEY=phc_…` (Coolify: build argument).
+ARG NEXT_PUBLIC_POSTHOG_KEY=
+ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
+ARG NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+ENV NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST}
 ENV S3_ENDPOINT=http://localhost:3900
 ENV S3_REGION=build
 ENV S3_BUCKET=build
