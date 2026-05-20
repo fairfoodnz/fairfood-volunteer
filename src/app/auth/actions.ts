@@ -19,7 +19,6 @@ import {
   sendWelcomeEmail,
 } from "@/lib/email";
 import { getPostHogClient } from "@/lib/posthog-server";
-import { fullName } from "@/lib/users";
 
 const PASSWORD_MIN = 8;
 const RESET_TTL_HOURS = 24;
@@ -144,7 +143,9 @@ export async function signUpAction(
   posthog.capture({
     distinctId: user.id,
     event: "sign_up_completed",
-    properties: { method: "email", name: fullName(user), email: user.email },
+    // No PII in PostHog properties — distinctId stitches the person; name
+    // and email stay in the app's own database where they belong.
+    properties: { method: "email" },
   });
   await posthog.flush();
 
@@ -275,6 +276,17 @@ export async function resetPasswordAction(
     };
   }
 
+  // Refuse to swap an active session onto another account — opening someone
+  // else's reset link while signed in as yourself must not silently take over
+  // the target account's session cookie. Force an explicit sign-out first.
+  const sessionUser = await currentUser();
+  if (sessionUser && sessionUser.id !== record.userId) {
+    return {
+      error:
+        "You're signed in as a different account. Sign out, then open this reset link again.",
+    };
+  }
+
   const passwordHash = await hashPassword(parsed.data.password);
   await db.$transaction([
     db.user.update({
@@ -376,6 +388,17 @@ export async function verifyEmailAction(
     };
   }
 
+  // Refuse to swap an active session onto another account — a phished or
+  // forwarded verification link must not silently overwrite the current
+  // session cookie with the target user's. Force explicit sign-out first.
+  const sessionUser = await currentUser();
+  if (sessionUser && sessionUser.id !== record.userId) {
+    return {
+      error:
+        "You're signed in as a different account. Sign out, then open this verification link again.",
+    };
+  }
+
   const [verified] = await db.$transaction([
     // Leave an existing timestamp untouched (e.g. already verified via a
     // password reset) — updateMany no-ops instead of clobbering it. Its
@@ -459,8 +482,11 @@ export type ClaimInviteState = {
 };
 
 /** Look up a raw invite token and return the invitee, or null if the token is
- *  bunk / expired / used. Used by the page server-component to render a
- *  "this link is no longer valid" view before showing the form. */
+ *  bunk / expired / used / already-claimed. Used by the page server-component
+ *  to render a "this link is no longer valid" view before showing the form.
+ *  Accounts whose `importedAt` has been cleared have already redeemed an
+ *  earlier invite — re-claiming would overwrite the password and revoke any
+ *  Google/passkey they've since added, so an old invite link must not work. */
 export async function findInviteByToken(rawToken: string): Promise<{
   user: {
     id: string;
@@ -475,11 +501,18 @@ export async function findInviteByToken(rawToken: string): Promise<{
     where: { tokenHash: hashToken(rawToken) },
     include: {
       user: {
-        select: { id: true, email: true, firstName: true, lastName: true },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          importedAt: true,
+        },
       },
     },
   });
   if (!record || record.usedAt || record.expiresAt < new Date()) return null;
+  if (!record.user.importedAt) return null;
   return { user: record.user, expiresAt: record.expiresAt };
 }
 
@@ -522,11 +555,35 @@ export async function claimInviteAction(
 
   const record = await db.volunteerInvite.findUnique({
     where: { tokenHash: hashToken(parsed.data.token) },
+    include: { user: { select: { importedAt: true } } },
   });
   if (!record || record.usedAt || record.expiresAt < new Date()) {
     return {
       error:
         "This invite link is invalid or has expired. Ask your coordinator to resend it.",
+    };
+  }
+  // Single-use was enforced via usedAt, but the 7-day TTL means an old invite
+  // link (forwarded email, archived inbox, shared device) could otherwise
+  // re-claim an account that has since signed in, set a passkey, or linked
+  // Google — wiping their sessions and resetting the password. Once the
+  // volunteer has claimed any earlier invite, importedAt is cleared; refuse
+  // redemption from that point on and route them through password reset.
+  if (!record.user.importedAt) {
+    return {
+      error:
+        "This account has already been set up. Use the sign-in page — or reset your password if you've forgotten it.",
+    };
+  }
+
+  // Same session-swap guard as the verify-email and reset-password flows:
+  // claiming an invite while signed in as a different account must not
+  // silently overwrite the cookie with a session for the invitee.
+  const sessionUser = await currentUser();
+  if (sessionUser && sessionUser.id !== record.userId) {
+    return {
+      error:
+        "You're signed in as a different account. Sign out, then open this invite link again.",
     };
   }
 
@@ -567,7 +624,7 @@ export async function claimInviteAction(
   posthog.capture({
     distinctId: user.id,
     event: "invite_claimed",
-    properties: { method: "password", name: fullName(user), email: user.email },
+    properties: { method: "password" },
   });
   await posthog.flush();
 

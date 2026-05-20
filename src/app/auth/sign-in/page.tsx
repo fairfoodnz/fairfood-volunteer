@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/site/footer";
 import { GoogleButton } from "@/components/auth/google-button";
 import { PasskeySignInButton } from "@/components/auth/passkey-sign-in-button";
 import { AuthDivider } from "@/components/auth/auth-divider";
-import { currentUser } from "@/lib/auth";
+import { currentUser, safeNextPath } from "@/lib/auth";
 import { googleConfigured } from "@/lib/oauth";
 import { devSignInAction } from "../actions";
 
@@ -28,7 +28,7 @@ type Props = { searchParams: Promise<{ next?: string; error?: string }> };
 export default async function SignInPage({ searchParams }: Props) {
   const user = await currentUser();
   const { next, error } = await searchParams;
-  if (user) redirect(next || "/me");
+  if (user) redirect(safeNextPath(next));
   const errorMsg = error ? SIGN_IN_ERRORS[error] : undefined;
   const showGoogle = googleConfigured();
 

@@ -4,10 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, safeNextPath } from "@/lib/auth";
 import { HeardAbout } from "@/generated/prisma";
 import { getPostHogClient } from "@/lib/posthog-server";
-import { fullName } from "@/lib/users";
 
 const HeardAboutValues = [
   HeardAbout.FRIEND,
@@ -80,11 +79,6 @@ export type QuestionnaireState = {
     >
   >;
 };
-
-function safeNext(next: string | undefined, fallback = "/me") {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return fallback;
-  return next;
-}
 
 export async function completeProfileAction(
   _prev: QuestionnaireState,
@@ -160,7 +154,7 @@ export async function completeProfileAction(
     posthog.capture({
       distinctId: user.id,
       event: "sign_up_completed",
-      properties: { method: "google", name: fullName(user), email: user.email },
+      properties: { method: "google" },
     });
   }
   posthog.capture({
@@ -172,5 +166,5 @@ export async function completeProfileAction(
 
   revalidatePath("/me");
   revalidatePath("/admin/flagged");
-  redirect(safeNext(parsed.data.next));
+  redirect(safeNextPath(parsed.data.next));
 }

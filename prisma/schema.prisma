@@ -41,6 +41,16 @@ enum DocumentCategory {
   OTHER
 }
 
+// Who can download a Document via /api/documents/[id]. Default VOLUNTEER —
+// the safe assumption for new uploads. Anything that goes on the public
+// marketing site must be marked PUBLIC explicitly; ADMIN is for internal
+// guidance or sensitive material (police-check templates, etc.).
+enum DocumentVisibility {
+  PUBLIC
+  VOLUNTEER
+  ADMIN
+}
+
 model User {
   id              String              @id @default(cuid())
   email           String              @unique
@@ -147,21 +157,26 @@ model Passkey {
   @@index([userId])
 }
 
+// Server-side session record. Only the SHA-256 hash of the raw token is
+// stored — the cookie holds the raw token, lookups hash the cookie value
+// first. Same threat model as PasswordResetToken / EmailVerificationToken /
+// VolunteerInvite: a leaked DB backup or read-only SQL injection must not
+// yield working session cookies.
 model Session {
   id        String   @id @default(cuid())
-  token     String   @unique
+  tokenHash String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  @@index([token])
+  @@index([userId])
 }
 
 // Single-use password reset tokens. We store only a SHA-256 hash of the
 // token, never the raw value: a leaked row must not be redeemable, since a
-// reset grants full account takeover. (Session.token is stored raw by
-// contrast — lower value, and resets wipe all sessions anyway.)
+// reset grants full account takeover. Session.tokenHash uses the same
+// pattern; redeeming a reset wipes all sessions for the user.
 model PasswordResetToken {
   id        String    @id @default(cuid())
   tokenHash String    @unique
@@ -326,18 +341,24 @@ model Booking {
 // Volunteer-facing documents (handbook, H&S, map etc.) stored in Garage / S3.
 // Soft-deleted via deletedAt so admin actions stay reversible until a sweep.
 model Document {
-  id           String            @id @default(cuid())
+  id           String              @id @default(cuid())
   title        String
-  description  String?           @db.Text
-  category     DocumentCategory  @default(OTHER)
-  objectKey    String            @unique
+  description  String?             @db.Text
+  category     DocumentCategory    @default(OTHER)
+  // Defaults to VOLUNTEER — the safe assumption for new uploads. Anything
+  // public must be flipped to PUBLIC explicitly; sensitive material flips
+  // to ADMIN. /api/documents/[id] gates on this; /resources shows only
+  // PUBLIC + VOLUNTEER (admins manage their own at /admin/documents).
+  visibility   DocumentVisibility  @default(VOLUNTEER)
+  objectKey    String              @unique
   mimeType     String
   sizeBytes    Int
   uploadedById String?
-  uploadedBy   User?             @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedBy   User?               @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
   deletedAt    DateTime?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
   @@index([category, deletedAt])
+  @@index([visibility, deletedAt])
 }

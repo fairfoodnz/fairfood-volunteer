@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, safeNextPath } from "@/lib/auth";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { QuestionnaireForm } from "./form";
@@ -16,7 +16,7 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
 
   // Already done — let them edit details on the proper profile page instead.
   if (user.profileCompletedAt) {
-    redirect(next && next.startsWith("/") ? next : "/me/profile");
+    redirect(safeNextPath(next, "/me/profile"));
   }
 
   const fresh = await db.user.findUnique({ where: { id: user.id } });

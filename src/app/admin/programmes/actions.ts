@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { slugify, INCLUSIVE_SLUG } from "@/lib/programs";
 import { isThemeKey, DEFAULT_THEME } from "@/lib/programme-theme";
+import { bufferMatchesMime } from "@/lib/file-sniff";
 import { deleteObject, putObject } from "@/lib/s3";
 
 export type ProgrammeFormState = { error?: string; ok?: boolean };
@@ -99,8 +100,16 @@ async function uploadImage(
   if (!ext) {
     return { error: "Images must be JPEG, PNG, WebP or GIF." };
   }
-  const imageKey = `programmes/${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  // file.type is browser-supplied — verify the magic bytes match before we
+  // store anything. Stops HTML/SVG masquerading as image/png from ever
+  // landing in object storage and being served from the app origin.
+  if (!bufferMatchesMime(buffer, file.type)) {
+    return {
+      error: "That image's contents don't match its file type. Try re-exporting it.",
+    };
+  }
+  const imageKey = `programmes/${randomUUID()}.${ext}`;
   await putObject({ key: imageKey, body: buffer, contentType: file.type });
   return { imageKey };
 }
