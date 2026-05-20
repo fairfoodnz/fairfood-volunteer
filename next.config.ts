@@ -36,7 +36,23 @@ const PROD_CSP = [
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "upgrade-insecure-requests",
+  // Where browsers POST CSP violations. Two directives because we're in
+  // the transition between legacy and modern reporting APIs:
+  //   - `report-uri` is the well-supported legacy form (Chrome/FF/Safari);
+  //     payload is application/csp-report.
+  //   - `report-to` is the modern Reporting API; payload is
+  //     application/reports+json. Needs the Reporting-Endpoints response
+  //     header (set below) to define the named group it references.
+  // Both fan into the same /api/csp-report handler which normalises the
+  // shape and forwards to PostHog as `csp_violation`.
+  "report-uri /api/csp-report",
+  "report-to csp-endpoint",
 ].join("; ");
+
+// Companion to the `report-to csp-endpoint` directive in PROD_CSP — defines
+// the named endpoint group the modern Reporting API posts to. Same target as
+// `report-uri` so the route handler is the single source of truth.
+const REPORTING_ENDPOINTS = 'csp-endpoint="/api/csp-report"';
 
 const SECURITY_HEADERS = [
   // Globalise the nosniff we already set per-file-route. Catches static
@@ -69,6 +85,7 @@ const SECURITY_HEADERS = [
           key: "Strict-Transport-Security",
           value: "max-age=63072000; includeSubDomains",
         },
+        { key: "Reporting-Endpoints", value: REPORTING_ENDPOINTS },
         { key: "Content-Security-Policy-Report-Only", value: PROD_CSP },
       ]
     : []),
