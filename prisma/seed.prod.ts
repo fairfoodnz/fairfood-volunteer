@@ -104,25 +104,21 @@ async function seedPrograms() {
 }
 
 async function seedAdmin() {
-  const existing = await prisma.user.findUnique({
+  // Atomic upsert — safe against the TOCTOU race where two containers boot
+  // simultaneously, both observe the row absent, and both attempt `create`
+  // (the loser would crash with P2002 and stop the container from starting).
+  //
+  // The `update` payload is intentionally minimal: it self-heals the role
+  // back to ADMIN if someone downgraded the bootstrap account, but never
+  // touches `passwordHash`, `firstName`, `lastName`, `profileCompletedAt`,
+  // or `emailVerifiedAt`. After first login the coordinator will rotate the
+  // password and probably fill in a real name — overwriting either of those
+  // on every boot would silently re-enable the well-known default password
+  // and clobber their edits.
+  await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
-  });
-  if (existing) {
-    // Self-heal: if someone manually downgraded the bootstrap account, put it
-    // back. We do NOT touch passwordHash on an existing row — the human has
-    // (hopefully) already rotated it, and overwriting it would silently
-    // re-enable the well-known default.
-    if (existing.role !== Role.ADMIN) {
-      await prisma.user.update({
-        where: { id: existing.id },
-        data: { role: Role.ADMIN },
-      });
-      return "promoted";
-    }
-    return "exists";
-  }
-  await prisma.user.create({
-    data: {
+    update: { role: Role.ADMIN },
+    create: {
       email: ADMIN_EMAIL,
       firstName: "Admin",
       lastName: null,
@@ -136,7 +132,6 @@ async function seedAdmin() {
       emailVerifiedAt: new Date(),
     },
   });
-  return "created";
 }
 
 export async function main() {
@@ -146,16 +141,10 @@ export async function main() {
     console.log(`[seed.prod]   ${programCount} programmes in sync.`);
 
     console.log("[seed.prod] Ensuring bootstrap admin…");
-    const result = await seedAdmin();
-    if (result === "created") {
-      console.log(
-        `[seed.prod]   Created ${ADMIN_EMAIL} with the default password — change it on first login.`,
-      );
-    } else if (result === "promoted") {
-      console.log(`[seed.prod]   Re-promoted ${ADMIN_EMAIL} to ADMIN.`);
-    } else {
-      console.log(`[seed.prod]   ${ADMIN_EMAIL} already present; left alone.`);
-    }
+    await seedAdmin();
+    console.log(
+      `[seed.prod]   ${ADMIN_EMAIL} present with ADMIN role. If this is a fresh DB, the default password is "admin123" — change it on first login.`,
+    );
 
     console.log("[seed.prod] Done.");
   } finally {
