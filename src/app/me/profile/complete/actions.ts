@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, safeNextPath } from "@/lib/auth";
 import { HeardAbout } from "@/generated/prisma";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { fullName } from "@/lib/users";
@@ -80,11 +80,6 @@ export type QuestionnaireState = {
     >
   >;
 };
-
-function safeNext(next: string | undefined, fallback = "/me") {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return fallback;
-  return next;
-}
 
 export async function completeProfileAction(
   _prev: QuestionnaireState,
@@ -172,5 +167,5 @@ export async function completeProfileAction(
 
   revalidatePath("/me");
   revalidatePath("/admin/flagged");
-  redirect(safeNext(parsed.data.next));
+  redirect(safeNextPath(parsed.data.next));
 }

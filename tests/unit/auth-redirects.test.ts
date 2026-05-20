@@ -26,7 +26,16 @@ describe("safeNextPath", () => {
     expect(safeNextPath("//evil.com")).toBe("/me");
     expect(safeNextPath("/\\evil.com")).toBe("/me");
     expect(safeNextPath("/\\/evil.com")).toBe("/me");
-    expect(safeNextPath("/%2Fevil.com")).toBe("/%2Fevil.com"); // encoded — not a real "//"
+    // Percent-encoded equivalents: some browsers decode Location and then
+    // normalise "\"→"/", so reject after a decode pass too.
+    expect(safeNextPath("/%2Fevil.com")).toBe("/me");
+    expect(safeNextPath("/%5Cevil.com")).toBe("/me");
+    expect(safeNextPath("/%2F%2Fevil.com")).toBe("/me");
+  });
+
+  it("falls back when next has malformed percent escapes", () => {
+    expect(safeNextPath("/%E0%A4%A")).toBe("/me");
+    expect(safeNextPath("/%ZZ")).toBe("/me");
   });
 
   it("honours a custom fallback", () => {

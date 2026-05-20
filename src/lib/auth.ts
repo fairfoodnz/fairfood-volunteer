@@ -81,16 +81,26 @@ export function appOrigin() {
  * Only allow same-origin relative redirect targets — never an absolute or
  * protocol-relative URL an attacker could smuggle in via `?next=`. Shared by
  * every sign-in entry point (password, Google, passkey) so the rule can't drift.
+ *
+ * Rejects three smuggling shapes:
+ *  - direct protocol-relative: `//host`, `/\host`, `/\/host`
+ *  - percent-encoded equivalents that some browsers decode in the Location
+ *    header and then normalise ("\"→"/"): `/%2Fhost`, `/%5Chost`
+ *  - undecodable input (malformed `%` escapes)
  */
 export function safeNextPath(
   next: string | null | undefined,
   fallback = "/me",
 ) {
   if (!next || !next.startsWith("/")) return fallback;
-  // Reject anything whose second char is "/" or "\": "//host" and "/\host"
-  // (and "/\/host") are protocol-relative once a browser normalises "\"→"/",
-  // which would be an off-site open redirect.
   if (/^\/[/\\]/.test(next)) return fallback;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(next);
+  } catch {
+    return fallback;
+  }
+  if (/^\/[/\\]/.test(decoded)) return fallback;
   return next;
 }
 

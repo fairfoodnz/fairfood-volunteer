@@ -5,7 +5,7 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { GoogleButton } from "@/components/auth/google-button";
 import { AuthDivider } from "@/components/auth/auth-divider";
-import { currentUser } from "@/lib/auth";
+import { currentUser, safeNextPath } from "@/lib/auth";
 import { googleConfigured } from "@/lib/oauth";
 
 export const metadata = {
@@ -17,7 +17,7 @@ type Props = { searchParams: Promise<{ next?: string }> };
 export default async function SignUpPage({ searchParams }: Props) {
   const user = await currentUser();
   const { next } = await searchParams;
-  if (user) redirect(next || "/me");
+  if (user) redirect(safeNextPath(next));
   const showGoogle = googleConfigured();
 
   return (
