@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
@@ -11,10 +12,11 @@ import {
   type RegistrationResponseJSON,
 } from "@simplewebauthn/server";
 import { Prisma } from "@/generated/prisma";
-import { requireUser } from "@/lib/auth";
+import { hashPassword, requireUser, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { fullName } from "@/lib/users";
 import { GOOGLE_PROVIDER } from "@/lib/oauth";
+import { getPostHogClient } from "@/lib/posthog-server";
 import {
   RP_NAME,
   decodeTransports,
@@ -24,6 +26,9 @@ import {
   storeChallenge,
   takeChallenge,
 } from "@/lib/webauthn";
+
+const PASSWORD_MIN = 8;
+const SESSION_COOKIE = "ff_session";
 
 export type RegisterBeginState =
   | { ok: true; options: PublicKeyCredentialCreationOptionsJSON }
@@ -185,6 +190,109 @@ export async function removePasskeyAction(formData: FormData) {
 
   if (outcome === "last") redirect("/me/security?error=last_method");
   if (outcome === "removed") revalidatePath("/me/security");
+}
+
+const ChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().optional(),
+    newPassword: z.string().min(PASSWORD_MIN, `At least ${PASSWORD_MIN} characters.`),
+    confirm: z.string().min(1, "Confirm your new password."),
+  })
+  .refine((d) => d.newPassword === d.confirm, {
+    message: "Passwords don't match.",
+    path: ["confirm"],
+  });
+
+export type ChangePasswordState = {
+  ok?: boolean;
+  error?: string;
+  fieldErrors?: Partial<
+    Record<"currentPassword" | "newPassword" | "confirm", string>
+  >;
+};
+
+/**
+ * In-place password change/set for a signed-in user. When the account already
+ * has a password we require the current one (standard "change" UX); when it
+ * doesn't (Google-/passkey-only sign-up), we let the existing session vouch
+ * for the user — they already proved control of the account to reach this
+ * page. Either way, every *other* session is revoked: a real password change
+ * should kick a lost or compromised device.
+ */
+export async function changePasswordAction(
+  _prev: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
+  const user = await requireUser();
+
+  const parsed = ChangePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword") ?? undefined,
+    newPassword: formData.get("newPassword"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) {
+    const fieldErrors: ChangePasswordState["fieldErrors"] = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (
+        key === "newPassword" ||
+        key === "confirm" ||
+        key === "currentPassword"
+      ) {
+        fieldErrors[key] ??= issue.message;
+      }
+    }
+    return Object.keys(fieldErrors).length
+      ? { fieldErrors }
+      : { error: "Couldn't save that. Please check the form and try again." };
+  }
+
+  if (user.passwordHash) {
+    const current = parsed.data.currentPassword ?? "";
+    if (!current) {
+      return {
+        fieldErrors: { currentPassword: "Enter your current password." },
+      };
+    }
+    const ok = await verifyPassword(current, user.passwordHash);
+    if (!ok) {
+      return {
+        fieldErrors: {
+          currentPassword: "That's not your current password.",
+        },
+      };
+    }
+  }
+
+  const newHash = await hashPassword(parsed.data.newPassword);
+
+  // Keep this session alive; kick every other one. Matches the reset flow's
+  // intent (a password change invalidates trust everywhere else).
+  const cookieStore = await cookies();
+  const currentToken = cookieStore.get(SESSION_COOKIE)?.value;
+
+  await db.$transaction([
+    db.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newHash },
+    }),
+    db.session.deleteMany({
+      where: {
+        userId: user.id,
+        ...(currentToken ? { token: { not: currentToken } } : {}),
+      },
+    }),
+  ]);
+
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: user.id,
+    event: user.passwordHash ? "password_changed" : "password_set",
+  });
+  await posthog.flush();
+
+  revalidatePath("/me/security");
+  return { ok: true };
 }
 
 export async function disconnectGoogleAction() {

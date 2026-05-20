@@ -7,6 +7,7 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { Button } from "@/components/ui/button";
 import { GoogleButton } from "@/components/auth/google-button";
+import { ChangePasswordForm } from "./change-password-form";
 import { PasskeyManager, type PasskeyView } from "./passkey-manager";
 import { disconnectGoogleAction } from "./actions";
 
@@ -88,23 +89,10 @@ export default async function SecurityPage({ searchParams }: Props) {
               desc={
                 hasPassword
                   ? "A password is set for this account."
-                  : "No password set — you sign in with Google or a passkey."
+                  : "Add a password so you can sign in without Google or a passkey."
               }
             >
-              <Button
-                asChild
-                variant="outline"
-                className="h-11"
-              >
-                <Link href="/auth/forgot-password">
-                  {hasPassword ? "Change password" : "Set a password"}
-                </Link>
-              </Button>
-              {!hasPassword && (
-                <p className="mt-2 text-xs text-foreground/60">
-                  We&rsquo;ll email you a secure link to set one.
-                </p>
-              )}
+              <ChangePasswordForm hasPassword={hasPassword} />
             </Section>
 
             {/* Google --------------------------------------------------- */}
