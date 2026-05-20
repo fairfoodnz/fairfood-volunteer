@@ -94,4 +94,8 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["sh", "-c", "NODE_PATH=/opt/migrator/node_modules /opt/migrator/node_modules/.bin/prisma migrate deploy && node server.js"]
+# `prisma db seed` runs prisma/seed.ts, which dispatches to seed.prod.ts under
+# NODE_ENV=production (set above). The prod seed is upsert-only and idempotent,
+# so re-running it on every boot just keeps editorial copy in sync and ensures
+# the bootstrap admin exists.
+CMD ["sh", "-c", "NODE_PATH=/opt/migrator/node_modules /opt/migrator/node_modules/.bin/prisma migrate deploy && NODE_PATH=/opt/migrator/node_modules /opt/migrator/node_modules/.bin/prisma db seed && node server.js"]
