@@ -1,12 +1,14 @@
 import "server-only";
+import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import {
   Google,
   generateCodeVerifier,
   generateState,
-  decodeIdToken,
 } from "arctic";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import { z } from "zod";
+import { safeNextPath } from "@/lib/auth";
 
 // Transient cookies that carry the OAuth round-trip state. All httpOnly and
 // short-lived — they only need to survive the hop out to Google and back.
@@ -60,6 +62,18 @@ export class OAuthError extends Error {
 }
 
 /**
+ * Constant-time equality on two strings. `timingSafeEqual` requires equal-
+ * length buffers; we short-circuit on length mismatch (the length itself isn't
+ * a secret) and otherwise let the runtime do a byte-by-byte XOR.
+ */
+function constantTimeStringEq(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, "utf8");
+  const bBuf = Buffer.from(b, "utf8");
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}
+
+/**
  * Begin the authorization-code+PKCE flow. Persists state, the PKCE verifier and
  * the post-login `next` in short-lived httpOnly cookies, then returns the
  * Google URL to redirect the browser to.
@@ -75,6 +89,13 @@ export async function startGoogleAuthorization(
     "email",
   ]);
 
+  // Validate `next` here, not just on the way back out: storing arbitrary
+  // attacker-supplied state in a victim's cookie jar (via a pre-warm link to
+  // `/auth/google?next=…`) is a CSRF-cookie-poisoning surface we shouldn't
+  // carry, even if `safeNextPath` would later reject it. `safeNextPath` returns
+  // its fallback for anything dangerous — only persist when the input survives.
+  const safeNext = next ? safeNextPath(next, "") : "";
+
   const jar = await cookies();
   const opts = {
     httpOnly: true,
@@ -85,7 +106,7 @@ export async function startGoogleAuthorization(
   };
   jar.set(STATE_COOKIE, state, opts);
   jar.set(VERIFIER_COOKIE, codeVerifier, opts);
-  if (next) jar.set(NEXT_COOKIE, next, opts);
+  if (safeNext) jar.set(NEXT_COOKIE, safeNext, opts);
   else jar.delete(NEXT_COOKIE);
 
   return url;
@@ -102,6 +123,44 @@ const ClaimsSchema = z.object({
   given_name: z.string().trim().min(1).optional(),
   family_name: z.string().trim().min(1).optional(),
 });
+
+/**
+ * Google's published JWKS (RFC 7517). `jose.createRemoteJWKSet` caches keys
+ * across calls and refreshes on `kid` miss — a single module-level instance
+ * keeps signature verification effectively free after warm-up. Key URL per
+ * Google's OpenID discovery document.
+ */
+const GOOGLE_JWKS = createRemoteJWKSet(
+  new URL("https://www.googleapis.com/oauth2/v3/certs"),
+);
+const GOOGLE_ISSUERS = new Set([
+  "https://accounts.google.com",
+  "accounts.google.com",
+]);
+
+/**
+ * Verify the ID token against Google's JWKS as defence in depth. The token
+ * arrived from Google's `/token` endpoint over TLS via arctic — the OIDC spec
+ * permits trusting it without signature verification on the code flow — but a
+ * compromised arctic upgrade, a misconfigured corporate proxy, or any future
+ * transport change would silently let an unsigned `sub`/`email` through. The
+ * cost (one cached JWKS fetch on first hit) is far less than the
+ * account-takeover blast radius if that assumption ever bent.
+ */
+async function verifyGoogleIdToken(idToken: string): Promise<unknown> {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    // googleClient() would have already thrown on the token exchange call —
+    // this branch is here for type narrowing.
+    throw new OAuthError("invalid_request");
+  }
+  const { payload } = await jwtVerify(idToken, GOOGLE_JWKS, {
+    audience: clientId,
+    // `iss` may be either form per Google's docs; pass both candidates.
+    issuer: [...GOOGLE_ISSUERS],
+  });
+  return payload;
+}
 
 export type GoogleIdentity = {
   /** Stable Google subject id — the join key for OAuthAccount. */
@@ -137,7 +196,13 @@ export async function completeGoogleAuthorization(
   if (!code || !state || !storedState || !codeVerifier) {
     throw new OAuthError("invalid_request");
   }
-  if (state !== storedState) throw new OAuthError("state_mismatch");
+  // Constant-time state compare. The values are per-user, single-use, 256-bit,
+  // so the difference vs `!==` isn't practically exploitable today — but the
+  // brief calls for constant-time on all secret comparisons (matches the
+  // PasswordResetToken / Session.tokenHash convention).
+  if (!constantTimeStringEq(state, storedState)) {
+    throw new OAuthError("state_mismatch");
+  }
 
   let claims: unknown;
   try {
@@ -145,8 +210,11 @@ export async function completeGoogleAuthorization(
       code,
       codeVerifier,
     );
-    claims = decodeIdToken(tokens.idToken());
-  } catch {
+    // Defence in depth: verify the ID token's signature against Google's JWKS
+    // and assert iss/aud rather than trusting the token-endpoint TLS hop alone.
+    claims = await verifyGoogleIdToken(tokens.idToken());
+  } catch (err) {
+    if (err instanceof OAuthError) throw err;
     throw new OAuthError("exchange_failed");
   }
 
