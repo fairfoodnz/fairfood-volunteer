@@ -130,24 +130,18 @@ function PolaroidStack() {
       <Polaroid
         rotate="-7deg"
         position="top-2 left-2 sm:left-0"
-        title="The kai table"
-        caption="Tuesday, 11:42am"
         src="/photos/hero-rescue.webp"
         alt="Volunteers sorting rescued kai at the Fair Food warehouse"
       />
       <Polaroid
         rotate="4deg"
         position="top-20 right-2"
-        title="Pack &amp; share"
-        caption="Avondale warehouse"
         src="/photos/kai-box.webp"
         alt="Volunteers packing kai boxes ready for whānau"
       />
       <Polaroid
         rotate="-3deg"
         position="bottom-0 left-8 sm:left-12"
-        title="Conscious Kitchen"
-        caption="Every Wed · 9am"
         src="/photos/hero-kitchen.webp"
         alt="Cooks preparing a meal in the Conscious Kitchen"
       />
@@ -158,22 +152,18 @@ function PolaroidStack() {
 function Polaroid({
   rotate,
   position,
-  title,
-  caption,
   src,
   alt,
 }: {
   rotate: string;
   position: string;
-  title: string;
-  caption: string;
   src: string;
   alt: string;
 }) {
   return (
-    <button
-      type="button"
-      className={`absolute ${position} z-10 w-44 cursor-pointer select-none rounded-sm bg-white p-3 text-left font-sans shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] outline-none transition-[scale,box-shadow] duration-300 ease-out hover:z-30 hover:scale-[1.04] hover:shadow-[0_28px_58px_-14px_rgba(0,0,0,0.34)] focus:z-20 focus:scale-[1.02] focus:shadow-[0_28px_58px_-14px_rgba(0,0,0,0.34)] focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none sm:w-56`}
+    <div
+      aria-hidden
+      className={`absolute ${position} z-10 w-44 select-none rounded-sm bg-white p-3 pb-10 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.25)] sm:w-56`}
       style={{ transform: `rotate(${rotate})` }}
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-charcoal/10">
@@ -185,15 +175,6 @@ function Polaroid({
           className="object-cover"
         />
       </div>
-      <div className="px-1 pt-3 pb-1">
-        <p
-          className="text-[0.95rem] font-semibold leading-tight"
-          dangerouslySetInnerHTML={{ __html: title }}
-        />
-        <p className="mt-0.5 font-mono text-[0.7rem] uppercase tracking-wider text-foreground/55">
-          {caption}
-        </p>
-      </div>
-    </button>
+    </div>
   );
 }

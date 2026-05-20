@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     q: "What should I wear and bring?",
-    a: "Closed-toe shoes, clothes you don&rsquo;t mind getting a little messy and your hair tied back. We&rsquo;ll provide aprons, gloves and hi-vis.",
+    a: "Closed-toe shoes and hair tied back. Hi-vis, aprons, gloves and a cuppa on us.",
   },
   {
     q: "Can I come as a walk-in?",
