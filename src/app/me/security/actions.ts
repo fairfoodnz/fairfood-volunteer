@@ -13,8 +13,10 @@ import {
 } from "@simplewebauthn/server";
 import { Prisma } from "@/generated/prisma";
 import {
+  PASSWORD_MAX,
   SESSION_COOKIE,
   hashPassword,
+  hashSessionToken,
   requireUser,
   verifyPassword,
 } from "@/lib/auth";
@@ -93,7 +95,13 @@ export async function beginPasskeyRegistration(): Promise<RegisterBeginState> {
       })),
       authenticatorSelection: {
         residentKey: "required",
-        userVerification: "preferred",
+        // Require user verification at enrolment so the credential is
+        // UV-capable end-to-end. Login also enforces UV (see passkey/actions.ts);
+        // a "preferred" enrolment would allow a non-UV credential past
+        // registration that login then rejects, which is a worse UX than
+        // simply requiring UV up front. All modern platform authenticators
+        // satisfy this transparently via Touch/Face ID / Windows Hello.
+        userVerification: "required",
       },
     });
     await storeChallenge("registration", options.challenge);
@@ -126,7 +134,9 @@ export async function finishPasskeyRegistration(
       expectedChallenge,
       expectedOrigin: rpOrigin(),
       expectedRPID: rpID(),
-      requireUserVerification: false,
+      // Pair with the "required" advertised at the start of the ceremony:
+      // refuse to record a credential the authenticator didn't user-verify.
+      requireUserVerification: true,
     });
   } catch (err) {
     console.error("[passkey] registration verification failed", err);
@@ -198,9 +208,18 @@ export async function removePasskeyAction(formData: FormData) {
 
 const ChangePasswordSchema = z
   .object({
-    currentPassword: z.string().optional(),
-    newPassword: z.string().min(PASSWORD_MIN, `At least ${PASSWORD_MIN} characters.`),
-    confirm: z.string().min(1, "Confirm your new password."),
+    // currentPassword is also capped because the path runs bcrypt.compare on
+    // whatever the client submits — cap before we hash to avoid a CPU-DoS
+    // shape identical to the sign-in one.
+    currentPassword: z.string().max(PASSWORD_MAX).optional(),
+    newPassword: z
+      .string()
+      .min(PASSWORD_MIN, `At least ${PASSWORD_MIN} characters.`)
+      .max(PASSWORD_MAX, `Up to ${PASSWORD_MAX} characters.`),
+    confirm: z
+      .string()
+      .min(1, "Confirm your new password.")
+      .max(PASSWORD_MAX),
   })
   .refine((d) => d.newPassword === d.confirm, {
     message: "Passwords don't match.",
@@ -287,7 +306,13 @@ export async function changePasswordAction(
       await tx.session.deleteMany({
         where: {
           userId: user.id,
-          ...(currentToken ? { token: { not: currentToken } } : {}),
+          // Match against tokenHash, not the raw cookie value (Session.token
+          // was renamed in the session-hashing migration). Without the hash
+          // call the where clause errors at runtime — TS lets the property
+          // through via the spread but Prisma rejects it.
+          ...(currentToken
+            ? { tokenHash: { not: hashSessionToken(currentToken) } }
+            : {}),
         },
       });
     },

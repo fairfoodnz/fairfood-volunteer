@@ -8,15 +8,41 @@ import type { User } from "@/generated/prisma";
 
 export const SESSION_COOKIE = "ff_session";
 const SESSION_LENGTH_DAYS = 30;
+const SESSION_LENGTH_MS = SESSION_LENGTH_DAYS * 24 * 60 * 60_000;
+/**
+ * Slide the expiry forward when a session is within this window of expiring.
+ * Active users stay signed in indefinitely; a stolen cookie still ages out
+ * inside one window of no use. Picked at SESSION_LENGTH_DAYS / 4 ≈ 7 days so a
+ * casual once-a-week user never logs out, but a leaked cookie that isn't
+ * exercised dies on the original 30-day fuse.
+ */
+const SESSION_RENEWAL_WINDOW_MS = 7 * 24 * 60 * 60_000;
 const BCRYPT_ROUNDS = 10;
+/** Bcrypt silently truncates beyond 72 bytes — enforce the limit at the edge. */
+export const PASSWORD_MAX = 72;
 
 function sessionToken() {
   return randomBytes(32).toString("hex");
 }
 
-/** SHA-256 of the raw session token — only this is ever stored or queried. */
-function hashSessionToken(raw: string) {
+/**
+ * SHA-256 of the raw session token — only this is ever stored or queried.
+ * Exported so callers that already hold the raw cookie value (e.g. the change-
+ * password path that revokes other sessions while keeping this one) can match
+ * against Session.tokenHash without reimplementing the hash.
+ */
+export function hashSessionToken(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
+}
+
+function sessionCookieOptions(expiresAt: Date) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    expires: expiresAt,
+    path: "/",
+  };
 }
 
 export async function hashPassword(password: string) {
@@ -29,7 +55,7 @@ export async function verifyPassword(password: string, hash: string) {
 
 export async function createSession(userId: string) {
   const token = sessionToken();
-  const expiresAt = new Date(Date.now() + SESSION_LENGTH_DAYS * 24 * 60 * 60_000);
+  const expiresAt = new Date(Date.now() + SESSION_LENGTH_MS);
   await db.session.create({
     data: {
       id: randomUUID(),
@@ -40,13 +66,7 @@ export async function createSession(userId: string) {
   });
 
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    expires: expiresAt,
-    path: "/",
-  });
+  cookieStore.set(SESSION_COOKIE, token, sessionCookieOptions(expiresAt));
 }
 
 export async function currentUser(): Promise<User | null> {
@@ -57,8 +77,37 @@ export async function currentUser(): Promise<User | null> {
     where: { tokenHash: hashSessionToken(t) },
     include: { user: true },
   });
-  if (!session) return null;
-  if (session.expiresAt < new Date()) return null;
+  // Server-side revocation, browser-side stale: the cookie carries a token the
+  // DB no longer recognises (or one we've let expire). Delete it so the browser
+  // stops 401'ing every navigation. cookies().delete() is itself only valid in
+  // mutable phases (action/route handler/middleware), so swallow the RSC throw.
+  if (!session || session.expiresAt < new Date()) {
+    try {
+      cookieStore.delete(SESSION_COOKIE);
+    } catch {
+      // RSC render phase — fine, next mutable request will clean up.
+    }
+    return null;
+  }
+  // Sliding-expiry: an active user inside the renewal window gets the cookie
+  // re-set and the row bumped. Cookie set runs first because it's the part
+  // that can fail (RSC render phase) — if it throws, we skip the DB update so
+  // the two sides stay in lockstep and we retry on the next mutable request.
+  const remaining = session.expiresAt.getTime() - Date.now();
+  if (remaining < SESSION_RENEWAL_WINDOW_MS) {
+    const newExpiresAt = new Date(Date.now() + SESSION_LENGTH_MS);
+    try {
+      cookieStore.set(SESSION_COOKIE, t, sessionCookieOptions(newExpiresAt));
+      await db.session.update({
+        where: { id: session.id },
+        data: { expiresAt: newExpiresAt },
+      });
+    } catch {
+      // RSC render phase — the user must hit a Server Action (or any mutable
+      // request) before the original expiry to actually slide. Falls through
+      // to "no renewal" but the existing session is still valid this request.
+    }
+  }
   return session.user;
 }
 

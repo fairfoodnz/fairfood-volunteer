@@ -4,7 +4,9 @@ import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import bcrypt from "bcryptjs";
 import {
+  PASSWORD_MAX,
   appOrigin,
   createSession,
   currentUser,
@@ -23,6 +25,22 @@ import { getPostHogClient } from "@/lib/posthog-server";
 const PASSWORD_MIN = 8;
 const RESET_TTL_HOURS = 24;
 const VERIFY_TTL_HOURS = 24;
+/** Per-user cooldown between verification email issuances. Stops "resend"
+ *  spam from costing Resend quota / damaging sender reputation, and closes
+ *  the inbox-flush race where a fresh send invalidates the first one. */
+const VERIFY_RESEND_COOLDOWN_SECONDS = 60;
+
+/**
+ * Real bcrypt hash precomputed at module load so the "user doesn't exist" path
+ * still runs a full key schedule and matches the wall-clock cost of a genuine
+ * password check. The previous hand-typed `$2b$10$invalid…` literal short-
+ * circuited bcryptjs's format check in <1ms, leaking which emails are
+ * registered. Sync hash at load is ~100ms once per worker — acceptable.
+ */
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(
+  "dummy-password-for-timing-equalisation",
+  10,
+);
 
 /** SHA-256 of the raw reset token — only this is ever stored or queried. */
 function hashToken(raw: string) {
@@ -31,7 +49,11 @@ function hashToken(raw: string) {
 
 const SignInSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1),
+  // Cap at PASSWORD_MAX (72 bytes — bcrypt's silent-truncation point) on every
+  // password input. Without this a multi-MB POST gets bcrypt-hashed on every
+  // attempt — trivial CPU DoS — and any passphrase longer than 72 bytes is
+  // silently truncated so the same input behaves differently across paths.
+  password: z.string().min(1).max(PASSWORD_MAX),
   next: z.string().optional(),
 });
 
@@ -40,8 +62,8 @@ const SignUpSchema = z
     email: z.string().email(),
     firstName: z.string().trim().min(1).max(80),
     lastName: z.string().trim().max(80).optional(),
-    password: z.string().min(PASSWORD_MIN),
-    confirm: z.string().min(PASSWORD_MIN),
+    password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
+    confirm: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
     next: z.string().optional(),
   })
   .refine((d) => d.password === d.confirm, {
@@ -73,9 +95,10 @@ export async function signInAction(
   const user = await db.user.findUnique({ where: { email: lower } });
   // Run bcrypt even when the user doesn't exist, to avoid leaking which emails
   // are registered. A null passwordHash (Google-/passkey-only account that
-  // never set one) coalesces to the same dummy hash, so password sign-in fails
-  // generically and in constant time rather than 500ing on a null.
-  const validHash = user?.passwordHash ?? "$2b$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvali";
+  // never set one) coalesces to a real, precomputed hash so password sign-in
+  // fails generically and at the same wall-clock cost as a genuine wrong-
+  // password check rather than 500ing on a null.
+  const validHash = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
   const ok = await verifyPassword(parsed.data.password, validHash);
   if (!user || !ok) {
     return { error: "That email and password don't match." };
@@ -177,8 +200,8 @@ const ForgotPasswordSchema = z.object({ email: z.string().email() });
 const ResetPasswordSchema = z
   .object({
     token: z.string().min(1),
-    password: z.string().min(PASSWORD_MIN),
-    confirm: z.string().min(PASSWORD_MIN),
+    password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
+    confirm: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
   })
   .refine((d) => d.password === d.confirm, {
     message: "Passwords don't match.",
@@ -456,6 +479,24 @@ export async function resendVerificationAction(
   // Idempotent: an already-verified account gets the same calm "sent" reply
   // rather than a confusing error.
   if (!user.emailVerifiedAt) {
+    // Rate-limit issuance per user. Two motives: (1) "Resend" mash costs
+    // Resend quota and hurts sender reputation; (2) inbox-flush race —
+    // issueEmailVerification invalidates the prior token, so an attacker
+    // who tricks the signed-in unverified user into hammering this can race
+    // the legitimate email out of the inbox between arrival and click.
+    const latest = await db.emailVerificationToken.findFirst({
+      where: { userId: user.id, usedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+    if (latest) {
+      const elapsedMs = Date.now() - latest.createdAt.getTime();
+      if (elapsedMs < VERIFY_RESEND_COOLDOWN_SECONDS * 1000) {
+        return {
+          error: `Please wait a moment before requesting another verification email.`,
+        };
+      }
+    }
     await issueEmailVerification(user);
   }
   return { sent: true };
@@ -468,8 +509,8 @@ export async function resendVerificationAction(
 const ClaimInviteSchema = z
   .object({
     token: z.string().min(1),
-    password: z.string().min(PASSWORD_MIN),
-    confirm: z.string().min(PASSWORD_MIN),
+    password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
+    confirm: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
   })
   .refine((d) => d.password === d.confirm, {
     message: "Passwords don't match.",
