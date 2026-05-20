@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { appOrigin, requireAdmin } from "@/lib/auth";
 import { sendVolunteerInviteEmail } from "@/lib/email";
 import {
+  MAX_FILE_BYTES,
   parseRoster,
   markExisting,
   summarise,
@@ -54,6 +55,16 @@ export async function parseFileAction(
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Choose a CSV or .xlsx file to upload." };
+  }
+  // Short-circuit on FormData-reported size before we materialise the bytes.
+  // parseRoster also caps post-buffer, but waiting until then means we've
+  // already allocated the whole array for a 100 MB upload — an easy memory-
+  // exhaustion shape on an admin route.
+  if (file.size > MAX_FILE_BYTES) {
+    return {
+      ok: false,
+      error: `That file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_FILE_BYTES / 1024 / 1024} MB — try splitting it.`,
+    };
   }
 
   // We need the bytes server-side; File from a server-action form is a
@@ -116,6 +127,14 @@ export async function confirmImportAction(formData: FormData): Promise<ConfirmRe
 
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Choose a CSV or .xlsx file to upload." };
+  }
+  // Same early bail-out as parseFileAction — the confirm path also reads the
+  // full buffer, so a 100 MB submit here would skip the preview's cap.
+  if (file.size > MAX_FILE_BYTES) {
+    return {
+      ok: false,
+      error: `That file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_FILE_BYTES / 1024 / 1024} MB — try splitting it.`,
+    };
   }
   const buffer = Buffer.from(await file.arrayBuffer());
 

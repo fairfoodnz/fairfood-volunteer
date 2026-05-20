@@ -5,10 +5,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+// Plain Unicode here, not HTML entities — the answers render as text so
+// React would escape any `&rsquo;` literally. Keeps the dangerouslySetInnerHTML
+// off this component (and out of a future CMS-backed refactor where it would
+// turn into stored XSS).
 const faqs = [
   {
     q: "Do I need any experience to volunteer?",
-    a: "Nope — as long as you&rsquo;ve got a pair of hands and are willing to do the mahi then we will welcome you at the kai tables.",
+    a: "Nope — as long as you’ve got a pair of hands and are willing to do the mahi then we will welcome you at the kai tables.",
   },
   {
     q: "How old do I need to be?",
@@ -20,15 +24,15 @@ const faqs = [
   },
   {
     q: "Can I come as a walk-in?",
-    a: "We can&rsquo;t always accommodate walk-ins because shifts have a set capacity. Booking ahead through this site is the most reliable way to get a spot.",
+    a: "We can’t always accommodate walk-ins because shifts have a set capacity. Booking ahead through this site is the most reliable way to get a spot.",
   },
   {
     q: "I want to bring my workplace — how does that work?",
-    a: "Email volunteering@fairfood.org.nz or use the &ldquo;Bring your team&rdquo; page. We&rsquo;ve hosted 150+ companies and tailor the session around your group&rsquo;s size and interests.",
+    a: "Email volunteering@fairfood.org.nz or use the “Bring your team” page. We’ve hosted 150+ companies and tailor the session around your group’s size and interests.",
   },
   {
     q: "What if I need to cancel?",
-    a: "No worries — just open the shift in &ldquo;My shifts&rdquo; and tap cancel. Letting us know early helps us offer the spot to someone else.",
+    a: "No worries — just open the shift in “My shifts” and tap cancel. Letting us know early helps us offer the spot to someone else.",
   },
 ];
 
@@ -63,7 +67,7 @@ export function Faq() {
                 {f.q}
               </AccordionTrigger>
               <AccordionContent className="px-5 pb-5 text-[0.95rem] leading-relaxed text-foreground/75">
-                <span dangerouslySetInnerHTML={{ __html: f.a }} />
+                {f.a}
               </AccordionContent>
             </AccordionItem>
           ))}
