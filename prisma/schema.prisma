@@ -147,21 +147,26 @@ model Passkey {
   @@index([userId])
 }
 
+// Server-side session record. Only the SHA-256 hash of the raw token is
+// stored — the cookie holds the raw token, lookups hash the cookie value
+// first. Same threat model as PasswordResetToken / EmailVerificationToken /
+// VolunteerInvite: a leaked DB backup or read-only SQL injection must not
+// yield working session cookies.
 model Session {
   id        String   @id @default(cuid())
-  token     String   @unique
+  tokenHash String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  @@index([token])
+  @@index([tokenHash])
 }
 
 // Single-use password reset tokens. We store only a SHA-256 hash of the
 // token, never the raw value: a leaked row must not be redeemable, since a
-// reset grants full account takeover. (Session.token is stored raw by
-// contrast — lower value, and resets wipe all sessions anyway.)
+// reset grants full account takeover. Session.tokenHash uses the same
+// pattern; redeeming a reset wipes all sessions for the user.
 model PasswordResetToken {
   id        String    @id @default(cuid())
   tokenHash String    @unique

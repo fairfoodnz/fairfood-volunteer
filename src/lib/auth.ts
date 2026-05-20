@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
@@ -12,6 +12,11 @@ const BCRYPT_ROUNDS = 10;
 
 function sessionToken() {
   return randomBytes(32).toString("hex");
+}
+
+/** SHA-256 of the raw session token — only this is ever stored or queried. */
+function hashSessionToken(raw: string) {
+  return createHash("sha256").update(raw).digest("hex");
 }
 
 export async function hashPassword(password: string) {
@@ -26,7 +31,12 @@ export async function createSession(userId: string) {
   const token = sessionToken();
   const expiresAt = new Date(Date.now() + SESSION_LENGTH_DAYS * 24 * 60 * 60_000);
   await db.session.create({
-    data: { id: randomUUID(), token, userId, expiresAt },
+    data: {
+      id: randomUUID(),
+      tokenHash: hashSessionToken(token),
+      userId,
+      expiresAt,
+    },
   });
 
   const cookieStore = await cookies();
@@ -44,7 +54,7 @@ export async function currentUser(): Promise<User | null> {
   const t = cookieStore.get(SESSION_COOKIE)?.value;
   if (!t) return null;
   const session = await db.session.findUnique({
-    where: { token: t },
+    where: { tokenHash: hashSessionToken(t) },
     include: { user: true },
   });
   if (!session) return null;
@@ -56,7 +66,7 @@ export async function signOut() {
   const cookieStore = await cookies();
   const t = cookieStore.get(SESSION_COOKIE)?.value;
   if (t) {
-    await db.session.deleteMany({ where: { token: t } });
+    await db.session.deleteMany({ where: { tokenHash: hashSessionToken(t) } });
   }
   cookieStore.delete(SESSION_COOKIE);
 }
