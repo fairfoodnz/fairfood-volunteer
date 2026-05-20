@@ -1,0 +1,24 @@
+name: Dependency review
+
+# Comments on PRs that introduce vulnerable or disallowed-license dependencies.
+# Complements Dependabot (which finds issues post-merge) by catching them at PR time.
+# Free for public repos; no other config required.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/dependency-review-action@v4
+        with:
+          comment-summary-in-pr: on-failure

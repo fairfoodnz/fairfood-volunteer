@@ -8,11 +8,11 @@ import {
 const faqs = [
   {
     q: "Do I need any experience to volunteer?",
-    a: "Nope — most shifts are unskilled and our team will show you the ropes. The Conscious Kitchen welcomes people who&rsquo;ve never held a chef&rsquo;s knife as well as those who run their own restaurants.",
+    a: "Nope — as long as you&rsquo;ve got a pair of hands and are willing to do the mahi then we will welcome you at the kai tables.",
   },
   {
     q: "How old do I need to be?",
-    a: "Most shifts are for volunteers aged 16+. For younger rangatahi, get in touch — we run school groups under supervision.",
+    a: "Most shifts are for volunteers aged 16+. Anyone under 18 years old must come with a parent or guardian first. For younger rangatahi, get in touch — we run school groups under supervision.",
   },
   {
     q: "What should I wear and bring?",

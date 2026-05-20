@@ -30,21 +30,25 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v4
+        # Reads the exact pnpm version from package.json's `packageManager`
+        # field — no version pinned here so the two stay in lockstep.
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: pnpm exec prisma generate
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Build (next build — full TS check)
-        run: npm run build
+        run: pnpm run build
 
   unit:
     name: Unit tests (Vitest)
@@ -54,20 +58,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v4
+        # Reads the exact pnpm version from package.json's `packageManager`
+        # field — no version pinned here so the two stay in lockstep.
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       # auth.ts is `server-only` and pulls in db.ts → the generated client
       # must exist for Vitest to resolve `@/generated/prisma`.
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: pnpm exec prisma generate
 
       - name: Unit tests
-        run: npm run test:unit
+        run: pnpm run test:unit
 
   e2e:
     name: E2E tests (Playwright)
@@ -103,30 +111,34 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v4
+        # Reads the exact pnpm version from package.json's `packageManager`
+        # field — no version pinned here so the two stay in lockstep.
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: pnpm exec prisma generate
 
       - name: Apply migrations
-        run: npx prisma migrate deploy
+        run: pnpm exec prisma migrate deploy
 
       - name: Seed database
-        run: npx prisma db seed
+        run: pnpm exec prisma db seed
 
       - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Run E2E tests
-        run: npm run test:e2e
+        run: pnpm run test:e2e
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
