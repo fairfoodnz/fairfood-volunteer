@@ -275,6 +275,17 @@ export async function resetPasswordAction(
     };
   }
 
+  // Refuse to swap an active session onto another account — opening someone
+  // else's reset link while signed in as yourself must not silently take over
+  // the target account's session cookie. Force an explicit sign-out first.
+  const sessionUser = await currentUser();
+  if (sessionUser && sessionUser.id !== record.userId) {
+    return {
+      error:
+        "You're signed in as a different account. Sign out, then open this reset link again.",
+    };
+  }
+
   const passwordHash = await hashPassword(parsed.data.password);
   await db.$transaction([
     db.user.update({
@@ -373,6 +384,17 @@ export async function verifyEmailAction(
     return {
       error:
         "This verification link is invalid or has expired. Request a new one.",
+    };
+  }
+
+  // Refuse to swap an active session onto another account — a phished or
+  // forwarded verification link must not silently overwrite the current
+  // session cookie with the target user's. Force explicit sign-out first.
+  const sessionUser = await currentUser();
+  if (sessionUser && sessionUser.id !== record.userId) {
+    return {
+      error:
+        "You're signed in as a different account. Sign out, then open this verification link again.",
     };
   }
 
@@ -527,6 +549,17 @@ export async function claimInviteAction(
     return {
       error:
         "This invite link is invalid or has expired. Ask your coordinator to resend it.",
+    };
+  }
+
+  // Same session-swap guard as the verify-email and reset-password flows:
+  // claiming an invite while signed in as a different account must not
+  // silently overwrite the cookie with a session for the invitee.
+  const sessionUser = await currentUser();
+  if (sessionUser && sessionUser.id !== record.userId) {
+    return {
+      error:
+        "You're signed in as a different account. Sign out, then open this invite link again.",
     };
   }
 
