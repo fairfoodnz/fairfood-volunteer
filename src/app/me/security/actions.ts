@@ -12,7 +12,12 @@ import {
   type RegistrationResponseJSON,
 } from "@simplewebauthn/server";
 import { Prisma } from "@/generated/prisma";
-import { hashPassword, requireUser, verifyPassword } from "@/lib/auth";
+import {
+  SESSION_COOKIE,
+  hashPassword,
+  requireUser,
+  verifyPassword,
+} from "@/lib/auth";
 import { db } from "@/lib/db";
 import { fullName } from "@/lib/users";
 import { GOOGLE_PROVIDER } from "@/lib/oauth";
@@ -28,7 +33,6 @@ import {
 } from "@/lib/webauthn";
 
 const PASSWORD_MIN = 8;
-const SESSION_COOKIE = "ff_session";
 
 export type RegisterBeginState =
   | { ok: true; options: PublicKeyCredentialCreationOptionsJSON }
@@ -271,20 +275,28 @@ export async function changePasswordAction(
   const cookieStore = await cookies();
   const currentToken = cookieStore.get(SESSION_COOKIE)?.value;
 
-  await db.$transaction([
-    db.user.update({
-      where: { id: user.id },
-      data: { passwordHash: newHash },
-    }),
-    db.session.deleteMany({
-      where: {
-        userId: user.id,
-        ...(currentToken ? { token: { not: currentToken } } : {}),
-      },
-    }),
-  ]);
+  // Interactive + Serializable to match this file's pattern for sensitive
+  // writes (passkey/Google disconnect). Closes the stale-read window between
+  // the requireUser() fetch and the update.
+  await db.$transaction(
+    async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { passwordHash: newHash },
+      });
+      await tx.session.deleteMany({
+        where: {
+          userId: user.id,
+          ...(currentToken ? { token: { not: currentToken } } : {}),
+        },
+      });
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 
   const posthog = getPostHogClient();
+  // user.passwordHash reflects the pre-update value (requireUser() ran before
+  // the transaction), so this correctly names the event "changed" vs "set".
   posthog.capture({
     distinctId: user.id,
     event: user.passwordHash ? "password_changed" : "password_set",

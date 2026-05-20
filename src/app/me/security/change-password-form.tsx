@@ -9,6 +9,12 @@ import { changePasswordAction, type ChangePasswordState } from "./actions";
 
 export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
   const [open, setOpen] = useState(false);
+  // Track the "has a password now" bit client-side: `hasPassword` is a frozen
+  // prop from the initial server render, and `revalidatePath` won't refresh
+  // this Server Component's snapshot until the next navigation. After a
+  // successful first-time set we need the button/labels/required fields to
+  // flip immediately.
+  const [hasPasswordNow, setHasPasswordNow] = useState(hasPassword);
   const [state, setState] = useState<ChangePasswordState>({});
   const [pending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
@@ -20,7 +26,8 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
       const result = await changePasswordAction(state, formData);
       setState(result);
       if (result.ok) {
-        toast.success(hasPassword ? "Password updated." : "Password set.");
+        toast.success(hasPasswordNow ? "Password updated." : "Password set.");
+        if (!hasPasswordNow) setHasPasswordNow(true);
         formRef.current?.reset();
         setOpen(false);
       }
@@ -38,7 +45,7 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
           setOpen(true);
         }}
       >
-        {hasPassword ? "Change password" : "Set a password"}
+        {hasPasswordNow ? "Change password" : "Set a password"}
       </Button>
     );
   }
@@ -47,7 +54,7 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
 
   return (
     <form ref={formRef} action={onSubmit} className="space-y-5" noValidate>
-      {hasPassword && (
+      {hasPasswordNow && (
         <Field
           label="Current password"
           id="currentPassword"
@@ -84,7 +91,7 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
         >
           {pending
             ? "Saving…"
-            : hasPassword
+            : hasPasswordNow
               ? "Update password"
               : "Set password"}
         </Button>
@@ -102,11 +109,12 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
           Cancel
         </Button>
       </div>
-      {hasPassword && (
-        <p className="text-xs text-foreground/55">
-          Changing your password will sign you out on every other device.
-        </p>
-      )}
+      {/* Shown for both "change" and first-time "set": the action revokes
+          every other session in either case (a fresh credential should kick
+          any lingering Google/passkey-only logins on other devices). */}
+      <p className="text-xs text-foreground/55">
+        Saving will sign you out on every other device.
+      </p>
     </form>
   );
 }
@@ -126,7 +134,10 @@ function Field({
   error?: string;
   required?: boolean;
 }) {
-  const helperId = helper ? `${id}-helper` : undefined;
+  // Only point aria-describedby at the helper while it's actually rendered —
+  // when an error is shown, the helper <p> below is hidden, so pointing to a
+  // non-existent id would be a dangling ARIA reference.
+  const helperId = helper && !error ? `${id}-helper` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   return (
     <div className="space-y-2">

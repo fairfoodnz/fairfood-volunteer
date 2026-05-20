@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import { db } from "./db";
 import type { User } from "@/generated/prisma";
 
-const SESSION_COOKIE = "ff_session";
+export const SESSION_COOKIE = "ff_session";
 const SESSION_LENGTH_DAYS = 30;
 const BCRYPT_ROUNDS = 10;
 
