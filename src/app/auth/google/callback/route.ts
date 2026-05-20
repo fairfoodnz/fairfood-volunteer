@@ -10,7 +10,6 @@ import {
   type GoogleIdentity,
 } from "@/lib/oauth";
 import { getPostHogClient } from "@/lib/posthog-server";
-import { fullName } from "@/lib/users";
 
 export const dynamic = "force-dynamic";
 
@@ -169,11 +168,7 @@ async function resolveDestination(
   posthogNew.capture({
     distinctId: created.id,
     event: "google_sign_in",
-    properties: {
-      is_new_user: true,
-      name: fullName(created),
-      email: created.email,
-    },
+    properties: { is_new_user: true },
   });
   await posthogNew.flush();
   // New account has no profileCompletedAt → routed to the questionnaire.

@@ -19,7 +19,6 @@ import {
   sendWelcomeEmail,
 } from "@/lib/email";
 import { getPostHogClient } from "@/lib/posthog-server";
-import { fullName } from "@/lib/users";
 
 const PASSWORD_MIN = 8;
 const RESET_TTL_HOURS = 24;
@@ -144,7 +143,9 @@ export async function signUpAction(
   posthog.capture({
     distinctId: user.id,
     event: "sign_up_completed",
-    properties: { method: "email", name: fullName(user), email: user.email },
+    // No PII in PostHog properties — distinctId stitches the person; name
+    // and email stay in the app's own database where they belong.
+    properties: { method: "email" },
   });
   await posthog.flush();
 
@@ -623,7 +624,7 @@ export async function claimInviteAction(
   posthog.capture({
     distinctId: user.id,
     event: "invite_claimed",
-    properties: { method: "password", name: fullName(user), email: user.email },
+    properties: { method: "password" },
   });
   await posthog.flush();
 
