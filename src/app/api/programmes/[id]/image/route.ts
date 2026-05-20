@@ -48,9 +48,11 @@ export async function GET(
     // Without nosniff, a browser could sniff a malformed object (HTML/SVG
     // smuggled in under image/*) and render active content on the app origin.
     "X-Content-Type-Options": "nosniff",
-    // Belt-and-braces: even if the type were wrong, force the browser to
-    // download rather than render. Inline images on cards still work via
-    // <img src=…>, which ignores Content-Disposition.
+    // <img src=…> ignores Content-Disposition; this only affects direct URL
+    // visits, where we want the image to preview in the browser rather than
+    // trigger a download. Paired with the Content-Type allowlist + nosniff
+    // above, an unexpected payload would be served as application/octet-
+    // stream and the browser would download it instead of rendering.
     "Content-Disposition": "inline",
     // Object key changes on every upload (uuid), so it's safe to cache hard.
     "Cache-Control": "public, max-age=300, stale-while-revalidate=86400",

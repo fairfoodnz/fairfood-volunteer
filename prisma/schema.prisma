@@ -170,7 +170,7 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  @@index([tokenHash])
+  @@index([userId])
 }
 
 // Single-use password reset tokens. We store only a SHA-256 hash of the

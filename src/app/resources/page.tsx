@@ -1,6 +1,7 @@
 import { FileText, Image as ImageIcon, Map as MapIcon } from "lucide-react";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   CATEGORY_LABELS,
@@ -62,12 +63,19 @@ function shortType(mime: string) {
 }
 
 export default async function ResourcesPage() {
-  // /resources is a public/volunteer-facing surface. ADMIN-only documents
-  // never appear here regardless of who's looking — admins manage those at
-  // /admin/documents. The /api/documents/[id] route still enforces auth on
-  // VOLUNTEER docs, so a hand-typed URL into a non-PUBLIC doc fails there.
+  // /resources is a public/volunteer-facing surface. Anonymous visitors see
+  // only PUBLIC documents — VOLUNTEER titles and descriptions stay behind
+  // sign-in (the metadata can be informative on its own, not just the
+  // download URL). Signed-in users see PUBLIC + VOLUNTEER. ADMIN docs never
+  // appear here regardless of role; admins manage those at /admin/documents.
+  // The /api/documents/[id] route is the authoritative ACL — this is the
+  // listing surface only.
+  const user = await currentUser();
   const documents = await db.document.findMany({
-    where: { deletedAt: null, visibility: { in: ["PUBLIC", "VOLUNTEER"] } },
+    where: {
+      deletedAt: null,
+      visibility: user ? { in: ["PUBLIC", "VOLUNTEER"] } : "PUBLIC",
+    },
     orderBy: [{ category: "asc" }, { title: "asc" }],
   });
 
