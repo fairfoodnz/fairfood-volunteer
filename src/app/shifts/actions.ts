@@ -292,7 +292,7 @@ export async function bookShiftsAction(
           };
           await sendBookingConfirmationEmail({
             to: user.email,
-            userName: user.name || undefined,
+            userName: user.firstName || undefined,
             programTitle: shift.program.title,
             whenLabel,
             location: shift.program.location,
