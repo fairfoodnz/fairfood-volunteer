@@ -18,6 +18,7 @@ import {
   sendWelcomeEmail,
 } from "@/lib/email";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { fullName } from "@/lib/users";
 
 const PASSWORD_MIN = 8;
 const RESET_TTL_HOURS = 24;
@@ -44,7 +45,8 @@ const SignInSchema = z.object({
 const SignUpSchema = z
   .object({
     email: z.string().email(),
-    name: z.string().trim().min(1).max(120),
+    firstName: z.string().trim().min(1).max(80),
+    lastName: z.string().trim().max(80).optional(),
     password: z.string().min(PASSWORD_MIN),
     confirm: z.string().min(PASSWORD_MIN),
     next: z.string().optional(),
@@ -57,7 +59,9 @@ const SignUpSchema = z
 export type SignInState = { error?: string };
 export type SignUpState = {
   error?: string;
-  fieldErrors?: Partial<Record<"email" | "name" | "password" | "confirm", string>>;
+  fieldErrors?: Partial<
+    Record<"email" | "firstName" | "lastName" | "password" | "confirm", string>
+  >;
 };
 
 export async function signInAction(
@@ -101,7 +105,8 @@ export async function signUpAction(
 ): Promise<SignUpState> {
   const parsed = SignUpSchema.safeParse({
     email: formData.get("email"),
-    name: formData.get("name"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName") || undefined,
     password: formData.get("password"),
     confirm: formData.get("confirm"),
     next: formData.get("next") || undefined,
@@ -131,7 +136,8 @@ export async function signUpAction(
   const user = await db.user.create({
     data: {
       email: lower,
-      name: parsed.data.name,
+      firstName: parsed.data.firstName,
+      lastName: parsed.data.lastName || null,
       passwordHash,
     },
   });
@@ -144,7 +150,7 @@ export async function signUpAction(
   posthog.capture({
     distinctId: user.id,
     event: "sign_up_completed",
-    properties: { method: "email", name: user.name, email: user.email },
+    properties: { method: "email", name: fullName(user), email: user.email },
   });
   await posthog.flush();
 
@@ -222,7 +228,7 @@ export async function requestPasswordResetAction(
       await sendPasswordResetEmail({
         to: user.email,
         resetUrl,
-        userName: user.name.split(" ")[0] || undefined,
+        userName: user.firstName || undefined,
         expiresInHours: RESET_TTL_HOURS,
       });
     } catch (err) {
@@ -323,7 +329,7 @@ export async function resetPasswordAction(
 async function issueEmailVerification(user: {
   id: string;
   email: string;
-  name: string;
+  firstName: string;
 }) {
   await db.emailVerificationToken.deleteMany({
     where: { userId: user.id, usedAt: null },
@@ -341,7 +347,7 @@ async function issueEmailVerification(user: {
     await sendVerificationEmail({
       to: user.email,
       verifyUrl,
-      userName: user.name.split(" ")[0] || undefined,
+      userName: user.firstName || undefined,
       expiresInHours: VERIFY_TTL_HOURS,
     });
   } catch (err) {
@@ -406,7 +412,7 @@ export async function verifyEmailAction(
     try {
       await sendWelcomeEmail({
         to: user.email,
-        userName: user.name.split(" ")[0] || undefined,
+        userName: user.firstName || undefined,
       });
     } catch (err) {
       console.error("[welcome-email] send failed", err);

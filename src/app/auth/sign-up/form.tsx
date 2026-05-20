@@ -15,14 +15,23 @@ export function SignUpForm({ next }: { next?: string }) {
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
-      <Field
-        label="Your name"
-        id="name"
-        autoComplete="name"
-        placeholder="e.g. Aroha Williams"
-        error={fe.name}
-        required
-      />
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <Field
+          label="First name"
+          id="firstName"
+          autoComplete="given-name"
+          placeholder="e.g. Aroha"
+          error={fe.firstName}
+          required
+        />
+        <Field
+          label="Last name"
+          id="lastName"
+          autoComplete="family-name"
+          placeholder="e.g. Williams"
+          error={fe.lastName}
+        />
+      </div>
       <Field
         label="Email"
         id="email"

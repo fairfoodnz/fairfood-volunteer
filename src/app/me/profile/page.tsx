@@ -13,7 +13,8 @@ export const metadata = { title: "Profile · Fair Food Volunteer" };
 export const dynamic = "force-dynamic";
 
 const ProfileSchema = z.object({
-  name: z.string().trim().min(1).max(120),
+  firstName: z.string().trim().min(1).max(80),
+  lastName: z.string().trim().max(80).optional(),
   phone: z.string().trim().max(40).optional(),
   pronouns: z.string().trim().max(40).optional(),
   emergencyName: z.string().trim().max(120).optional(),
@@ -25,14 +26,19 @@ async function saveProfile(formData: FormData) {
   "use server";
   const user = await requireUser();
   const data = ProfileSchema.parse({
-    name: formData.get("name"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName") || undefined,
     phone: formData.get("phone") || undefined,
     pronouns: formData.get("pronouns") || undefined,
     emergencyName: formData.get("emergencyName") || undefined,
     emergencyPhone: formData.get("emergencyPhone") || undefined,
     accessNeeds: formData.get("accessNeeds") || undefined,
   });
-  await db.user.update({ where: { id: user.id }, data });
+  // Empty last name clears the column (mononym) rather than leaving the old value.
+  await db.user.update({
+    where: { id: user.id },
+    data: { ...data, lastName: data.lastName ?? null },
+  });
   revalidatePath("/me/profile");
   revalidatePath("/me");
 }
@@ -57,7 +63,17 @@ export default async function ProfilePage() {
 
           <form action={saveProfile} className="mt-10 space-y-8">
             <Card title="The basics">
-              <Field label="Name" name="name" defaultValue={fresh?.name} required />
+              <Field
+                label="First name"
+                name="firstName"
+                defaultValue={fresh?.firstName}
+                required
+              />
+              <Field
+                label="Last name"
+                name="lastName"
+                defaultValue={fresh?.lastName ?? ""}
+              />
               <Field label="Email" value={fresh?.email} disabled />
               <Field label="Phone" name="phone" defaultValue={fresh?.phone ?? ""} />
               <Field

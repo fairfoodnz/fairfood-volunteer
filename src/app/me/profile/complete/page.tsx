@@ -28,7 +28,7 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
         <div className="container-x mx-auto max-w-2xl">
           <header className="mb-10 space-y-3">
             <p className="eyebrow text-leaf-deep">
-              Kia ora, {user.name.split(" ")[0]}
+              Kia ora, {user.firstName}
             </p>
             <h1 className="display text-balance text-3xl font-bold leading-tight md:text-4xl">
               Let&rsquo;s get you sorted before your first shift.

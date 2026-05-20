@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { bookShiftAction, type BookState } from "../actions";
+import type { PersonName } from "@/lib/users";
 
 export function BookForm({
   shiftId,
   user,
 }: {
   shiftId: string;
-  user: { name: string; email: string } | null;
+  user: (PersonName & { email: string }) | null;
 }) {
   const [state, action, pending] = useActionState<BookState, FormData>(
     bookShiftAction,
@@ -25,7 +26,7 @@ export function BookForm({
       <div className="space-y-1">
         <p className="eyebrow text-leaf-deep">Book this shift</p>
         <h3 className="display text-xl font-semibold">
-          {user ? `Lock it in, ${user.name.split(" ")[0]}` : "Sign up to book"}
+          {user ? `Lock it in, ${user.firstName}` : "Sign up to book"}
         </h3>
         {!user && (
           <p className="text-sm text-foreground/70">

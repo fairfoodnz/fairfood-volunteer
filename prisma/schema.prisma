@@ -54,7 +54,10 @@ model User {
   // (still timing-safe). A password reset can later populate it (the user
   // controls the inbox), which simply adds password login as another option.
   passwordHash    String?
-  name            String
+  firstName       String
+  // Null for mononyms and OAuth identities that only supply a given name.
+  // Display code must treat a missing last name gracefully (see lib/users.ts).
+  lastName        String?
   phone           String?
   role            Role                @default(VOLUNTEER)
   pronouns        String?

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { formatShiftRange } from "@/lib/programs";
+import { fullName } from "@/lib/users";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BookingStatus, Role } from "@/generated/prisma";
@@ -35,9 +36,11 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const user = await db.user.findUnique({
     where: { id },
-    select: { name: true },
+    select: { firstName: true, lastName: true },
   });
-  return { title: user ? `${user.name} · Volunteers` : "Volunteer · Admin" };
+  return {
+    title: user ? `${fullName(user)} · Volunteers` : "Volunteer · Admin",
+  };
 }
 
 export default async function VolunteerDetailPage({ params }: Props) {
@@ -100,7 +103,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
           <div>
             <p className="eyebrow">Volunteer</p>
             <h1 className="display mt-2 flex flex-wrap items-center gap-3 text-3xl font-bold leading-tight md:text-4xl">
-              {user.name}
+              {fullName(user)}
               {isAdminUser && (
                 <span className="rounded-full bg-leaf/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-leaf-deep">
                   Admin
@@ -291,8 +294,8 @@ export default async function VolunteerDetailPage({ params }: Props) {
                   <p className="text-sm">
                     {isAdminUser ? (
                       <>
-                        <span className="font-semibold">{user.name}</span> is
-                        currently an admin. Demoting removes access to{" "}
+                        <span className="font-semibold">{fullName(user)}</span>{" "}
+                        is currently an admin. Demoting removes access to{" "}
                         <code className="rounded bg-foreground/10 px-1 text-xs">
                           /admin
                         </code>{" "}
@@ -300,7 +303,8 @@ export default async function VolunteerDetailPage({ params }: Props) {
                       </>
                     ) : (
                       <>
-                        Make <span className="font-semibold">{user.name}</span>{" "}
+                        Make{" "}
+                        <span className="font-semibold">{fullName(user)}</span>{" "}
                         an admin. They&rsquo;ll be able to manage rosters,
                         documents, and other volunteers.
                       </>
