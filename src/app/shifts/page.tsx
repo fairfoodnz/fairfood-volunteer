@@ -37,29 +37,35 @@ export default async function ShiftsPage({ searchParams }: Props) {
     ...programmes.map((p) => ({ label: p.title, slug: p.slug })),
   ];
 
-  const shifts = await db.shift.findMany({
-    where: {
-      cancelled: false,
-      startsAt: { gte: new Date() },
-      program:
-        filter !== "ALL"
-          ? { slug: filter }
-          : { slug: { not: INCLUSIVE_SLUG } },
-    },
-    orderBy: { startsAt: "asc" },
-    include: {
-      program: true,
-      _count: {
-        select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
+  // The shifts query and the session lookup are independent — run them in
+  // parallel to save a round-trip on slower connections. The per-user
+  // booking lookup that follows still depends on both, so it stays
+  // sequential.
+  const [shifts, user] = await Promise.all([
+    db.shift.findMany({
+      where: {
+        cancelled: false,
+        startsAt: { gte: new Date() },
+        program:
+          filter !== "ALL"
+            ? { slug: filter }
+            : { slug: { not: INCLUSIVE_SLUG } },
       },
-      blocks: { select: { slots: true } },
-    },
-    take: 60,
-  });
+      orderBy: { startsAt: "asc" },
+      include: {
+        program: true,
+        _count: {
+          select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
+        },
+        blocks: { select: { slots: true } },
+      },
+      take: 60,
+    }),
+    currentUser(),
+  ]);
 
   // Fetch the viewer's confirmed bookings so the listing can mark them as
   // "Going" rather than offering a redundant tick. We only need IDs.
-  const user = await currentUser();
   const myBookedShiftIds = user
     ? new Set(
         (

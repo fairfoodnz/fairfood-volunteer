@@ -197,6 +197,14 @@ export async function bookShiftsAction(
     };
   }
 
+  // KNOWN RACE (TOCTOU): the capacity check below reads counts from a snapshot
+  // taken once before the loop, so two concurrent requests can both pass the
+  // check for the last spot and over-book by one. The race already exists in
+  // bookShiftAction (single shift); this version inherits it and widens the
+  // window because creates are sequential. The proper fix — for both actions —
+  // is an atomic INSERT … WHERE (filled + blocked) < capacity. Tracked as a
+  // follow-up rather than landing it inside this UX change so both call sites
+  // can move together.
   const shifts = await db.shift.findMany({
     where: { id: { in: parsed.data.shiftIds } },
     include: {
@@ -239,8 +247,16 @@ export async function bookShiftsAction(
     }
 
     try {
+      // status defaults to CONFIRMED in the schema but we set it explicitly:
+      // the listing's `myBookedShiftIds` filters on CONFIRMED, so this field
+      // is part of the booking's observable contract — not an implementation
+      // detail the schema default should hide.
       const booking = await db.booking.create({
-        data: { userId: user.id, shiftId: shift.id },
+        data: {
+          userId: user.id,
+          shiftId: shift.id,
+          status: BookingStatus.CONFIRMED,
+        },
       });
       confirmed.push({ booking, shift });
     } catch (e) {
