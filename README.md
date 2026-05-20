@@ -4,6 +4,8 @@ Volunteer management for [Fair Food](https://volunteer.fairfood.org.nz) — prog
 
 Built with Next.js 16 (App Router) + React 19, Prisma 7 over Postgres, Tailwind CSS v4 with shadcn/ui, and custom password auth (plus Google sign-in and passkeys). Deployed on Coolify with Garage S3 for object storage (not Vercel).
 
+The package manager is **pnpm** (pinned via `packageManager` in `package.json`). Enable Corepack once with `corepack enable` and the right pnpm version is used automatically.
+
 ## Getting started
 
 Start the local Postgres and S3 services, then the dev server:
@@ -14,11 +16,11 @@ docker compose up -d garage    # Garage S3 on localhost:3900
 ./scripts/garage-init.sh       # first run only — prints the S3_* env vars
 
 cp .env.example .env           # then fill in the values below
-npm install
-npx prisma migrate dev
-npx prisma db seed
+pnpm install
+pnpm exec prisma migrate dev
+pnpm exec prisma db seed
 
-npm run dev                    # http://localhost:3000
+pnpm dev                       # http://localhost:3000
 ```
 
 In dev, with `RESEND_API_KEY` unset, transactional emails (email verification, password reset) are printed to the server console instead of being sent.
@@ -31,15 +33,15 @@ See `.env.example`. Required: `DATABASE_URL`, `AUTH_SECRET`, `NEXT_PUBLIC_APP_UR
 
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Next.js dev server on port 3000 |
-| `npm run build` | Production build (`output: "standalone"`) |
-| `npm start` | Run the built server |
-| `npm run lint` | ESLint (flat config). Full type checking is via `npm run build` |
-| `npm run email:dev` | react-email preview on port 3001 (`emails/`) |
-| `npx prisma migrate dev` | Apply migrations locally |
-| `npx prisma db seed` | Seed the database (`prisma/seed.ts`) |
-| `npm test` / `npm run test:unit` | Vitest unit tests (`tests/unit/`) |
-| `npm run test:e2e` | Playwright e2e tests (`tests/e2e/`; needs the seeded dev DB) |
+| `pnpm dev` | Next.js dev server on port 3000 |
+| `pnpm build` | Production build (`output: "standalone"`) |
+| `pnpm start` | Run the built server |
+| `pnpm lint` | ESLint (flat config). Full type checking is via `pnpm build` |
+| `pnpm email:dev` | react-email preview on port 3001 (`emails/`) |
+| `pnpm exec prisma migrate dev` | Apply migrations locally |
+| `pnpm exec prisma db seed` | Seed the database (`prisma/seed.ts`) |
+| `pnpm test` / `pnpm test:unit` | Vitest unit tests (`tests/unit/`) |
+| `pnpm test:e2e` | Playwright e2e tests (`tests/e2e/`; needs the seeded dev DB) |
 
 Tests run in CI via the `unit` and `e2e` jobs in `.github/workflows/ci.yaml`.
 

@@ -4,8 +4,13 @@
 FROM node:24-alpine AS deps
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
-COPY package.json package-lock.json ./
-RUN npm ci
+# Corepack installs pnpm shims; the shims then read the exact pnpm version
+# from package.json's `packageManager` field on first invocation. We can't
+# `corepack prepare --activate` here because that command needs package.json
+# in the CWD — and we want this RUN layer cached above the COPY.
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # ---- builder: generate prisma client + build Next.js standalone bundle
 FROM node:24-alpine AS builder
@@ -39,8 +44,12 @@ ENV S3_ACCESS_KEY_ID=build
 ENV S3_SECRET_ACCESS_KEY=build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate
-RUN npm run build
+# Corepack again so `pnpm` is on PATH for the build step (it ships with Node
+# but needs activation per stage). package.json is now in CWD so the shim
+# can pick up the pinned version from its `packageManager` field.
+RUN corepack enable
+RUN pnpm exec prisma generate
+RUN pnpm run build
 
 # ---- runner: minimal runtime image
 FROM node:24-alpine AS runner

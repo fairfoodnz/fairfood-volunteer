@@ -10,7 +10,7 @@ import { cookies } from "next/headers";
  *  - `origin` = the full origin the ceremony must have happened on, including
  *               port (localhost:3000 in dev). Passed as `expectedOrigin`.
  *
- * localhost is a WebAuthn-secure context, so passkeys work in `npm run dev`
+ * localhost is a WebAuthn-secure context, so passkeys work in `pnpm dev`
  * with no extra setup.
  */
 function appUrl() {

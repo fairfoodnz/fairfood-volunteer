@@ -56,11 +56,17 @@ export default defineConfig({
 
   // In CI the workflow builds, migrates and seeds first, then this just boots
   // the production server. Locally it builds+starts, or reuses an already
-  // running `npm run dev` / `npm start` on :3000.
+  // running `pnpm dev` / `pnpm start` on :3000.
+  //
+  // Don't use the `pnpm start -- -p ${PORT}` form: pnpm forwards `--`
+  // literally to the script (unlike npm, which consumes it), so `next start`
+  // sees `-- -p 3000` as a positional dir arg and errors with
+  // "Invalid project directory provided". `pnpm start -p ${PORT}` is the
+  // right form — extra args after the script name are appended.
   webServer: {
     command: CI
-      ? `npm run start -- -p ${PORT}`
-      : `npm run build && npm run start -- -p ${PORT}`,
+      ? `pnpm start -p ${PORT}`
+      : `pnpm build && pnpm start -p ${PORT}`,
     url: baseURL,
     timeout: 240_000,
     reuseExistingServer: !CI,
