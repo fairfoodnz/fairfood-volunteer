@@ -270,10 +270,7 @@ function Detail({
 function Note({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <h3
-        className="display text-xl font-semibold"
-        dangerouslySetInnerHTML={{ __html: title }}
-      />
+      <h3 className="display text-xl font-semibold">{title}</h3>
       <div className="text-sm text-foreground/75">{children}</div>
     </div>
   );
