@@ -7,6 +7,7 @@ import VerifyEmail from "../../emails/verify-email";
 import WelcomeEmail from "../../emails/welcome";
 import BookingConfirmationEmail from "../../emails/booking-confirmation";
 import BookingCancelledEmail from "../../emails/booking-cancelled";
+import VolunteerInviteEmail from "../../emails/volunteer-invite";
 import type { CalendarLinks } from "@/lib/calendar";
 
 /**
@@ -174,6 +175,33 @@ export async function sendBookingConfirmationEmail(opts: {
         contentType: "text/calendar; method=PUBLISH; charset=utf-8",
       },
     ],
+  });
+}
+
+/**
+ * Renders and sends the `emails/volunteer-invite.tsx` template — the welcome
+ * "set your password" email that goes out after a coordinator bulk-imports a
+ * roster onto the new volunteer portal. Phrased as a portal-launch welcome
+ * rather than an account-claim notice so it lands as a continuation of the
+ * volunteer's existing relationship with Fair Food, not a cold call.
+ */
+export async function sendVolunteerInviteEmail(opts: {
+  to: string;
+  claimUrl: string;
+  userName?: string;
+  expiresInDays?: number;
+}) {
+  const expiresInDays = opts.expiresInDays ?? 7;
+  return sendEmail({
+    to: opts.to,
+    subject: `Welcome to the new Fair Food volunteer portal — set your password`,
+    react: (
+      <VolunteerInviteEmail
+        claimUrl={opts.claimUrl}
+        userName={opts.userName}
+        expiresInDays={expiresInDays}
+      />
+    ),
   });
 }
 

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
+  appOrigin,
   createSession,
   currentUser,
   hashPassword,
@@ -27,13 +28,6 @@ const VERIFY_TTL_HOURS = 24;
 /** SHA-256 of the raw reset token — only this is ever stored or queried. */
 function hashToken(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
-}
-
-/** Absolute origin reset links resolve against (mirrors emails/brand.ts). */
-function appOrigin() {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://volunteer.fairfood.org.nz"
-  ).replace(/\/$/, "");
 }
 
 const SignInSchema = z.object({
@@ -442,6 +436,143 @@ export async function resendVerificationAction(
     await issueEmailVerification(user);
   }
   return { sent: true };
+}
+
+// ---------------------------------------------------------------------------
+// Volunteer invite redemption (admin bulk-import claim flow)
+// ---------------------------------------------------------------------------
+
+const ClaimInviteSchema = z
+  .object({
+    token: z.string().min(1),
+    password: z.string().min(PASSWORD_MIN),
+    confirm: z.string().min(PASSWORD_MIN),
+  })
+  .refine((d) => d.password === d.confirm, {
+    message: "Passwords don't match.",
+    path: ["confirm"],
+  });
+
+export type ClaimInviteState = {
+  error?: string;
+  fieldErrors?: Partial<Record<"password" | "confirm", string>>;
+};
+
+/** Look up a raw invite token and return the invitee, or null if the token is
+ *  bunk / expired / used. Used by the page server-component to render a
+ *  "this link is no longer valid" view before showing the form. */
+export async function findInviteByToken(rawToken: string): Promise<{
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string | null;
+  };
+  expiresAt: Date;
+} | null> {
+  if (!rawToken) return null;
+  const record = await db.volunteerInvite.findUnique({
+    where: { tokenHash: hashToken(rawToken) },
+    include: {
+      user: {
+        select: { id: true, email: true, firstName: true, lastName: true },
+      },
+    },
+  });
+  if (!record || record.usedAt || record.expiresAt < new Date()) return null;
+  return { user: record.user, expiresAt: record.expiresAt };
+}
+
+/**
+ * Set a password from a volunteer-invite token. Mirrors `resetPasswordAction`
+ * but additionally clears `User.importedAt` (the volunteer has now claimed the
+ * account) and uses the dedicated VolunteerInvite table. As with
+ * password-reset, redeeming the link verifies the email (proof of inbox
+ * control) and revokes any prior sessions.
+ */
+export async function claimInviteAction(
+  _prev: ClaimInviteState,
+  formData: FormData,
+): Promise<ClaimInviteState> {
+  const parsed = ClaimInviteSchema.safeParse({
+    token: formData.get("token"),
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) {
+    const fieldErrors: ClaimInviteState["fieldErrors"] = {};
+    let tokenInvalid = false;
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if (key === "token") tokenInvalid = true;
+      else if (key === "password" || key === "confirm") {
+        fieldErrors[key] ??= issue.message;
+      }
+    }
+    if (tokenInvalid) {
+      return {
+        error:
+          "This invite link is invalid or has expired. Ask your coordinator to resend it.",
+      };
+    }
+    return Object.keys(fieldErrors).length
+      ? { fieldErrors }
+      : { error: "Choose a password of at least 8 characters." };
+  }
+
+  const record = await db.volunteerInvite.findUnique({
+    where: { tokenHash: hashToken(parsed.data.token) },
+  });
+  if (!record || record.usedAt || record.expiresAt < new Date()) {
+    return {
+      error:
+        "This invite link is invalid or has expired. Ask your coordinator to resend it.",
+    };
+  }
+
+  const passwordHash = await hashPassword(parsed.data.password);
+  await db.$transaction([
+    db.user.update({
+      where: { id: record.userId },
+      data: {
+        passwordHash,
+        // Volunteer has claimed — they're no longer "awaiting claim".
+        importedAt: null,
+      },
+    }),
+    // Clicking through proves inbox control — verify the email if it wasn't
+    // already (idempotent against the password-reset path).
+    db.user.updateMany({
+      where: { id: record.userId, emailVerifiedAt: null },
+      data: { emailVerifiedAt: new Date() },
+    }),
+    db.volunteerInvite.update({
+      where: { id: record.id },
+      data: { usedAt: new Date() },
+    }),
+    // Drop any sibling unredeemed invites — if there were stale ones (e.g. an
+    // admin resent), this redemption invalidates them. Same shape as reset.
+    db.volunteerInvite.deleteMany({
+      where: { userId: record.userId, usedAt: null },
+    }),
+    // Wipe any pre-existing sessions for safety (rare for a newly-imported
+    // account, but mirrors the reset-password posture).
+    db.session.deleteMany({ where: { userId: record.userId } }),
+  ]);
+
+  const user = await db.user.findUniqueOrThrow({ where: { id: record.userId } });
+  await createSession(user.id);
+
+  const posthog = getPostHogClient();
+  posthog.capture({
+    distinctId: user.id,
+    event: "invite_claimed",
+    properties: { method: "password", name: fullName(user), email: user.email },
+  });
+  await posthog.flush();
+
+  // First-touch: they should complete the questionnaire before booking.
+  redirect("/me/profile/complete");
 }
 
 export async function devSignInAction(formData: FormData) {
