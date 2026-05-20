@@ -47,6 +47,10 @@ export async function GET(
     // Strips CR/LF/quote/backslash from doc.title — closes the
     // header-injection vector through admin-supplied titles.
     "Content-Disposition": contentDispositionHeader(doc.title, "attachment"),
+    // Per-user authorisation result — any intermediary cache (CDN, Coolify
+    // Traefik with caching enabled, a future Cloudflare layer) must NOT
+    // store this response or serve it to a different user.
+    "Cache-Control": "private, no-store",
   };
   if (object.contentLength != null) {
     headers["Content-Length"] = String(object.contentLength);
