@@ -2,16 +2,18 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
-import { ProgramArt } from "@/components/site/illustrations";
 import { formatShiftRange, INCLUSIVE_SLUG } from "@/lib/programs";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
-import { Badge } from "@/components/ui/badge";
+import { currentUser } from "@/lib/auth";
 import { BookingStatus } from "@/generated/prisma";
+import { ShiftsList, type ShiftCard, type ShiftDay } from "./shifts-list";
 
 export const metadata = { title: "Open shifts · Fair Food Volunteer" };
 export const dynamic = "force-dynamic";
 
-type Props = { searchParams: Promise<{ programme?: string }> };
+type Props = {
+  searchParams: Promise<{ programme?: string; selected?: string }>;
+};
 
 export default async function ShiftsPage({ searchParams }: Props) {
   const sp = await searchParams;
@@ -35,27 +37,90 @@ export default async function ShiftsPage({ searchParams }: Props) {
     ...programmes.map((p) => ({ label: p.title, slug: p.slug })),
   ];
 
-  const shifts = await db.shift.findMany({
-    where: {
-      cancelled: false,
-      startsAt: { gte: new Date() },
-      program:
-        filter !== "ALL"
-          ? { slug: filter }
-          : { slug: { not: INCLUSIVE_SLUG } },
-    },
-    orderBy: { startsAt: "asc" },
-    include: {
-      program: true,
-      _count: {
-        select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
+  // The shifts query and the session lookup are independent — run them in
+  // parallel to save a round-trip on slower connections. The per-user
+  // booking lookup that follows still depends on both, so it stays
+  // sequential.
+  const [shifts, user] = await Promise.all([
+    db.shift.findMany({
+      where: {
+        cancelled: false,
+        startsAt: { gte: new Date() },
+        program:
+          filter !== "ALL"
+            ? { slug: filter }
+            : { slug: { not: INCLUSIVE_SLUG } },
       },
-      blocks: { select: { slots: true } },
-    },
-    take: 60,
-  });
+      orderBy: { startsAt: "asc" },
+      include: {
+        program: true,
+        _count: {
+          select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
+        },
+        blocks: { select: { slots: true } },
+      },
+      take: 60,
+    }),
+    currentUser(),
+  ]);
+
+  // Fetch the viewer's confirmed bookings so the listing can mark them as
+  // "Going" rather than offering a redundant tick. We only need IDs.
+  const myBookedShiftIds = user
+    ? new Set(
+        (
+          await db.booking.findMany({
+            where: {
+              userId: user.id,
+              status: BookingStatus.CONFIRMED,
+              shiftId: { in: shifts.map((s) => s.id) },
+            },
+            select: { shiftId: true },
+          })
+        ).map((b) => b.shiftId),
+      )
+    : new Set<string>();
+
+  const initialSelection = (sp.selected ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   const grouped = groupByDay(shifts);
+  const groupedForClient: ShiftDay[] = grouped.map(({ day, shifts }) => ({
+    day,
+    shifts: shifts.map<ShiftCard>((s) => {
+      const { free, isFull } = shiftAvailability(
+        s.capacity,
+        s._count.bookings,
+        sumBlocks(s.blocks),
+      );
+      const alreadyBooked = myBookedShiftIds.has(s.id);
+      const bookable = !isFull && !alreadyBooked;
+      return {
+        id: s.id,
+        whenLabel: formatShiftRange(s.startsAt, s.endsAt),
+        capacity: s.capacity,
+        free,
+        isFull,
+        isAlmostFull: !isFull && free <= 2,
+        notes: s.notes,
+        bookable,
+        unbookableReason: alreadyBooked
+          ? "Already booked"
+          : isFull
+            ? "Full"
+            : null,
+        program: {
+          id: s.program.id,
+          title: s.program.title,
+          slug: s.program.slug,
+          imageUrl: s.program.imageUrl,
+          imageKey: s.program.imageKey,
+        },
+      };
+    }),
+  }));
 
   return (
     <>
@@ -95,80 +160,12 @@ export default async function ShiftsPage({ searchParams }: Props) {
         </section>
 
         <section className="container-x py-12 md:py-16">
-          {grouped.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <div className="space-y-12">
-              {grouped.map(({ day, shifts }) => (
-                <div key={day}>
-                  <div className="mb-5 flex items-baseline justify-between">
-                    <h2 className="display text-2xl font-semibold md:text-3xl">
-                      {day}
-                    </h2>
-                    <span className="font-mono text-xs uppercase tracking-widest text-foreground/55">
-                      {shifts.length} shift{shifts.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                  <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {shifts.map((s) => {
-                      const { free } = shiftAvailability(
-                        s.capacity,
-                        s._count.bookings,
-                        sumBlocks(s.blocks),
-                      );
-                      return (
-                        <li key={s.id}>
-                          <Link
-                            href={`/shifts/${s.id}`}
-                            className="group flex h-full flex-col gap-4 overflow-hidden rounded-md border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-leaf/50 hover:shadow-sm"
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-leaf-deep">
-                                  {s.program.title}
-                                </p>
-                                <p className="mt-1 text-sm font-medium text-foreground/75">
-                                  {formatShiftRange(s.startsAt, s.endsAt)}
-                                </p>
-                              </div>
-                              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-cream-deep transition-transform group-hover:scale-[1.03]">
-                                <ProgramArt program={s.program} />
-                              </div>
-                            </div>
-                            <div className="mt-auto flex items-center justify-between">
-                              <span className="text-sm">
-                                <span className="font-semibold">{free}</span>
-                                <span className="text-foreground/55">
-                                  {" "}
-                                  of {s.capacity} spot{s.capacity === 1 ? "" : "s"} left
-                                </span>
-                              </span>
-                              {free === 0 ? (
-                                <Badge variant="secondary">Full</Badge>
-                              ) : free <= 2 ? (
-                                <Badge className="bg-tomato/15 text-tomato hover:bg-tomato/15">
-                                  Almost full
-                                </Badge>
-                              ) : (
-                                <span className="text-sm font-semibold text-leaf-deep">
-                                  Book →
-                                </span>
-                              )}
-                            </div>
-                            {s.notes && (
-                              <p className="text-xs italic text-foreground/65">
-                                {s.notes}
-                              </p>
-                            )}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
+          <ShiftsList
+            groupedShifts={groupedForClient}
+            initialSelection={initialSelection}
+            authed={!!user}
+            isEmpty={groupedForClient.length === 0}
+          />
         </section>
       </main>
       <SiteFooter />
@@ -206,15 +203,3 @@ function groupByDay(shifts: ShiftWithCount[]) {
   return Array.from(map, ([day, shifts]) => ({ day, shifts }));
 }
 
-function EmptyState() {
-  return (
-    <div className="rounded-md border border-dashed border-border bg-card p-10 text-center">
-      <h3 className="display text-2xl font-semibold">
-        No shifts match — yet.
-      </h3>
-      <p className="mt-2 text-foreground/70">
-        Try a different programme, or come back tomorrow when next week opens.
-      </p>
-    </div>
-  );
-}

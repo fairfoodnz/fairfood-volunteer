@@ -135,7 +135,7 @@ export default async function ShiftPage({ params }: Props) {
                 />
                 <Detail
                   label="Bring"
-                  value="Closed-toe shoes, water bottle, kind energy. Aprons, gloves and a cuppa on us."
+                  value="Closed-toe shoes and hair tied back. Hi-vis, aprons, gloves and a cuppa on us."
                 />
                 <Detail
                   label="Not sure?"
