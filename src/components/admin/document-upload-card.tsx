@@ -9,13 +9,15 @@ import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
   MAX_UPLOAD_BYTES,
+  VISIBILITY_LABELS,
+  VISIBILITY_ORDER,
   formatBytes,
 } from "@/lib/documents";
 import {
   uploadDocumentAction,
   type UploadState,
 } from "@/app/admin/documents/actions";
-import { DocumentCategory } from "@/generated/prisma";
+import { DocumentCategory, DocumentVisibility } from "@/generated/prisma";
 
 const INITIAL_STATE: UploadState = {};
 
@@ -179,6 +181,21 @@ export function DocumentUploadCard() {
                 {CATEGORY_ORDER.map((c) => (
                   <option key={c} value={c}>
                     {CATEGORY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Who can see it?" htmlFor="doc-visibility">
+              <select
+                id="doc-visibility"
+                name="visibility"
+                defaultValue={DocumentVisibility.VOLUNTEER}
+                disabled={pending}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-60"
+              >
+                {VISIBILITY_ORDER.map((v) => (
+                  <option key={v} value={v}>
+                    {VISIBILITY_LABELS[v]}
                   </option>
                 ))}
               </select>

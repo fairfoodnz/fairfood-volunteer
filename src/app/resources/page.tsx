@@ -62,8 +62,12 @@ function shortType(mime: string) {
 }
 
 export default async function ResourcesPage() {
+  // /resources is a public/volunteer-facing surface. ADMIN-only documents
+  // never appear here regardless of who's looking — admins manage those at
+  // /admin/documents. The /api/documents/[id] route still enforces auth on
+  // VOLUNTEER docs, so a hand-typed URL into a non-PUBLIC doc fails there.
   const documents = await db.document.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, visibility: { in: ["PUBLIC", "VOLUNTEER"] } },
     orderBy: [{ category: "asc" }, { title: "asc" }],
   });
 

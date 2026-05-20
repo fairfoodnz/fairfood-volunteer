@@ -10,8 +10,9 @@ import {
   MAX_UPLOAD_BYTES,
   extensionForMime,
 } from "@/lib/documents";
+import { bufferMatchesMime } from "@/lib/file-sniff";
 import { deleteObject, putObject } from "@/lib/s3";
-import { DocumentCategory } from "@/generated/prisma";
+import { DocumentCategory, DocumentVisibility } from "@/generated/prisma";
 
 export type UploadState = {
   error?: string;
@@ -22,6 +23,7 @@ const UploadSchema = z.object({
   title: z.string().trim().min(1, "Give it a title.").max(160),
   description: z.string().trim().max(600).optional().or(z.literal("")),
   category: z.nativeEnum(DocumentCategory),
+  visibility: z.nativeEnum(DocumentVisibility),
 });
 
 export async function uploadDocumentAction(
@@ -49,14 +51,24 @@ export async function uploadDocumentAction(
     title: formData.get("title"),
     description: formData.get("description") ?? "",
     category: formData.get("category"),
+    visibility: formData.get("visibility") ?? DocumentVisibility.VOLUNTEER,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the form." };
   }
 
+  const buffer = Buffer.from(await file.arrayBuffer());
+  // file.type is set by the browser and can lie. Verify the magic bytes
+  // match the declared MIME before we touch storage — stops a renamed
+  // .html / .svg from landing in object storage labelled as image/png.
+  if (!bufferMatchesMime(buffer, file.type)) {
+    return {
+      error: "That file's contents don't match its file type. Re-export it and try again.",
+    };
+  }
+
   const ext = extensionForMime(file.type, file.name);
   const objectKey = `documents/${randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
 
   await putObject({ key: objectKey, body: buffer, contentType: file.type });
 
@@ -66,6 +78,7 @@ export async function uploadDocumentAction(
         title: parsed.data.title,
         description: parsed.data.description || null,
         category: parsed.data.category,
+        visibility: parsed.data.visibility,
         objectKey,
         mimeType: file.type,
         sizeBytes: file.size,
