@@ -159,6 +159,18 @@ export default function BookingConfirmationEmail({
               ) : null}
             </Section>
 
+            <Section
+              className={`mb-[28px] border-l-[3px] border-l-solid border-l-[${brand.leafDeep}] bg-[${brand.cream}] px-[20px] py-[16px]`}
+            >
+              <Text
+                className={`m-0 text-[15px] leading-[24px] text-[${brand.charcoal}]`}
+              >
+                <strong>First time with us?</strong> Please arrive 15 minutes
+                early so we can run you through a quick induction before the
+                shift starts.
+              </Text>
+            </Section>
+
             <Heading
               as="h2"
               className={`m-0 mb-[12px] text-[18px] font-semibold text-[${brand.charcoal}]`}
