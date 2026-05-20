@@ -82,10 +82,17 @@ model User {
 
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
+  // True when this account was created by an admin importing a roster (CSV/XLSX)
+  // and the volunteer hasn't yet redeemed the invite link. Lets the UI show
+  // "Awaiting claim" badges and gate filters without re-deriving from token rows.
+  // Cleared at first invite redemption (see VolunteerInvite.usedAt path).
+  importedAt        DateTime?
+
   bookings           Booking[]
   sessions           Session[]
   passwordResets     PasswordResetToken[]
   emailVerifications EmailVerificationToken[]
+  invites            VolunteerInvite[]
   oauthAccounts      OAuthAccount[]
   passkeys           Passkey[]
   uploadedDocs       Document[]          @relation("DocumentUploader")
@@ -156,6 +163,32 @@ model PasswordResetToken {
   tokenHash String    @unique
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// Single-use volunteer-invite tokens — issued when an admin bulk-imports
+// volunteers from a roster (CSV/XLSX) and clicks "Send invites". Same threat
+// model as PasswordResetToken: only the SHA-256 hash of the raw token is
+// stored, never the raw value, so a leaked row can't be redeemed. One live
+// token per user — the issuer drops prior unredeemed ones before creating a
+// new one (so "Resend invite" is safe to spam). 7-day TTL: invites are sent
+// proactively by a coordinator, not in response to a user action, so they
+// should outlive a casual delay before the volunteer reads their email.
+// Redeeming this token sets a password AND clears User.importedAt AND verifies
+// the email (in the same transaction as resetPasswordAction's tail).
+model VolunteerInvite {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Snapshot of who sent the invite — kept across User deletions via SetNull so
+  // the audit trail survives (e.g. an admin leaves the org). Pure provenance:
+  // the action requireAdmin()'s on its own and doesn't need this for auth.
+  invitedById String?
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())

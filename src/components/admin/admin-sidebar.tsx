@@ -10,6 +10,7 @@ import {
   Boxes,
   AlertCircle,
   Users,
+  UserPlus,
   FileText,
   ExternalLink,
   LogOut,
@@ -70,7 +71,12 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
         icon: AlertCircle,
         badge: "unreviewed",
       },
-      { href: "/admin/volunteers", label: "All volunteers", icon: Users },
+      { href: "/admin/volunteers", label: "All volunteers", icon: Users, exact: true },
+      {
+        href: "/admin/volunteers/import",
+        label: "Import roster",
+        icon: UserPlus,
+      },
     ],
   },
   {
