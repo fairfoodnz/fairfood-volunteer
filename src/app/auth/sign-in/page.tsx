@@ -108,6 +108,7 @@ function Dot() {
 }
 
 function DevQuickLogin() {
+  if (process.env.NODE_ENV !== "development") return null;
   return (
     <div className="mt-6 rounded-md border border-dashed border-leaf/40 bg-leaf/5 p-4">
       <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">

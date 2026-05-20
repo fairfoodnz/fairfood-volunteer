@@ -576,6 +576,7 @@ export async function claimInviteAction(
 }
 
 export async function devSignInAction(formData: FormData) {
+  if (process.env.NODE_ENV !== "development") return;
   const role = formData.get("role");
   if (role !== "admin" && role !== "volunteer") return;
   const email = DEV_SEED_EMAILS[role];
