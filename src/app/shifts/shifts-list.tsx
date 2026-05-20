@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
 import { Check } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ProgramArt } from "@/components/site/illustrations";
 import { bookShiftsAction, type BookManyState } from "./actions";
@@ -195,58 +194,110 @@ function ShiftCardItem({
   onToggle: () => void;
   failureReason: string | null;
 }) {
+  const alreadyBooked = shift.unbookableReason === "Already booked";
+  // Card chrome reacts to selection: thicker leaf border + a hard offset shadow
+  // in our brand green so a ticked card feels decisively "picked" against the
+  // cream backdrop. The hover state mirrors the same idiom at lower intensity.
   const cardOutline = selected
-    ? "border-leaf bg-leaf/[0.04] shadow-[0_2px_0_0_var(--leaf,#3f7d3a)] -translate-y-0.5"
-    : "border-border hover:-translate-y-0.5 hover:border-leaf/50 hover:shadow-sm";
+    ? "border-2 border-leaf -translate-y-1 shadow-[0_4px_0_-1px_var(--ff-green)]"
+    : "border border-border hover:-translate-y-0.5 hover:border-leaf/40 hover:shadow-md";
 
   return (
     <li className="relative">
       <Link
         href={`/shifts/${shift.id}`}
-        className={`group flex h-full flex-col gap-4 overflow-hidden rounded-md border bg-card p-5 pr-12 transition-all ${cardOutline}`}
+        className={`group flex h-full flex-col overflow-hidden rounded-lg bg-card transition-all ${cardOutline}`}
       >
-        <div className="flex items-start justify-between gap-4">
+        {/* Hero photograph anchors the card. A subtle bottom gradient keeps the
+            top-left status pill readable across whatever the photo carries. */}
+        <div className="relative aspect-[5/3] w-full overflow-hidden bg-cream-deep">
+          <div
+            className={`absolute inset-0 transition-transform duration-500 ${
+              selected ? "scale-[1.04]" : "group-hover:scale-[1.02]"
+            }`}
+          >
+            <ProgramArt program={shift.program} />
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-black/25 to-transparent" />
+
+          {/* Urgency / status pill — top-left. Only renders when there's a story
+              to tell, so bookable-with-plenty-of-room cards stay quiet. */}
+          {shift.isFull ? (
+            <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-charcoal/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-cream backdrop-blur-sm">
+              Full
+            </span>
+          ) : alreadyBooked ? (
+            <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-leaf-deep px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-cream">
+              <Check className="h-3 w-3" strokeWidth={3} /> You&rsquo;re going
+            </span>
+          ) : shift.isAlmostFull ? (
+            <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-tomato px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-cream">
+              Almost full
+            </span>
+          ) : null}
+
+          {/* Selected-state wash over the photo — ties the photo to the card
+              chrome so the whole thing reads as "picked". */}
+          {selected && (
+            <div className="pointer-events-none absolute inset-0 bg-leaf/25 mix-blend-multiply" />
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-1 flex-col gap-3 p-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-leaf-deep">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-leaf-deep">
               {shift.program.title}
             </p>
-            <p className="mt-1 text-sm font-medium text-foreground/75">
+            <p className="mt-1.5 text-base font-semibold leading-snug text-foreground">
               {shift.whenLabel}
             </p>
           </div>
-          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-cream-deep transition-transform group-hover:scale-[1.03]">
-            <ProgramArt program={shift.program} />
+
+          {shift.notes && (
+            <p className="text-xs italic text-foreground/65">{shift.notes}</p>
+          )}
+
+          {failureReason && (
+            <p className="text-xs font-medium text-tomato">{failureReason}</p>
+          )}
+
+          {/* Footer: a strong tabular-numeral spot count on the left gives the
+              card a hard visual anchor; the action sits opposite on the right. */}
+          <div className="mt-auto flex items-end justify-between border-t border-border/60 pt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className={`font-mono text-[26px] font-bold leading-none tabular-nums ${
+                  shift.isAlmostFull
+                    ? "text-tomato"
+                    : shift.isFull
+                      ? "text-foreground/40"
+                      : "text-foreground"
+                }`}
+              >
+                {shift.isFull ? 0 : shift.free}
+              </span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-foreground/55">
+                spot{!shift.isFull && shift.free === 1 ? "" : "s"} left
+              </span>
+            </div>
+            {shift.isFull ? (
+              <span className="text-sm font-medium text-foreground/45">View →</span>
+            ) : alreadyBooked ? (
+              <span className="text-sm font-semibold text-leaf-deep">Details →</span>
+            ) : (
+              <span className="text-sm font-semibold text-leaf-deep transition-transform group-hover:translate-x-0.5">
+                Book →
+              </span>
+            )}
           </div>
         </div>
-        <div className="mt-auto flex items-center justify-between">
-          <span className="text-sm">
-            <span className="font-semibold">{shift.free}</span>
-            <span className="text-foreground/55">
-              {" "}of {shift.capacity} spot{shift.capacity === 1 ? "" : "s"} left
-            </span>
-          </span>
-          {shift.isFull ? (
-            <Badge variant="secondary">Full</Badge>
-          ) : shift.isAlmostFull ? (
-            <Badge className="bg-tomato/15 text-tomato hover:bg-tomato/15">
-              Almost full
-            </Badge>
-          ) : !shift.bookable && shift.unbookableReason === "Already booked" ? (
-            <span className="text-sm font-semibold text-leaf-deep">Booked ✓</span>
-          ) : (
-            <span className="text-sm font-semibold text-leaf-deep">Book →</span>
-          )}
-        </div>
-        {shift.notes && (
-          <p className="text-xs italic text-foreground/65">{shift.notes}</p>
-        )}
-        {failureReason && (
-          <p className="text-xs font-medium text-tomato">{failureReason}</p>
-        )}
       </Link>
 
-      {/* Checkbox sits OUTSIDE the Link as a sibling so we don't nest interactive
-          elements; z-index keeps it above the card's hover affordance. */}
+      {/* Multi-select control. Sibling of the Link (never nested interactive
+          elements). Sized 36×36 with a 2px ring + drop-shadow so it reads on
+          any photograph — the "tick me" affordance is the same idiom whether
+          the photo behind it is busy or sparse. */}
       {shift.bookable ? (
         <button
           type="button"
@@ -256,22 +307,19 @@ function ShiftCardItem({
             selected ? `Deselect ${shift.program.title}` : `Select ${shift.program.title}`
           }
           onClick={onToggle}
-          className={`absolute right-3 top-3 z-10 inline-flex h-7 w-7 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+          className={`absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border-2 shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
             selected
-              ? "border-leaf bg-leaf text-cream"
-              : "border-foreground/30 bg-card hover:border-leaf hover:bg-leaf/5"
+              ? "scale-105 border-cream bg-leaf text-cream"
+              : "border-cream bg-cream/95 text-foreground/70 hover:scale-105 hover:bg-leaf hover:text-cream"
           }`}
         >
-          {selected ? <Check className="h-4 w-4" /> : null}
+          <Check
+            className={`h-4 w-4 transition-opacity ${
+              selected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
+            }`}
+            strokeWidth={3}
+          />
         </button>
-      ) : shift.unbookableReason ? (
-        <span
-          aria-hidden
-          className="absolute right-3 top-3 z-10 inline-flex h-7 select-none items-center rounded border border-dashed border-foreground/20 bg-card/70 px-2 font-mono text-[10px] uppercase tracking-widest text-foreground/55"
-          title={shift.unbookableReason}
-        >
-          {shift.unbookableReason === "Already booked" ? "Going" : "—"}
-        </span>
       ) : null}
     </li>
   );
