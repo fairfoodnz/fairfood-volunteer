@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { appOrigin, requireAdmin } from "@/lib/auth";
 import { sendVolunteerInviteEmail } from "@/lib/email";
 import {
   parseRoster,
@@ -35,13 +35,6 @@ const INVITE_TTL_DAYS = 7;
 /** SHA-256 of the raw token — only this is ever stored or queried. */
 function hashToken(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
-}
-
-/** Absolute origin claim links resolve against (mirrors emails/brand.ts). */
-function appOrigin() {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://volunteer.fairfood.org.nz"
-  ).replace(/\/$/, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -164,27 +157,47 @@ export async function confirmImportAction(formData: FormData): Promise<ConfirmRe
   // the per-row returned id we need for the invite step — and 100-row inserts
   // are well within budget here.
   if (toCreate.length > 0) {
-    const created = await db.$transaction(
-      toCreate.map((row) =>
-        db.user.create({
-          data: {
-            email: row.email,
-            firstName: row.firstName,
-            lastName: row.lastName,
-            phone: row.phone,
-            notes: row.notes,
-            // Coordinator vouched for these addresses, but per the existing
-            // convention we still wait for the volunteer's first click on the
-            // invite link before flipping emailVerifiedAt — see resetPasswordAction.
-            importedAt: now,
-            // Soft gate is preserved: profileCompletedAt stays null so they
-            // still complete the questionnaire before booking a shift.
-          },
-          select: { id: true },
-        }),
-      ),
-    );
-    createdUserIds.push(...created.map((u) => u.id));
+    try {
+      const created = await db.$transaction(
+        toCreate.map((row) =>
+          db.user.create({
+            data: {
+              email: row.email,
+              firstName: row.firstName,
+              lastName: row.lastName,
+              phone: row.phone,
+              notes: row.notes,
+              // Coordinator vouched for these addresses, but per the existing
+              // convention we still wait for the volunteer's first click on the
+              // invite link before flipping emailVerifiedAt — see resetPasswordAction.
+              importedAt: now,
+              // Soft gate is preserved: profileCompletedAt stays null so they
+              // still complete the questionnaire before booking a shift.
+            },
+            select: { id: true },
+          }),
+        ),
+      );
+      createdUserIds.push(...created.map((u) => u.id));
+    } catch (err: unknown) {
+      // P2002 (unique-constraint violation on User.email) can fire if a
+      // volunteer signs up between the pre-check `findMany` above and the
+      // batch insert — milliseconds, but real. Surface as a typed result so
+      // the client toast handler kicks in instead of an uncaught rejection.
+      const isPrismaUnique =
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        (err as { code: unknown }).code === "P2002";
+      if (isPrismaUnique) {
+        return {
+          ok: false,
+          error:
+            "One or more of these emails were registered while you were reviewing the preview. Re-upload the file to see the updated status.",
+        };
+      }
+      throw err;
+    }
   }
 
   // Optionally fire invites in the same call — coordinator opts in via a
@@ -266,20 +279,25 @@ async function issueAndSendInvites(
   const skipped = userIds.length - users.length;
 
   for (const user of users) {
-    // One live invite per user — drop the existing one before issuing a fresh
-    // token. This makes "Resend" safe to spam and keeps the unique index from
-    // ever blocking us.
-    await db.volunteerInvite.deleteMany({
-      where: { userId: user.id, usedAt: null },
-    });
-    const raw = randomBytes(32).toString("hex");
-    await db.volunteerInvite.create({
-      data: {
-        tokenHash: hashToken(raw),
-        userId: user.id,
-        invitedById,
-        expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 24 * 3_600_000),
-      },
+    // One live invite per user. Two concurrent resends (bulk + per-row, or
+    // a double-click) can both observe the old token, both delete it, then
+    // both insert — leaving two live tokens for one user, which violates
+    // the "one live invite" invariant. Doing the delete+create atomically
+    // inside a single transaction collapses that TOCTOU window.
+    let raw!: string;
+    await db.$transaction(async (tx) => {
+      await tx.volunteerInvite.deleteMany({
+        where: { userId: user.id, usedAt: null },
+      });
+      raw = randomBytes(32).toString("hex");
+      await tx.volunteerInvite.create({
+        data: {
+          tokenHash: hashToken(raw),
+          userId: user.id,
+          invitedById,
+          expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 24 * 3_600_000),
+        },
+      });
     });
     const claimUrl = `${appOrigin()}/auth/invite/${raw}`;
     try {
@@ -298,17 +316,4 @@ async function issueAndSendInvites(
   }
 
   return { sent, skipped };
-}
-
-/**
- * One-off resend for a single user. Same body as the bulk path; this exists
- * because the UI's row-level "Resend" button doesn't want to construct a
- * one-element array on the client.
- */
-export async function resendInviteAction(formData: FormData): Promise<void> {
-  const admin = await requireAdmin();
-  const userId = formData.get("userId");
-  if (typeof userId !== "string" || !userId) return;
-  await issueAndSendInvites([userId], admin.id);
-  revalidatePath("/admin/volunteers/import");
 }

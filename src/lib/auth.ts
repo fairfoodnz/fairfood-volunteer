@@ -62,6 +62,22 @@ export async function signOut() {
 }
 
 /**
+ * Absolute origin emailed links + OAuth callbacks resolve against. Single
+ * source of truth so the production-fallback URL only lives in one place
+ * (mirrors emails/brand.ts on the email side). Strips any trailing slash so
+ * callers can safely do `${appOrigin()}/path`.
+ *
+ * Note: `NEXT_PUBLIC_APP_URL` is build-time-inlined by Next.js — see
+ * CLAUDE.md "Deployment" — so in non-prod images this must be passed as a
+ * Docker build argument, not a runtime env var.
+ */
+export function appOrigin() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://volunteer.fairfood.org.nz"
+  ).replace(/\/$/, "");
+}
+
+/**
  * Only allow same-origin relative redirect targets — never an absolute or
  * protocol-relative URL an attacker could smuggle in via `?next=`. Shared by
  * every sign-in entry point (password, Google, passkey) so the rule can't drift.

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
+  appOrigin,
   createSession,
   currentUser,
   hashPassword,
@@ -27,13 +28,6 @@ const VERIFY_TTL_HOURS = 24;
 /** SHA-256 of the raw reset token — only this is ever stored or queried. */
 function hashToken(raw: string) {
   return createHash("sha256").update(raw).digest("hex");
-}
-
-/** Absolute origin reset links resolve against (mirrors emails/brand.ts). */
-function appOrigin() {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://volunteer.fairfood.org.nz"
-  ).replace(/\/$/, "");
 }
 
 const SignInSchema = z.object({
