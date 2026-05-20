@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/auth";
 import { slugify, INCLUSIVE_SLUG } from "@/lib/programs";
 import { isThemeKey, DEFAULT_THEME } from "@/lib/programme-theme";
 import { bufferMatchesMime } from "@/lib/file-sniff";
+import { probeImage } from "@/lib/image-dimensions";
 import { deleteObject, putObject } from "@/lib/s3";
 
 export type ProgrammeFormState = { error?: string; ok?: boolean };
@@ -108,6 +109,20 @@ async function uploadImage(
     return {
       error: "That image's contents don't match its file type. Try re-exporting it.",
     };
+  }
+  // Decompression-bomb guard: read width/height from the container header
+  // (no pixel decode) and reject anything that would explode in memory on a
+  // later decode. A 2 KB PNG can validly point at 30 000×30 000 px ≈ 3.6 GB
+  // RGBA — fine on disk, fatal the moment a thumbnailer/Image optimizer or
+  // admin preview tries to read it.
+  const probe = await probeImage(buffer);
+  if (!probe.ok) {
+    if (probe.reason === "too_large") {
+      return {
+        error: "That image is too large to display. Resize it before uploading.",
+      };
+    }
+    return { error: "Couldn't read that image. Try re-exporting it." };
   }
   const imageKey = `programmes/${randomUUID()}.${ext}`;
   await putObject({ key: imageKey, body: buffer, contentType: file.type });
