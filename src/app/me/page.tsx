@@ -56,7 +56,7 @@ export default async function MePage({ searchParams }: Props) {
 
           <header className="mb-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="eyebrow">Kia ora, {user.name.split(" ")[0]}</p>
+              <p className="eyebrow">Kia ora, {user.firstName}</p>
               <h1 className="display mt-2 text-balance text-4xl font-bold leading-tight md:text-5xl">
                 Your shifts at the kai table.
               </h1>

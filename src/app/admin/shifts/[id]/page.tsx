@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatShiftRange } from "@/lib/programs";
+import { fullName } from "@/lib/users";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { Button } from "@/components/ui/button";
 import { CancelShiftDialog } from "@/components/admin/cancel-shift-dialog";
@@ -102,7 +103,7 @@ export default async function AdminShiftPage({ params }: Props) {
                 {confirmed.map((b) => (
                   <li key={b.id} className="grid gap-3 p-4 md:grid-cols-[1fr_auto] md:items-center">
                     <div>
-                      <p className="font-semibold">{b.user.name}</p>
+                      <p className="font-semibold">{fullName(b.user)}</p>
                       <p className="text-xs text-foreground/65">
                         {b.user.email}
                         {b.user.phone && ` · ${b.user.phone}`}
@@ -127,7 +128,7 @@ export default async function AdminShiftPage({ params }: Props) {
                       </StatusForm>
                       <CancelBookingDialog
                         bookingId={b.id}
-                        volunteerName={b.user.name}
+                        volunteerName={fullName(b.user)}
                       />
                     </div>
                   </li>
@@ -142,7 +143,7 @@ export default async function AdminShiftPage({ params }: Props) {
                 {cancelled.map((b) => (
                   <li key={b.id} className="flex items-center justify-between p-4 text-sm">
                     <span>
-                      {b.user.name}{" "}
+                      {fullName(b.user)}{" "}
                       <span className="text-foreground/55">
                         · {b.status.toLowerCase()}
                       </span>

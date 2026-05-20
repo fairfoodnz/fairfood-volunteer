@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { HeardAbout } from "@/generated/prisma";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { fullName } from "@/lib/users";
 
 const HeardAboutValues = [
   HeardAbout.FRIEND,
@@ -159,7 +160,7 @@ export async function completeProfileAction(
     posthog.capture({
       distinctId: user.id,
       event: "sign_up_completed",
-      properties: { method: "google", name: user.name, email: user.email },
+      properties: { method: "google", name: fullName(user), email: user.email },
     });
   }
   posthog.capture({

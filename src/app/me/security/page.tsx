@@ -62,7 +62,7 @@ export default async function SecurityPage({ searchParams }: Props) {
       <main className="flex-1 py-12 md:py-16">
         <div className="container-x max-w-3xl">
           <header className="mb-8">
-            <p className="eyebrow">Kia ora, {user.name.split(" ")[0]}</p>
+            <p className="eyebrow">Kia ora, {user.firstName}</p>
             <h1 className="display mt-2 text-balance text-4xl font-bold leading-tight md:text-5xl">
               Sign-in &amp; security
             </h1>

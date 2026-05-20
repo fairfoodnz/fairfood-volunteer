@@ -96,7 +96,11 @@ const ClaimsSchema = z.object({
   email: z.string().email(),
   // Google omits this for some Workspace edge cases; treat missing as false.
   email_verified: z.boolean().optional().default(false),
+  // Standard OIDC name claims. `given_name`/`family_name` are preferred; the
+  // full `name` is only a fallback to split when they're absent.
   name: z.string().trim().min(1).optional(),
+  given_name: z.string().trim().min(1).optional(),
+  family_name: z.string().trim().min(1).optional(),
 });
 
 export type GoogleIdentity = {
@@ -104,7 +108,10 @@ export type GoogleIdentity = {
   sub: string;
   email: string;
   emailVerified: boolean;
-  name?: string;
+  /** Given name, falling back to the first token of `name` if Google omits it. */
+  firstName?: string;
+  /** Family name, falling back to the remainder of `name`. May be absent. */
+  lastName?: string;
 };
 
 /**
@@ -146,12 +153,22 @@ export async function completeGoogleAuthorization(
   const parsed = ClaimsSchema.safeParse(claims);
   if (!parsed.success) throw new OAuthError("invalid_claims");
 
+  // Prefer the discrete OIDC claims; only split the combined `name` if Google
+  // didn't send `given_name`. A single-token `name` yields no last name.
+  const nameParts = parsed.data.name?.split(/\s+/) ?? [];
+  const firstName =
+    parsed.data.given_name ?? (nameParts.length > 0 ? nameParts[0] : undefined);
+  const lastName =
+    parsed.data.family_name ??
+    (nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined);
+
   return {
     identity: {
       sub: parsed.data.sub,
       email: parsed.data.email.trim().toLowerCase(),
       emailVerified: parsed.data.email_verified,
-      name: parsed.data.name,
+      firstName,
+      lastName,
     },
     next,
   };

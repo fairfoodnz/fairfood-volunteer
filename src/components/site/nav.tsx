@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./user-menu";
 import { PostHogUserSync } from "@/components/posthog-user-sync";
+import { fullName } from "@/lib/users";
 
 const links: { href: string; label: string; external?: boolean }[] = [
   { href: "/programs", label: "Programmes" },
@@ -17,7 +18,13 @@ export async function SiteNav() {
 
   return (
     <>
-      {user && <PostHogUserSync userId={user.id} name={user.name} email={user.email} />}
+      {user && (
+        <PostHogUserSync
+          userId={user.id}
+          name={fullName(user)}
+          email={user.email}
+        />
+      )}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
         <div className="container-x flex h-16 items-center justify-between gap-6">
           <Logo size={42} />
@@ -37,7 +44,14 @@ export async function SiteNav() {
           </nav>
           <div className="flex items-center gap-2">
             {user ? (
-              <UserMenu user={{ name: user.name, email: user.email, role: user.role }} />
+              <UserMenu
+                user={{
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  email: user.email,
+                  role: user.role,
+                }}
+              />
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
