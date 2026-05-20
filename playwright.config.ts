@@ -56,11 +56,11 @@ export default defineConfig({
 
   // In CI the workflow builds, migrates and seeds first, then this just boots
   // the production server. Locally it builds+starts, or reuses an already
-  // running `npm run dev` / `npm start` on :3000.
+  // running `pnpm dev` / `pnpm start` on :3000.
   webServer: {
     command: CI
-      ? `npm run start -- -p ${PORT}`
-      : `npm run build && npm run start -- -p ${PORT}`,
+      ? `pnpm start -- -p ${PORT}`
+      : `pnpm build && pnpm start -- -p ${PORT}`,
     url: baseURL,
     timeout: 240_000,
     reuseExistingServer: !CI,

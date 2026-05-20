@@ -1,0 +1,49 @@
+# pnpm settings for this (single-package) project. As of pnpm 11 these live
+# here rather than under "pnpm" in package.json or in .npmrc.
+# https://pnpm.io/settings
+
+# Make pnpm behave like npm at the node_modules layout level:
+#  - nodeLinker: hoisted     → flat node_modules, no symlinks (so Next.js's
+#                              NFT tracing for `output: "standalone"` and the
+#                              Dockerfile's `COPY .next/standalone` flow work
+#                              exactly as they did under npm).
+#  - shamefullyHoist: true   → hoist transitive deps to the top level too, so
+#                              phantom-dep imports keep working. Required
+#                              because Prisma's generated client imports
+#                              `@prisma/client-runtime-utils` without declaring
+#                              it as a peer, and a couple of our own imports
+#                              do the same with `@react-email/render`.
+#
+# This trades pnpm's strict dependency boundaries for a smaller diff. If we
+# clean up phantom deps later, we can drop shamefullyHoist and tighten the
+# layout.
+nodeLinker: hoisted
+shamefullyHoist: true
+
+# Allow-list for dependency install/build scripts. pnpm blocks them by default;
+# everything here is something we need to run scripts for. Anything left out
+# stays blocked (and pnpm will warn loudly if a needed one is missing).
+#
+# - sharp:           powers next/image
+# - @prisma/engines, prisma, @prisma/client: required for `prisma generate`,
+#   `migrate deploy`, and runtime queries
+# - esbuild:         backs vitest and tsx
+# - unrs-resolver:   used by ESLint's TS resolver (eslint-config-next)
+# - @playwright/test: downloads its browser binary (CI also re-runs
+#   `pnpm exec playwright install`, this keeps local dev consistent)
+#
+# Deliberately set to false — postinstall is purely informational/optional:
+# - core-js:    postinstall just prints sponsor messages
+# - msw:        postinstall sets up a service worker we don't use
+# - protobufjs: transitive of opentelemetry; nothing we touch needs the prebuild
+allowBuilds:
+  "@playwright/test": true
+  "@prisma/client": true
+  "@prisma/engines": true
+  esbuild: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+  core-js: false
+  msw: false
+  protobufjs: false
