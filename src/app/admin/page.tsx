@@ -35,9 +35,7 @@ export default async function AdminPage() {
   ]);
 
   const totalCapacity = shifts.reduce((s, x) => s + x.capacity, 0);
-  // Match the volunteer-facing "Going · X of Y" headline: count both
-  // CONFIRMED bookings and off-platform group holds against capacity, so a
-  // shift filled by a school group of 8 doesn't read as 0 booked.
+  // Include off-platform group holds so a group-only shift doesn't read as 0 booked.
   const totalBooked = shifts.reduce(
     (s, x) => s + x._count.bookings + sumBlocks(x.blocks),
     0,
