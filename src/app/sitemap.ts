@@ -5,6 +5,10 @@ import { programHref } from "@/lib/programs";
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? "https://volunteer.fairfood.org.nz";
 
+// Render on-request, not at build time: the build job has no DB and the
+// programme list is sourced from Prisma.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const programmes = await db.program.findMany({
     where: { active: true },
