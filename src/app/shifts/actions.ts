@@ -7,7 +7,11 @@ import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { sumBlocks } from "@/lib/shifts";
 import { formatShiftRange, INCLUSIVE_SLUG } from "@/lib/programs";
-import { buildICS, calendarLinks } from "@/lib/calendar";
+import {
+  buildBookingCalendarEvent,
+  buildICS,
+  calendarLinks,
+} from "@/lib/calendar";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { BookingStatus } from "@/generated/prisma";
 import { appUrl } from "../../../emails/brand";
@@ -107,21 +111,16 @@ export async function bookShiftAction(
   try {
     const whenLabel = formatShiftRange(shift.startsAt, shift.endsAt);
     const manageUrl = `${appUrl}/me`;
-    const calendarEvent = {
-      uid: `booking-${booking.id}@volunteer.fairfood.org.nz`,
-      title: `${shift.program.title} shift — Fair Food NZ`,
-      description: [
-        `You're volunteering with Fair Food NZ on the ${shift.program.title} programme.`,
-        parsed.data.notes ? `Your note: ${parsed.data.notes}` : null,
-        `Manage your booking: ${manageUrl}`,
-      ]
-        .filter(Boolean)
-        .join("\n\n"),
+    const calendarEvent = buildBookingCalendarEvent({
+      bookingId: booking.id,
+      programTitle: shift.program.title,
       location: shift.program.location,
       start: shift.startsAt,
       end: shift.endsAt,
-      url: `${appUrl}/shifts/${shift.id}`,
-    };
+      appOrigin: appUrl,
+      shiftId: shift.id,
+      notes: parsed.data.notes,
+    });
     await sendBookingConfirmationEmail({
       to: user.email,
       userName: user.firstName || undefined,
@@ -278,18 +277,15 @@ export async function bookShiftsAction(
       confirmed.map(async ({ booking, shift }) => {
         try {
           const whenLabel = formatShiftRange(shift.startsAt, shift.endsAt);
-          const calendarEvent = {
-            uid: `booking-${booking.id}@volunteer.fairfood.org.nz`,
-            title: `${shift.program.title} shift — Fair Food NZ`,
-            description: [
-              `You're volunteering with Fair Food NZ on the ${shift.program.title} programme.`,
-              `Manage your booking: ${manageUrl}`,
-            ].join("\n\n"),
+          const calendarEvent = buildBookingCalendarEvent({
+            bookingId: booking.id,
+            programTitle: shift.program.title,
             location: shift.program.location,
             start: shift.startsAt,
             end: shift.endsAt,
-            url: `${appUrl}/shifts/${shift.id}`,
-          };
+            appOrigin: appUrl,
+            shiftId: shift.id,
+          });
           await sendBookingConfirmationEmail({
             to: user.email,
             userName: user.firstName || undefined,

@@ -157,3 +157,39 @@ export function calendarLinks(event: CalendarEvent): CalendarLinks {
     yahoo: yahoo.toString(),
   };
 }
+
+/**
+ * Single source of truth for the shape of a booking's calendar event. Used by
+ * both the confirmation email (`bookShiftAction` / `bookShiftsAction`) and the
+ * volunteer-facing "Add to calendar" affordance on `/me` and `/shifts/[id]`,
+ * so the title/description/location/UID stay identical across every surface
+ * — calendars dedupe by UID, so a mismatch would create a duplicate entry
+ * when a volunteer adds the same shift from two places.
+ */
+export function buildBookingCalendarEvent(args: {
+  bookingId: string;
+  programTitle: string;
+  location: string;
+  start: Date;
+  end: Date;
+  appOrigin: string;
+  shiftId: string;
+  notes?: string | null;
+}): CalendarEvent {
+  const manageUrl = `${args.appOrigin}/me`;
+  return {
+    uid: `booking-${args.bookingId}@volunteer.fairfood.org.nz`,
+    title: `${args.programTitle} shift — Fair Food NZ`,
+    description: [
+      `You're volunteering with Fair Food NZ on the ${args.programTitle} programme.`,
+      args.notes ? `Your note: ${args.notes}` : null,
+      `Manage your booking: ${manageUrl}`,
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
+    location: args.location,
+    start: args.start,
+    end: args.end,
+    url: `${args.appOrigin}/shifts/${args.shiftId}`,
+  };
+}
