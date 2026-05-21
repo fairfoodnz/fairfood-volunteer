@@ -9,6 +9,7 @@ import { CancelShiftDialog } from "@/components/admin/cancel-shift-dialog";
 import { CancelBookingDialog } from "@/components/admin/cancel-booking-dialog";
 import { setBookingStatus } from "../../actions";
 import { SlotBlocks } from "./slot-blocks";
+import { AssignVolunteerTrigger } from "./assign-volunteer";
 import { BookingStatus } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,16 @@ export default async function AdminShiftPage({ params }: Props) {
 
   const blocked = sumBlocks(shift.blocks);
   const { free } = shiftAvailability(shift.capacity, confirmed.length, blocked);
+
+  const isPast = shift.startsAt < new Date();
+  const assignDisabled = shift.cancelled || isPast || free <= 0;
+  const assignDisabledReason = shift.cancelled
+    ? "This shift was cancelled."
+    : isPast
+      ? "This shift has already started."
+      : free <= 0
+        ? "This shift is full — cancel a booking or remove a slot block first."
+        : undefined;
 
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
@@ -95,9 +106,29 @@ export default async function AdminShiftPage({ params }: Props) {
             />
           </Section>
 
-          <Section title={`On the roster (${confirmed.length})`}>
+          <Section
+            title={`On the roster (${confirmed.length})`}
+            action={
+              <AssignVolunteerTrigger
+                shiftId={shift.id}
+                disabled={assignDisabled}
+                disabledReason={assignDisabledReason}
+              />
+            }
+          >
             {confirmed.length === 0 ? (
-              <Empty>No bookings yet.</Empty>
+              <Empty>
+                <p>No bookings yet.</p>
+                {!assignDisabled && (
+                  <p className="mt-1 text-xs text-foreground/55">
+                    Use{" "}
+                    <span className="font-semibold text-leaf-deep">
+                      Assign volunteer
+                    </span>{" "}
+                    to add someone manually.
+                  </p>
+                )}
+              </Empty>
             ) : (
               <ul className="divide-y divide-border rounded-md border border-border bg-card">
                 {confirmed.map((b) => (
@@ -161,10 +192,21 @@ export default async function AdminShiftPage({ params }: Props) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="mb-10">
-      <h2 className="display mb-3 text-xl font-semibold">{title}</h2>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="display text-xl font-semibold">{title}</h2>
+        {action}
+      </div>
       {children}
     </section>
   );
