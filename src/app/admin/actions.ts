@@ -333,7 +333,7 @@ export async function addSlotBlock(
 
   const shift = await db.shift.findUnique({
     where: { id: shiftId },
-    select: { id: true },
+    select: { id: true, program: { select: { slug: true } } },
   });
   if (!shift) return { error: "That shift no longer exists." };
 
@@ -345,6 +345,9 @@ export async function addSlotBlock(
   revalidatePath("/admin");
   revalidatePath("/shifts");
   revalidatePath(`/shifts/${shiftId}`);
+  // The programme detail page lists its upcoming shifts with a group pill
+  // inline, so adding/removing a block must invalidate that page too.
+  revalidatePath(`/programs/${shift.program.slug}`);
   return { ok: true };
 }
 
@@ -354,7 +357,10 @@ export async function removeSlotBlock(formData: FormData) {
   if (typeof id !== "string" || !id) return;
   const block = await db.slotBlock.findUnique({
     where: { id },
-    select: { shiftId: true },
+    select: {
+      shiftId: true,
+      shift: { select: { program: { select: { slug: true } } } },
+    },
   });
   if (!block) return;
   await db.slotBlock.delete({ where: { id } });
@@ -362,4 +368,5 @@ export async function removeSlotBlock(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/shifts");
   revalidatePath(`/shifts/${block.shiftId}`);
+  revalidatePath(`/programs/${block.shift.program.slug}`);
 }

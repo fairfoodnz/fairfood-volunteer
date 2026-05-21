@@ -324,8 +324,12 @@ model Shift {
 // An admin-reserved hold on a Shift — slots a coordinator is keeping back for
 // an off-platform group (corporate day, school class, private booking, etc.).
 // Carries no User: it reduces public + admin availability exactly like a
-// confirmed Booking but is never shown to volunteers. A shift can have several
-// independent holds; each is added/removed on its own and carries its own note.
+// confirmed Booking. Volunteers see a discreet "Corporate group joining" /
+// "School group joining" pill (driven by `kind` + `slots`) so regulars can
+// make an informed choice; the `note` stays admin-only because coordinators
+// put contact details and head counts in it. A shift can have several
+// independent holds; each is added/removed on its own and carries its own
+// kind + note.
 model SlotBlock {
   id        String        @id @default(cuid())
   shiftId   String
