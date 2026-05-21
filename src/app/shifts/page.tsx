@@ -3,7 +3,11 @@ import { db } from "@/lib/db";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { formatShiftRange, INCLUSIVE_SLUG } from "@/lib/programs";
-import { sumBlocks, shiftAvailability } from "@/lib/shifts";
+import {
+  sumBlocks,
+  shiftAvailability,
+  summarizeBlocks,
+} from "@/lib/shifts";
 import { currentUser } from "@/lib/auth";
 import { BookingStatus } from "@/generated/prisma";
 import { ShiftsList, type ShiftCard, type ShiftDay } from "./shifts-list";
@@ -57,7 +61,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
         _count: {
           select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
         },
-        blocks: { select: { slots: true } },
+        blocks: { select: { slots: true, kind: true } },
       },
       take: 60,
     }),
@@ -106,6 +110,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
         isAlmostFull: !isFull && free <= 2,
         notes: s.notes,
         bookable,
+        groupBlocks: summarizeBlocks(s.blocks),
         unbookableReason: alreadyBooked
           ? "Already booked"
           : isFull
@@ -177,7 +182,7 @@ type ShiftWithCount = Awaited<
   ReturnType<typeof db.shift.findMany>
 >[number] & {
   _count: { bookings: number };
-  blocks: { slots: number }[];
+  blocks: { slots: number; kind: import("@/generated/prisma").SlotBlockKind }[];
   program: {
     id: string;
     title: string;

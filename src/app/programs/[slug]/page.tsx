@@ -10,7 +10,12 @@ import {
   INCLUSIVE_SLUG,
   INCLUSIVE_MAILTO,
 } from "@/lib/programs";
-import { sumBlocks, shiftAvailability } from "@/lib/shifts";
+import {
+  sumBlocks,
+  shiftAvailability,
+  summarizeBlocks,
+  blockKindLabel,
+} from "@/lib/shifts";
 import { BookingStatus } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +42,7 @@ export default async function ProgramPage({ params }: Props) {
           _count: {
             select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
           },
-          blocks: { select: { slots: true } },
+          blocks: { select: { slots: true, kind: true } },
         },
       },
     },
@@ -150,18 +155,27 @@ export default async function ProgramPage({ params }: Props) {
                     s._count.bookings,
                     sumBlocks(s.blocks),
                   );
+                  const groupBlocks = summarizeBlocks(s.blocks);
                   return (
                     <li key={s.id}>
                       <Link
                         href={`/shifts/${s.id}`}
                         className="flex items-center justify-between p-5 hover:bg-cream-deep/40"
                       >
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-medium">
                             {formatShiftRange(s.startsAt, s.endsAt)}
                           </p>
                           <p className="text-xs text-foreground/65">
                             {free} of {s.capacity} spots open
+                            {groupBlocks.map((b) => (
+                              <span
+                                key={b.kind}
+                                className="ml-2 inline-flex items-center rounded-full border border-clay/30 bg-clay/10 px-2 py-0.5 text-[10px] font-semibold text-clay"
+                              >
+                                {blockKindLabel(b.kind)} of {b.slots} joining
+                              </span>
+                            ))}
                           </p>
                         </div>
                         <span className="font-semibold text-leaf-deep">Book →</span>

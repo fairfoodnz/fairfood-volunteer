@@ -9,7 +9,7 @@ import { nzWallTimeToUtc } from "@/lib/schedule";
 import { sumBlocks } from "@/lib/shifts";
 import { formatShiftRange } from "@/lib/programs";
 import { sendBookingCancellationEmail } from "@/lib/email";
-import { BookingStatus } from "@/generated/prisma";
+import { BookingStatus, SlotBlockKind } from "@/generated/prisma";
 
 const ShiftFieldsSchema = z.object({
   programSlug: z.string().min(1),
@@ -309,6 +309,7 @@ export async function bulkDeleteShifts(
 const SlotBlockSchema = z.object({
   shiftId: z.string().min(1),
   slots: z.coerce.number().int().min(1).max(500),
+  kind: z.nativeEnum(SlotBlockKind).default(SlotBlockKind.OTHER),
   note: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
@@ -322,12 +323,13 @@ export async function addSlotBlock(
   const parsed = SlotBlockSchema.safeParse({
     shiftId: formData.get("shiftId"),
     slots: formData.get("slots"),
+    kind: formData.get("kind") ?? SlotBlockKind.OTHER,
     note: formData.get("note") ?? "",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Check the form." };
   }
-  const { shiftId, slots, note } = parsed.data;
+  const { shiftId, slots, kind, note } = parsed.data;
 
   const shift = await db.shift.findUnique({
     where: { id: shiftId },
@@ -336,7 +338,7 @@ export async function addSlotBlock(
   if (!shift) return { error: "That shift no longer exists." };
 
   await db.slotBlock.create({
-    data: { shiftId, slots, note: note ? note : null },
+    data: { shiftId, slots, kind, note: note ? note : null },
   });
 
   revalidatePath(`/admin/shifts/${shiftId}`);
