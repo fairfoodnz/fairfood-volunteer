@@ -515,7 +515,12 @@ export async function assignBookingAction(
       include: {
         _count: {
           select: {
-            bookings: { where: { status: BookingStatus.CONFIRMED } },
+            // ATTENDED bookings also hold a spot (see ACTIVE_BOOKING_STATUSES
+            // / shiftAvailability) — counting CONFIRMED alone could
+            // undercount when coordinators mark attendance before start.
+            bookings: {
+              where: { status: { in: [...ACTIVE_BOOKING_STATUSES] } },
+            },
           },
         },
         blocks: { select: { slots: true } },
@@ -569,7 +574,10 @@ export async function assignBookingAction(
       where: { id: existing.id },
       data: {
         status: BookingStatus.CONFIRMED,
-        notes: notes ?? undefined,
+        // Pass `notes` directly (string | null) so an empty field clears any
+        // note from the prior cancelled booking — `?? undefined` would skip
+        // the column update and silently preserve stale text.
+        notes,
       },
     });
     bookingId = updated.id;
