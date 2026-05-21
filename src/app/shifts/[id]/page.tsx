@@ -46,6 +46,7 @@ export default async function ShiftPage({ params }: Props) {
         select: {
           id: true,
           userId: true,
+          notes: true,
           user: { select: { firstName: true, lastName: true } },
         },
       },
@@ -236,6 +237,7 @@ export default async function ShiftPage({ params }: Props) {
                             end: shift.endsAt,
                             appOrigin: appOrigin(),
                             shiftId: shift.id,
+                            notes: myBooking.notes,
                           }),
                         )}
                       />
