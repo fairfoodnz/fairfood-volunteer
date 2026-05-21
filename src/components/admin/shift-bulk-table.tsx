@@ -186,11 +186,13 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
                       {s.programme}
                     </td>
                     <td className="px-4 py-3 tabular-nums">
-                      <span className="font-semibold">{s.confirmed}</span>
+                      <span className="font-semibold">
+                        {s.confirmed + s.blockedSlots}
+                      </span>
                       <span className="text-foreground/55"> / {s.capacity}</span>
                       {s.blockedSlots > 0 && (
                         <span className="ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/65">
-                          {s.blockedSlots} held
+                          incl. {s.blockedSlots} held
                         </span>
                       )}
                     </td>

@@ -35,7 +35,13 @@ export default async function AdminPage() {
   ]);
 
   const totalCapacity = shifts.reduce((s, x) => s + x.capacity, 0);
-  const totalBooked = shifts.reduce((s, x) => s + x._count.bookings, 0);
+  // Match the volunteer-facing "Going · X of Y" headline: count both
+  // CONFIRMED bookings and off-platform group holds against capacity, so a
+  // shift filled by a school group of 8 doesn't read as 0 booked.
+  const totalBooked = shifts.reduce(
+    (s, x) => s + x._count.bookings + sumBlocks(x.blocks),
+    0,
+  );
 
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
@@ -92,7 +98,7 @@ export default async function AdminPage() {
                 <tbody>
                   {shifts.map((s) => {
                     const blocked = sumBlocks(s.blocks);
-                    const { free } = shiftAvailability(
+                    const { taken, free } = shiftAvailability(
                       s.capacity,
                       s._count.bookings,
                       blocked,
@@ -106,15 +112,13 @@ export default async function AdminPage() {
                           {s.program.title}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="font-semibold">
-                            {s._count.bookings}
-                          </span>
+                          <span className="font-semibold">{taken}</span>
                           <span className="text-foreground/55">
                             {" "}/ {s.capacity}
                           </span>
                           {blocked > 0 && (
                             <span className="ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/65">
-                              {blocked} held
+                              incl. {blocked} held
                             </span>
                           )}
                           {free <= 2 && free > 0 && (
