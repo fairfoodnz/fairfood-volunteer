@@ -11,7 +11,9 @@ import {
   summarizeBlocks,
   blockKindLabel,
 } from "@/lib/shifts";
-import { currentUser } from "@/lib/auth";
+import { appOrigin, currentUser } from "@/lib/auth";
+import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
+import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { BookForm } from "./book-form";
 import { CancelBookingDialog } from "./cancel-booking";
 import { BookingStatus } from "@/generated/prisma";
@@ -223,6 +225,20 @@ export default async function ShiftPage({ params }: Props) {
                       {formatShiftRange(shift.startsAt, shift.endsAt)}
                     </p>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <AddToCalendar
+                        bookingId={myBooking.id}
+                        links={calendarLinks(
+                          buildBookingCalendarEvent({
+                            bookingId: myBooking.id,
+                            programTitle: shift.program.title,
+                            location: shift.program.location,
+                            start: shift.startsAt,
+                            end: shift.endsAt,
+                            appOrigin: appOrigin(),
+                            shiftId: shift.id,
+                          }),
+                        )}
+                      />
                       <Link
                         href="/me"
                         className="inline-flex h-9 items-center rounded border border-border bg-card px-3 text-sm font-semibold text-foreground/80 transition-colors hover:border-leaf hover:text-leaf-deep"

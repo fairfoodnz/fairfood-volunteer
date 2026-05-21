@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { appOrigin, requireUser } from "@/lib/auth";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { VerifyEmailBanner } from "@/components/site/verify-email-banner";
+import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { formatShiftRange } from "@/lib/programs";
+import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CancelBookingDialog } from "../shifts/[id]/cancel-booking";
@@ -109,7 +111,22 @@ export default async function MePage({ searchParams }: Props) {
                         {b.shift.program.location}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 md:justify-end">
+                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                      <AddToCalendar
+                        bookingId={b.id}
+                        links={calendarLinks(
+                          buildBookingCalendarEvent({
+                            bookingId: b.id,
+                            programTitle: b.shift.program.title,
+                            location: b.shift.program.location,
+                            start: b.shift.startsAt,
+                            end: b.shift.endsAt,
+                            appOrigin: appOrigin(),
+                            shiftId: b.shiftId,
+                            notes: b.notes,
+                          }),
+                        )}
+                      />
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/shifts/${b.shiftId}`}>Details</Link>
                       </Button>
