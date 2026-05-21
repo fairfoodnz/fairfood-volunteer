@@ -5,7 +5,12 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { formatShiftRange, INCLUSIVE_SLUG, INCLUSIVE_MAILTO } from "@/lib/programs";
-import { sumBlocks, shiftAvailability } from "@/lib/shifts";
+import {
+  sumBlocks,
+  shiftAvailability,
+  summarizeBlocks,
+  blockKindLabel,
+} from "@/lib/shifts";
 import { currentUser } from "@/lib/auth";
 import { BookForm } from "./book-form";
 import { CancelBookingDialog } from "./cancel-booking";
@@ -42,7 +47,7 @@ export default async function ShiftPage({ params }: Props) {
           user: { select: { firstName: true, lastName: true } },
         },
       },
-      blocks: { select: { slots: true } },
+      blocks: { select: { slots: true, kind: true } },
     },
   });
   if (!shift) notFound();
@@ -52,14 +57,16 @@ export default async function ShiftPage({ params }: Props) {
     (user && shift.bookings.find((b) => b.userId === user.id)) || null;
 
   const bookedCount = shift.bookings.length;
-  const { free, isFull } = shiftAvailability(
+  const blockedCount = sumBlocks(shift.blocks);
+  const { taken, free, isFull } = shiftAvailability(
     shift.capacity,
     bookedCount,
-    sumBlocks(shift.blocks),
+    blockedCount,
   );
   const inPast = shift.startsAt < new Date();
   const isInclusive = shift.program.slug === INCLUSIVE_SLUG;
   const rosterChips = buildRosterChips(shift.bookings, user?.id ?? null);
+  const groupBlocks = summarizeBlocks(shift.blocks);
 
   return (
     <>
@@ -101,9 +108,9 @@ export default async function ShiftPage({ params }: Props) {
                   id="roster-heading"
                   className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
                 >
-                  Going · {bookedCount} of {shift.capacity}
+                  Going · {taken} of {shift.capacity}
                 </p>
-                {rosterChips.length === 0 ? (
+                {rosterChips.length === 0 && groupBlocks.length === 0 ? (
                   <p className="text-sm text-foreground/65">
                     Be the first to put your name down.
                   </p>
@@ -122,7 +129,20 @@ export default async function ShiftPage({ params }: Props) {
                         </span>
                       </li>
                     ))}
+                    {groupBlocks.map((b) => (
+                      <li key={b.kind}>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-clay/30 bg-clay/10 px-3 py-1 text-sm font-semibold text-clay">
+                          + {blockKindLabel(b.kind).toLowerCase()} of {b.slots}
+                        </span>
+                      </li>
+                    ))}
                   </ul>
+                )}
+                {groupBlocks.length > 0 && (
+                  <p className="text-xs text-foreground/65">
+                    A pre-arranged group is joining this shift alongside the
+                    volunteers above.
+                  </p>
                 )}
               </section>
 

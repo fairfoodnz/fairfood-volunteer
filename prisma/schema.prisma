@@ -51,6 +51,20 @@ enum DocumentVisibility {
   ADMIN
 }
 
+// The kind of off-platform group that a SlotBlock is holding spots for. Public
+// surfaces show a generic "Corporate group joining" / "School group joining"
+// pill so regular volunteers can see who else will be in the warehouse with
+// them — some regulars deliberately steer clear of corporate days, and we'd
+// rather they make an informed choice than turn up surprised. OTHER is the
+// quiet default (used by legacy rows pre-dating this enum) and shows as a
+// neutral "Group joining" pill.
+enum SlotBlockKind {
+  CORPORATE
+  SCHOOL
+  COMMUNITY
+  OTHER
+}
+
 model User {
   id              String              @id @default(cuid())
   email           String              @unique
@@ -310,15 +324,24 @@ model Shift {
 // An admin-reserved hold on a Shift — slots a coordinator is keeping back for
 // an off-platform group (corporate day, school class, private booking, etc.).
 // Carries no User: it reduces public + admin availability exactly like a
-// confirmed Booking but is never shown to volunteers. A shift can have several
-// independent holds; each is added/removed on its own and carries its own note.
+// confirmed Booking. Volunteers see a discreet "Corporate group joining" /
+// "School group joining" pill (driven by `kind` + `slots`) so regulars can
+// make an informed choice; the `note` stays admin-only because coordinators
+// put contact details and head counts in it. A shift can have several
+// independent holds; each is added/removed on its own and carries its own
+// kind + note.
 model SlotBlock {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   shiftId   String
-  shift     Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  shift     Shift         @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   slots     Int
-  note      String?  @db.Text
-  createdAt DateTime @default(now())
+  // What kind of group these slots are held for. Drives the public-facing
+  // "Corporate group joining" / "School group joining" pill on shift cards and
+  // detail pages — note stays admin-only because coordinators put contact
+  // details / counts / company names in it.
+  kind      SlotBlockKind @default(OTHER)
+  note      String?       @db.Text
+  createdAt DateTime      @default(now())
 
   @@index([shiftId])
 }

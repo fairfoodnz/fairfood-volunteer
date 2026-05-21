@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
-import { Check } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProgramArt } from "@/components/site/illustrations";
 import { bookShiftsAction, type BookManyState } from "./actions";
+import { blockKindLabel, type BlockSummary } from "@/lib/shifts";
 
 /**
  * Plain (serialisable) shift shape consumed by this client component. The
@@ -24,6 +25,12 @@ export type ShiftCard = {
   bookable: boolean;
   /** Reason the shift can't be ticked (e.g. "Already booked"). */
   unbookableReason: string | null;
+  /**
+   * Off-platform group holds, summarised by kind. Drives the discreet
+   * "Corporate group joining" pill so regulars who'd rather skip a corporate
+   * day can see what they're walking into.
+   */
+  groupBlocks: BlockSummary[];
   program: {
     id: string;
     title: string;
@@ -253,6 +260,23 @@ function ShiftCardItem({
               {shift.whenLabel}
             </p>
           </div>
+
+          {shift.groupBlocks.length > 0 && (
+            <ul className="flex flex-wrap gap-1.5">
+              {shift.groupBlocks.map((b) => (
+                <li
+                  key={b.kind}
+                  className="inline-flex items-center gap-1 rounded-full border border-clay/30 bg-clay/10 px-2.5 py-0.5 text-[11px] font-semibold text-clay"
+                  title={`A ${blockKindLabel(b.kind).toLowerCase()} of ${b.slots} is booked into this shift.`}
+                >
+                  <Users className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+                  <span>
+                    {blockKindLabel(b.kind)} of {b.slots} joining
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           {shift.notes && (
             <p className="text-xs italic text-foreground/65">{shift.notes}</p>
