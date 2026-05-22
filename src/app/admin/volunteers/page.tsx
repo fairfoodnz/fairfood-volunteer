@@ -193,12 +193,10 @@ export default async function VolunteersPage({
             method="get"
             className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
           >
-            {/* preserve current filter/sort when submitting search */}
+            {/* preserve current filter when submitting search; sort rides
+                along via the Select's own hidden input */}
             {filter !== "all" && (
               <input type="hidden" name="filter" value={filter} />
-            )}
-            {sort !== "recent" && (
-              <input type="hidden" name="sort" value={sort} />
             )}
             <div className="relative w-full md:max-w-sm">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/50" />
