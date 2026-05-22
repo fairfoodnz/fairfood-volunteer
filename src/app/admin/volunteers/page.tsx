@@ -2,6 +2,13 @@ import Link from "next/link";
 import { Search, Users, ShieldAlert, UserCheck } from "lucide-react";
 import { db } from "@/lib/db";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Prisma, BookingStatus, Role } from "@/generated/prisma";
 import { fullName } from "@/lib/users";
 
@@ -186,12 +193,10 @@ export default async function VolunteersPage({
             method="get"
             className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
           >
-            {/* preserve current filter/sort when submitting search */}
+            {/* preserve current filter when submitting search; sort rides
+                along via the Select's own hidden input */}
             {filter !== "all" && (
               <input type="hidden" name="filter" value={filter} />
-            )}
-            {sort !== "recent" && (
-              <input type="hidden" name="sort" value={sort} />
             )}
             <div className="relative w-full md:max-w-sm">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/50" />
@@ -211,18 +216,22 @@ export default async function VolunteersPage({
               >
                 Sort
               </label>
-              <select
-                id="vol-sort"
+              <Select
                 name="sort"
                 defaultValue={sort}
-                className="h-10 rounded-md border border-border bg-background px-2 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                items={Object.fromEntries(SORTS.map((s) => [s.key, s.label]))}
               >
-                {SORTS.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="vol-sort" className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORTS.map((s) => (
+                    <SelectItem key={s.key} value={s.key}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <button
                 type="submit"
                 className="inline-flex h-10 items-center rounded-md bg-foreground/5 px-3 text-sm font-semibold hover:bg-foreground/10"

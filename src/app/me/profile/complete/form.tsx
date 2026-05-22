@@ -1,11 +1,18 @@
 "use client";
 
-import { useActionState, useMemo } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { format, subYears } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { HeardAbout } from "@/generated/prisma";
 import {
@@ -46,6 +53,9 @@ export function QuestionnaireForm({
     {},
   );
   const fe = state.fieldErrors ?? {};
+  const [heardAbout, setHeardAbout] = useState<HeardAbout | "">(
+    defaults.heardAbout,
+  );
   // UX guardrails only — the action authoritatively enforces the 13–120 age
   // window (see completeProfileAction). Keep the bounds in lockstep with it.
   const birthdayBounds = useMemo(() => {
@@ -101,38 +111,48 @@ export function QuestionnaireForm({
           <Label htmlFor="heardAbout">
             How did you hear about Fair Food? <Req />
           </Label>
-          <select
-            id="heardAbout"
+          <Select
             name="heardAbout"
-            defaultValue={defaults.heardAbout}
-            aria-invalid={fe.heardAbout ? true : undefined}
-            className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={heardAbout === "" ? null : heardAbout}
+            onValueChange={(v) =>
+              setHeardAbout((v ?? "") as HeardAbout | "")
+            }
+            items={Object.fromEntries(
+              HEARD_ABOUT_OPTIONS.map((opt) => [opt.value, opt.label]),
+            )}
           >
-            <option value="" disabled>
-              Pick one…
-            </option>
-            {HEARD_ABOUT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              id="heardAbout"
+              className="h-11 w-full"
+              aria-invalid={fe.heardAbout ? true : undefined}
+            >
+              <SelectValue placeholder="Pick one…" />
+            </SelectTrigger>
+            <SelectContent>
+              {HEARD_ABOUT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Err>{fe.heardAbout}</Err>
 
-          {/* Revealed when "Somewhere else" is selected. CSS-only via :has() on the wrapping fieldset. */}
-          <div className="reveal-other mt-3 hidden">
-            <Label htmlFor="heardAboutOther" className="text-sm">
-              Tell us more
-            </Label>
-            <Input
-              id="heardAboutOther"
-              name="heardAboutOther"
-              defaultValue={defaults.heardAboutOther}
-              aria-invalid={fe.heardAboutOther ? true : undefined}
-              className="mt-2 h-11"
-            />
-            <Err>{fe.heardAboutOther}</Err>
-          </div>
+          {heardAbout === HeardAbout.OTHER && (
+            <div className="mt-3">
+              <Label htmlFor="heardAboutOther" className="text-sm">
+                Tell us more
+              </Label>
+              <Input
+                id="heardAboutOther"
+                name="heardAboutOther"
+                defaultValue={defaults.heardAboutOther}
+                aria-invalid={fe.heardAboutOther ? true : undefined}
+                className="mt-2 h-11"
+              />
+              <Err>{fe.heardAboutOther}</Err>
+            </div>
+          )}
         </FieldRow>
 
         <FieldRow>
@@ -202,12 +222,7 @@ function FormSection({ children }: { children: React.ReactNode }) {
 }
 
 function FieldRow({ children }: { children: React.ReactNode }) {
-  // Wrapping <fieldset> + group selector for the heardAbout "other" reveal.
-  return (
-    <fieldset className="space-y-2 [&:has(select_option[value=OTHER]:checked)_.reveal-other]:!block">
-      {children}
-    </fieldset>
-  );
+  return <fieldset className="space-y-2">{children}</fieldset>;
 }
 
 function FlagGroup({

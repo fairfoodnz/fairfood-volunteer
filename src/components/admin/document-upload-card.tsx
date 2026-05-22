@@ -5,6 +5,13 @@ import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ALLOWED_MIME_TYPES,
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -171,34 +178,42 @@ export function DocumentUploadCard() {
               />
             </Field>
             <Field label="Category" htmlFor="doc-category">
-              <select
-                id="doc-category"
+              <Select
                 name="category"
                 defaultValue={DocumentCategory.OTHER}
                 disabled={pending}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-60"
+                items={CATEGORY_LABELS}
               >
-                {CATEGORY_ORDER.map((c) => (
-                  <option key={c} value={c}>
-                    {CATEGORY_LABELS[c]}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="doc-category" className="h-10 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_ORDER.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {CATEGORY_LABELS[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <Field label="Who can see it?" htmlFor="doc-visibility">
-              <select
-                id="doc-visibility"
+              <Select
                 name="visibility"
                 defaultValue={DocumentVisibility.VOLUNTEER}
                 disabled={pending}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-60"
+                items={VISIBILITY_LABELS}
               >
-                {VISIBILITY_ORDER.map((v) => (
-                  <option key={v} value={v}>
-                    {VISIBILITY_LABELS[v]}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="doc-visibility" className="h-10 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VISIBILITY_ORDER.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {VISIBILITY_LABELS[v]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
             <Field label="Description (optional)" htmlFor="doc-description">
               <textarea

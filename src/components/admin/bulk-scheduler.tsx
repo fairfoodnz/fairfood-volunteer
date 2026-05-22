@@ -15,6 +15,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TemplateLite = {
   id: string;
@@ -146,18 +153,24 @@ export function BulkScheduler({
       <div className="space-y-6 rounded-md border border-border bg-card p-6">
         <div className="space-y-2">
           <Label htmlFor="programme">Programme</Label>
-          <select
-            id="programme"
+          <Select
             value={programId}
-            onChange={(e) => changeProgramme(e.target.value)}
-            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+            onValueChange={(v) => {
+              if (typeof v === "string") changeProgramme(v);
+            }}
+            items={Object.fromEntries(programmes.map((p) => [p.id, p.title]))}
           >
-            {programmes.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="programme" className="h-11 w-full">
+              <SelectValue placeholder="Choose a programme" />
+            </SelectTrigger>
+            <SelectContent>
+              {programmes.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
