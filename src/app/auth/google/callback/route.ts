@@ -157,6 +157,7 @@ async function resolveDestination(
     try {
       await sendWelcomeEmail({
         to: created.email,
+        userId: created.id,
         userName: created.firstName || undefined,
       });
     } catch (err) {

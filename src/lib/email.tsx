@@ -8,6 +8,8 @@ import WelcomeEmail from "../../emails/welcome";
 import BookingConfirmationEmail from "../../emails/booking-confirmation";
 import BookingCancelledEmail from "../../emails/booking-cancelled";
 import VolunteerInviteEmail from "../../emails/volunteer-invite";
+import { EmailLogStatus, EmailTemplate } from "@/generated/prisma";
+import { db } from "@/lib/db";
 import type { CalendarLinks } from "@/lib/calendar";
 
 /**
@@ -21,6 +23,12 @@ import type { CalendarLinks } from "@/lib/calendar";
  *
  * `EMAIL_FROM` must be an address on a domain verified in Resend
  * (fairfood.org.nz). Format: `Name <addr@domain>` or a bare address.
+ *
+ * Every send (success, dev-noop, or failure) is recorded in `EmailLog` so
+ * admins can see what was sent to a volunteer from /admin/volunteers/[id].
+ * The log row is best-effort: if the DB write itself fails we log to console
+ * and let the original send result through — we'd rather drop the audit
+ * entry than break the actual mail flow.
  */
 const FROM =
   process.env.EMAIL_FROM ?? "Fair Food <volunteering@fairfood.org.nz>";
@@ -46,39 +54,115 @@ type SendArgs = {
   /** A react-email document, e.g. <ForgotPasswordEmail … />. */
   react: React.ReactElement;
   attachments?: EmailAttachment[];
+  /** Which template was rendered — required so the audit log knows. */
+  template: EmailTemplate;
+  /**
+   * The volunteer this email is for, when known. Nullable so emails sent to a
+   * bare address (e.g. a password reset for a non-existent account, though we
+   * never actually send those) still get logged.
+   */
+  userId?: string | null;
 };
 
-export async function sendEmail({ to, subject, react, attachments }: SendArgs) {
+/**
+ * Best-effort EmailLog write. Swallows DB errors after console-logging so a
+ * failed audit insert never breaks the underlying email send (the send is
+ * already done by the time we get here).
+ */
+async function recordEmailLog(row: {
+  userId: string | null;
+  toEmail: string;
+  subject: string;
+  template: EmailTemplate;
+  status: EmailLogStatus;
+  providerId: string | null;
+  error: string | null;
+  bodyHtml: string;
+  bodyText: string;
+}) {
+  try {
+    await db.emailLog.create({ data: row });
+  } catch (e) {
+    console.error("[email-log] failed to record send", e);
+  }
+}
+
+export async function sendEmail({
+  to,
+  subject,
+  react,
+  attachments,
+  template,
+  userId,
+}: SendArgs) {
   const html = await render(react);
   const text = await render(react, { plainText: true });
 
   if (!resend) {
     if (process.env.NODE_ENV === "production") {
       throw new Error(
-        "RESEND_API_KEY is not set — refusing to drop a transactional email in production."
+        "RESEND_API_KEY is not set — refusing to drop a transactional email in production.",
       );
     }
     const attachLine = attachments?.length
       ? `  attachments: ${attachments.map((a) => a.filename).join(", ")}\n`
       : "";
     console.log(
-      `\n📧 [email:dev] would send via Resend\n  to: ${to}\n  subject: ${subject}\n  from: ${FROM}\n${attachLine}--- text body ---\n${text}\n-----------------\n`
+      `\n📧 [email:dev] would send via Resend\n  to: ${to}\n  subject: ${subject}\n  from: ${FROM}\n${attachLine}--- text body ---\n${text}\n-----------------\n`,
     );
+    await recordEmailLog({
+      userId: userId ?? null,
+      toEmail: to,
+      subject,
+      template,
+      status: EmailLogStatus.DEV_LOGGED,
+      providerId: null,
+      error: null,
+      bodyHtml: html,
+      bodyText: text,
+    });
     return { id: "dev-noop" };
   }
 
-  const { data, error } = await resend.emails.send({
-    from: FROM,
-    to,
+  let data: Awaited<ReturnType<typeof resend.emails.send>>["data"] = null;
+  let providerId: string | null = null;
+  let sendError: Error | null = null;
+  try {
+    const result = await resend.emails.send({
+      from: FROM,
+      to,
+      subject,
+      html,
+      text,
+      attachments,
+    });
+    if (result.error) {
+      sendError = new Error(
+        `Resend send failed: ${result.error.name}: ${result.error.message}`,
+      );
+    } else {
+      data = result.data;
+      providerId = data?.id ?? null;
+    }
+  } catch (e) {
+    sendError = e instanceof Error ? e : new Error(String(e));
+  }
+
+  await recordEmailLog({
+    userId: userId ?? null,
+    toEmail: to,
     subject,
-    html,
-    text,
-    attachments,
+    template,
+    status: sendError ? EmailLogStatus.FAILED : EmailLogStatus.SENT,
+    providerId,
+    error: sendError ? sendError.message : null,
+    bodyHtml: html,
+    bodyText: text,
   });
 
-  if (error) {
+  if (sendError) {
     // Surface the provider message; callers decide how to degrade.
-    throw new Error(`Resend send failed: ${error.name}: ${error.message}`);
+    throw sendError;
   }
   return data;
 }
@@ -89,10 +173,13 @@ export async function sendVerificationEmail(opts: {
   verifyUrl: string;
   userName?: string;
   expiresInHours?: number;
+  userId?: string;
 }) {
   const expiresInHours = opts.expiresInHours ?? 24;
   return sendEmail({
     to: opts.to,
+    userId: opts.userId,
+    template: EmailTemplate.VERIFY_EMAIL,
     subject: `Confirm your email to finish setting up your Fair Food account`,
     react: (
       <VerifyEmail
@@ -108,9 +195,12 @@ export async function sendVerificationEmail(opts: {
 export async function sendWelcomeEmail(opts: {
   to: string;
   userName?: string;
+  userId?: string;
 }) {
   return sendEmail({
     to: opts.to,
+    userId: opts.userId,
+    template: EmailTemplate.WELCOME,
     subject: `You're in — welcome to the Fair Food volunteer whānau`,
     react: <WelcomeEmail userName={opts.userName} />,
   });
@@ -122,10 +212,13 @@ export async function sendPasswordResetEmail(opts: {
   resetUrl: string;
   userName?: string;
   expiresInHours?: number;
+  userId?: string;
 }) {
   const expiresInHours = opts.expiresInHours ?? 24;
   return sendEmail({
     to: opts.to,
+    userId: opts.userId,
+    template: EmailTemplate.PASSWORD_RESET,
     subject: `Reset your Fair Food password — link valid for ${expiresInHours} hours`,
     react: (
       <ForgotPasswordEmail
@@ -153,9 +246,12 @@ export async function sendBookingConfirmationEmail(opts: {
   manageUrl: string;
   calendar: CalendarLinks;
   ics: string;
+  userId?: string;
 }) {
   return sendEmail({
     to: opts.to,
+    userId: opts.userId,
+    template: EmailTemplate.BOOKING_CONFIRMATION,
     subject: `You're booked in — ${opts.programTitle}, ${opts.whenLabel}`,
     react: (
       <BookingConfirmationEmail
@@ -190,10 +286,13 @@ export async function sendVolunteerInviteEmail(opts: {
   claimUrl: string;
   userName?: string;
   expiresInDays?: number;
+  userId?: string;
 }) {
   const expiresInDays = opts.expiresInDays ?? 7;
   return sendEmail({
     to: opts.to,
+    userId: opts.userId,
+    template: EmailTemplate.VOLUNTEER_INVITE,
     subject: `Welcome to the new Fair Food volunteer portal — set your password`,
     react: (
       <VolunteerInviteEmail
@@ -218,9 +317,12 @@ export async function sendBookingCancellationEmail(opts: {
   programTitle: string;
   whenLabel: string;
   location: string;
+  userId?: string;
 }) {
   return sendEmail({
     to: opts.to,
+    userId: opts.userId,
+    template: EmailTemplate.BOOKING_CANCELLED,
     subject: `Cancelled — your ${opts.programTitle} shift on ${opts.whenLabel}`,
     react: (
       <BookingCancelledEmail

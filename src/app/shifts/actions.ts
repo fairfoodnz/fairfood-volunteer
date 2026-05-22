@@ -123,6 +123,7 @@ export async function bookShiftAction(
     });
     await sendBookingConfirmationEmail({
       to: user.email,
+      userId: user.id,
       userName: user.firstName || undefined,
       programTitle: shift.program.title,
       whenLabel,
@@ -288,6 +289,7 @@ export async function bookShiftsAction(
           });
           await sendBookingConfirmationEmail({
             to: user.email,
+            userId: user.id,
             userName: user.firstName || undefined,
             programTitle: shift.program.title,
             whenLabel,

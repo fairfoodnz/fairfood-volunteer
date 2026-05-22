@@ -322,6 +322,7 @@ async function issueAndSendInvites(
     try {
       await sendVolunteerInviteEmail({
         to: user.email,
+        userId: user.id,
         claimUrl,
         userName: user.firstName || undefined,
         expiresInDays: INVITE_TTL_DAYS,
