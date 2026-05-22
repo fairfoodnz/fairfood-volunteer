@@ -34,10 +34,14 @@ export async function GET(
       "Content-Type": "text/html; charset=utf-8",
       "X-Content-Type-Options": "nosniff",
       // Block scripts, forms, frame navigation, and outbound network — the
-      // iframe is purely for visual preview. `img-src *` keeps inline brand
-      // images and any CID-style externals visible.
+      // iframe is purely for visual preview. `img-src 'self' data:` covers
+      // the self-hosted PNGs in public/email/ (the only images react-email
+      // currently emits) plus inline data: URIs. We deliberately don't widen
+      // this to `*` so a future template bug that pulls a third-party image
+      // can't silently exfiltrate the admin's IP/user-agent — add a named
+      // host here if a template ever legitimately needs one.
       "Content-Security-Policy":
-        "default-src 'none'; img-src * data:; style-src 'unsafe-inline'; font-src data:; sandbox",
+        "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; font-src data:; sandbox",
       // Audit content — never let an intermediary cache it across admins.
       "Cache-Control": "private, no-store",
       "X-Frame-Options": "SAMEORIGIN",
