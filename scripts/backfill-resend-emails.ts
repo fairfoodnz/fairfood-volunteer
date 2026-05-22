@@ -163,8 +163,14 @@ async function main() {
       const createdAt = new Date(body.created_at);
 
       if (DRY_RUN) {
+        // Deliberately log only the opaque Resend message id and whether a
+        // user was matched. Logging the template name (e.g. PASSWORD_RESET)
+        // or the recipient address would (a) trip CodeQL's
+        // `js/clear-text-logging` rule and (b) leak audit metadata into any
+        // chat or ticket where the dry-run output gets pasted. The Resend
+        // dashboard is the source of truth for full details.
         console.log(
-          `[backfill] would insert ${item.id} → ${template} for ${toEmail}${user ? ` (user ${user.id})` : " (no user)"}`,
+          `[backfill] would insert ${item.id} (matched user: ${user ? "yes" : "no"})`,
         );
         stats.inserted += 1;
         if (stats.inserted >= MAX_INSERTS) break outer;
