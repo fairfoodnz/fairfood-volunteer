@@ -28,8 +28,8 @@ export function ImpersonateForm({
     <form action={action} className="rounded-md border border-border bg-card p-4">
       <input type="hidden" name="userId" value={userId} />
       <p className="text-sm">
-        Sign in as <span className="font-semibold">{volunteerName}</span> for
-        up to an hour so you can see exactly what they see — useful when
+        Sign in as <span className="font-semibold">{volunteerName}</span>{" "}
+        for up to an hour so you can see exactly what they see — useful when
         debugging a booking or a profile issue they&rsquo;ve reported.
       </p>
       <p className="mt-2 text-xs text-foreground/55">
