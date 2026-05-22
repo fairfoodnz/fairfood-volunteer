@@ -93,8 +93,10 @@ export async function currentUser(): Promise<User | null> {
   // re-set and the row bumped. Cookie set runs first because it's the part
   // that can fail (RSC render phase) — if it throws, we skip the DB update so
   // the two sides stay in lockstep and we retry on the next mutable request.
+  // Impersonation sessions are deliberately short-lived (1h) and must NOT
+  // slide — see src/lib/impersonation.ts.
   const remaining = session.expiresAt.getTime() - Date.now();
-  if (remaining < SESSION_RENEWAL_WINDOW_MS) {
+  if (!session.isImpersonation && remaining < SESSION_RENEWAL_WINDOW_MS) {
     const newExpiresAt = new Date(Date.now() + SESSION_LENGTH_MS);
     try {
       cookieStore.set(SESSION_COOKIE, t, sessionCookieOptions(newExpiresAt));

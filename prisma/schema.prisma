@@ -125,6 +125,8 @@ model User {
   passkeys           Passkey[]
   uploadedDocs       Document[]          @relation("DocumentUploader")
   emailLogs          EmailLog[]
+  impersonationsRun     ImpersonationLog[]  @relation("ImpersonationAdmin")
+  impersonationsAsTarget ImpersonationLog[] @relation("ImpersonationTarget")
 }
 
 // A linked third-party identity (currently only Google). One row per
@@ -184,6 +186,10 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  // True when minted by an admin impersonating this user. currentUser() skips
+  // its sliding-expiry renewal so impersonation stays short-lived (1h),
+  // independent of the volunteer's usual 30-day fuse.
+  isImpersonation Boolean @default(false)
 
   @@index([userId])
 }
@@ -247,6 +253,23 @@ model EmailVerificationToken {
   createdAt DateTime  @default(now())
 
   @@index([userId])
+}
+
+// Audit trail of admin impersonation. One row per "start impersonating"
+// click; endedAt is filled when the admin stops (or stays null if the
+// impersonation session expired without an explicit stop). Pure record-
+// keeping: the start/stop flow itself doesn't gate on this table.
+model ImpersonationLog {
+  id           String    @id @default(cuid())
+  adminId      String
+  admin        User      @relation("ImpersonationAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+  targetUserId String
+  target       User      @relation("ImpersonationTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+
+  @@index([adminId, startedAt])
+  @@index([targetUserId])
 }
 
 model Program {

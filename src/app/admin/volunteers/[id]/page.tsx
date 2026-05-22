@@ -6,6 +6,7 @@ import { formatShiftRange } from "@/lib/programs";
 import { fullName } from "@/lib/users";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ImpersonateForm } from "@/components/admin/impersonate-form";
 import { BookingStatus, Role } from "@/generated/prisma";
 import {
   updateVolunteerNotesAction,
@@ -356,6 +357,15 @@ export default async function VolunteerDetailPage({ params }: Props) {
                 </div>
               </form>
             </Section>
+
+            {!isSelf && !isAdminUser && (
+              <Section title="Impersonate">
+                <ImpersonateForm
+                  userId={user.id}
+                  volunteerName={fullName(user)}
+                />
+              </Section>
+            )}
 
             <Section title="Admin access">
               {isSelf ? (
