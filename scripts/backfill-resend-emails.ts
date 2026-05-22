@@ -47,11 +47,11 @@ const MAX_INSERTS = process.env.BACKFILL_LIMIT
 
 // Page size: Resend caps at 100. Each list page is one API call, then we make
 // one more `get()` per email to pull the body — so 100 emails = 101 calls per
-// page. The script paces itself with a 50ms delay between body fetches and
-// a 250ms pause between list pages, so even a Resend history with thousands
-// of pages stays well under the documented 10 req/s soft limit.
+// page. Resend's documented soft limit is 10 req/s; 100ms between body
+// fetches keeps body calls right at that ceiling, and the 250ms inter-page
+// pause gives a margin against the unthrottled list call that opens each page.
 const PAGE_SIZE = 100;
-const PER_REQUEST_DELAY_MS = 50;
+const PER_REQUEST_DELAY_MS = 100;
 const PER_PAGE_DELAY_MS = 250;
 
 /**
