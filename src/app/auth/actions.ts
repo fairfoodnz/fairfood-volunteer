@@ -20,6 +20,7 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "@/lib/email";
+import { stopImpersonation } from "@/lib/impersonation";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 const PASSWORD_MIN = 8;
@@ -184,6 +185,16 @@ export async function signUpAction(
 export async function signOutAction() {
   await signOut();
   redirect("/");
+}
+
+/**
+ * End an active admin impersonation: restore the admin's original session
+ * cookie and close out the audit row. Safe to call when nothing is being
+ * impersonated — `stopImpersonation()` is a no-op in that case.
+ */
+export async function stopImpersonationAction() {
+  await stopImpersonation();
+  redirect("/admin/volunteers");
 }
 
 const DEV_SEED_EMAILS = {
