@@ -100,6 +100,45 @@ export function minutesOf(time: string): number {
 }
 
 /**
+ * Resolve the UTC instants that bracket "tomorrow in NZ" as a [start, end)
+ * range — i.e. NZ-local midnight at the start of (NZ today + 1) and the
+ * following NZ-local midnight. DST-aware via `nzWallTimeToUtc`, so the window
+ * is always 23 / 24 / 25 hours depending on which side of an autumn or
+ * spring switch tomorrow lands on.
+ *
+ * Used by the booking-reminder cron (`/api/cron/booking-reminders`): a shift
+ * counts as "tomorrow" when its `startsAt` falls in this half-open range, no
+ * matter what time of day the cron actually fired.
+ */
+export function nzTomorrowUtcRange(now: Date = new Date()): {
+  start: Date;
+  end: Date;
+} {
+  const nzDay = new Intl.DateTimeFormat("en-CA", {
+    timeZone: NZ_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  // "en-CA" yields a sortable YYYY-MM-DD for today's NZ calendar date,
+  // regardless of the host's ambient zone.
+  const todayISO = nzDay.format(now);
+  const [y, m, d] = todayISO.split("-").map(Number);
+  // Calendar-day arithmetic in UTC so month/year rollovers come along for
+  // the ride — the value is a date label, not an instant.
+  const tomorrowMs = Date.UTC(y, m - 1, d) + 86_400_000;
+  const dayAfterMs = tomorrowMs + 86_400_000;
+  const isoOf = (ms: number) => {
+    const dt = new Date(ms);
+    return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+  };
+  return {
+    start: nzWallTimeToUtc(isoOf(tomorrowMs), "00:00"),
+    end: nzWallTimeToUtc(isoOf(dayAfterMs), "00:00"),
+  };
+}
+
+/**
  * Every calendar date (YYYY-MM-DD) from `startISO` to `endISO` inclusive whose
  * weekday is in `weekdays` (0 = Sun … 6 = Sat). Pure calendar arithmetic in
  * UTC — each value is exactly a calendar date, independent of timezone — so the

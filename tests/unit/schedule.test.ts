@@ -4,6 +4,7 @@ import {
   enumerateDates,
   isHHMM,
   minutesOf,
+  nzTomorrowUtcRange,
   nzWallTimeToUtc,
   toNzDateTimeLocal,
 } from "@/lib/schedule";
@@ -111,6 +112,62 @@ describe("enumerateDates", () => {
     );
     expect(out).toHaveLength(5);
     expect(out[0]).toBe("2026-01-01");
+  });
+});
+
+describe("nzTomorrowUtcRange", () => {
+  it("brackets tomorrow's NZ calendar day at NZDT (summer)", () => {
+    // 2026-01-15 10:00 NZDT (UTC+13) → tomorrow is 2026-01-16 in NZ.
+    // 2026-01-16 00:00 NZDT = 2026-01-15 11:00 UTC
+    // 2026-01-17 00:00 NZDT = 2026-01-16 11:00 UTC
+    const now = new Date("2026-01-14T21:00:00.000Z"); // 2026-01-15 10:00 NZDT
+    const { start, end } = nzTomorrowUtcRange(now);
+    expect(start.toISOString()).toBe("2026-01-15T11:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-01-16T11:00:00.000Z");
+  });
+
+  it("brackets tomorrow's NZ calendar day at NZST (winter)", () => {
+    // 2026-07-15 10:00 NZST (UTC+12) → tomorrow is 2026-07-16 in NZ.
+    // 2026-07-16 00:00 NZST = 2026-07-15 12:00 UTC
+    // 2026-07-17 00:00 NZST = 2026-07-16 12:00 UTC
+    const now = new Date("2026-07-14T22:00:00.000Z"); // 2026-07-15 10:00 NZST
+    const { start, end } = nzTomorrowUtcRange(now);
+    expect(start.toISOString()).toBe("2026-07-15T12:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-07-16T12:00:00.000Z");
+  });
+
+  it("rolls over the month boundary correctly", () => {
+    // 2026-01-31 10:00 NZDT → tomorrow is 2026-02-01 in NZ.
+    const now = new Date("2026-01-30T21:00:00.000Z");
+    const { start, end } = nzTomorrowUtcRange(now);
+    expect(start.toISOString()).toBe("2026-01-31T11:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-02-01T11:00:00.000Z");
+  });
+
+  it("rolls over the year boundary correctly", () => {
+    // 2026-12-31 10:00 NZDT → tomorrow is 2027-01-01 in NZ.
+    const now = new Date("2026-12-30T21:00:00.000Z");
+    const { start, end } = nzTomorrowUtcRange(now);
+    expect(start.toISOString()).toBe("2026-12-31T11:00:00.000Z");
+    expect(end.toISOString()).toBe("2027-01-01T11:00:00.000Z");
+  });
+
+  it("produces a 23-hour window across the spring-forward switch", () => {
+    // NZ DST starts the last Sunday of September. In 2026 that's 2026-09-27:
+    // clocks jump from 02:00 NZST to 03:00 NZDT. If "now" is on Saturday
+    // 26 Sep NZ, "tomorrow" is the 23-hour Sunday.
+    const now = new Date("2026-09-25T22:00:00.000Z"); // 2026-09-26 10:00 NZST
+    const { start, end } = nzTomorrowUtcRange(now);
+    expect(end.getTime() - start.getTime()).toBe(23 * 60 * 60 * 1000);
+  });
+
+  it("produces a 25-hour window across the fall-back switch", () => {
+    // NZ DST ends the first Sunday of April. In 2026 that's 2026-04-05:
+    // clocks fall from 03:00 NZDT to 02:00 NZST. If "now" is Saturday 4 Apr
+    // NZ, "tomorrow" is the 25-hour Sunday.
+    const now = new Date("2026-04-03T21:00:00.000Z"); // 2026-04-04 10:00 NZDT
+    const { start, end } = nzTomorrowUtcRange(now);
+    expect(end.getTime() - start.getTime()).toBe(25 * 60 * 60 * 1000);
   });
 });
 

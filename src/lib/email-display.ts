@@ -13,6 +13,7 @@ export const EMAIL_TEMPLATE_LABELS: Record<EmailTemplate, string> = {
   PASSWORD_RESET: "Password reset",
   BOOKING_CONFIRMATION: "Booking confirmation",
   BOOKING_CANCELLED: "Booking cancellation",
+  BOOKING_REMINDER: "Booking reminder",
   VOLUNTEER_INVITE: "Volunteer invite",
 };
 
