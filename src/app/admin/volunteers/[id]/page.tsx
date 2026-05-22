@@ -34,6 +34,10 @@ const HEARD_ABOUT_LABELS: Record<string, string> = {
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props) {
+  // Next calls generateMetadata independently of the page component, so the
+  // page's own requireAdmin() doesn't gate this DB query. Guard it explicitly
+  // — match the rest of /admin where every server read is admin-gated.
+  await requireAdmin();
   const { id } = await params;
   const user = await db.user.findUnique({
     where: { id },
