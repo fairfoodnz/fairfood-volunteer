@@ -301,12 +301,12 @@ export default async function VolunteersPage({
                         key={u.id}
                         className="border-t border-border transition-colors hover:bg-cream-deep/40"
                       >
-                        <td className="px-4 py-3 align-top">
+                        <td className="max-w-[16rem] px-4 py-3 align-top">
                           <Link
                             href={`/admin/volunteers/${u.id}`}
-                            className="group inline-flex flex-col gap-1"
+                            className="group flex flex-col gap-1"
                           >
-                            <span className="font-semibold group-hover:text-leaf-deep">
+                            <span className="font-semibold break-words group-hover:text-leaf-deep">
                               {fullName(u)}
                             </span>
                             <span className="flex flex-wrap items-center gap-1">
@@ -318,7 +318,7 @@ export default async function VolunteersPage({
                             </span>
                           </Link>
                         </td>
-                        <td className="hidden px-4 py-3 align-top text-foreground/75 md:table-cell">
+                        <td className="hidden max-w-[18rem] px-4 py-3 align-top text-foreground/75 md:table-cell">
                           <div className="truncate">{u.email}</div>
                           {u.phone && (
                             <div className="text-xs text-foreground/55">
@@ -326,10 +326,10 @@ export default async function VolunteersPage({
                             </div>
                           )}
                         </td>
-                        <td className="hidden px-4 py-3 align-top text-foreground/75 sm:table-cell">
+                        <td className="hidden px-4 py-3 align-top whitespace-nowrap text-foreground/75 sm:table-cell">
                           {NZ_DATE.format(u.createdAt)}
                         </td>
-                        <td className="px-4 py-3 align-top">
+                        <td className="px-4 py-3 align-top whitespace-nowrap">
                           <span className="font-semibold">
                             {u._count.bookings}
                           </span>
@@ -337,12 +337,12 @@ export default async function VolunteersPage({
                             confirmed
                           </span>
                         </td>
-                        <td className="px-4 py-3 align-top text-foreground/75">
+                        <td className="px-4 py-3 align-top whitespace-nowrap text-foreground/75">
                           {lastBooking
                             ? NZ_DATE.format(lastBooking.createdAt)
                             : "—"}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
                           <Link
                             href={`/admin/volunteers/${u.id}`}
                             className="font-semibold text-leaf-deep hover:underline"
