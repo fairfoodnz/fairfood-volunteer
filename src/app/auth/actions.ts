@@ -260,6 +260,7 @@ export async function requestPasswordResetAction(
     try {
       await sendPasswordResetEmail({
         to: user.email,
+        userId: user.id,
         resetUrl,
         userName: user.firstName || undefined,
         expiresInHours: RESET_TTL_HOURS,
@@ -390,6 +391,7 @@ async function issueEmailVerification(user: {
   try {
     await sendVerificationEmail({
       to: user.email,
+      userId: user.id,
       verifyUrl,
       userName: user.firstName || undefined,
       expiresInHours: VERIFY_TTL_HOURS,
@@ -467,6 +469,7 @@ export async function verifyEmailAction(
     try {
       await sendWelcomeEmail({
         to: user.email,
+        userId: user.id,
         userName: user.firstName || undefined,
       });
     } catch (err) {

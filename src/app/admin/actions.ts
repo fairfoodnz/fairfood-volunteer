@@ -176,7 +176,7 @@ export async function setBookingStatus(formData: FormData) {
   const existing = await db.booking.findUnique({
     where: { id: parsed.bookingId },
     include: {
-      user: { select: { email: true, firstName: true } },
+      user: { select: { id: true, email: true, firstName: true } },
       shift: {
         include: {
           program: { select: { title: true, location: true, slug: true } },
@@ -205,6 +205,7 @@ export async function setBookingStatus(formData: FormData) {
     try {
       await sendBookingCancellationEmail({
         to: existing.user.email,
+        userId: existing.user.id,
         userName: existing.user.firstName || undefined,
         programTitle: existing.shift.program.title,
         whenLabel: formatShiftRange(
@@ -626,6 +627,7 @@ export async function assignBookingAction(
       };
       await sendBookingConfirmationEmail({
         to: user.email,
+        userId: user.id,
         userName: user.firstName || undefined,
         programTitle: shift.program.title,
         whenLabel,

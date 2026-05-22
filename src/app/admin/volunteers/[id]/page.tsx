@@ -12,6 +12,16 @@ import {
   updateVolunteerNotesAction,
   setVolunteerRoleAction,
 } from "../actions";
+import {
+  EMAIL_STATUS_BADGE,
+  EMAIL_TEMPLATE_LABELS,
+  formatEmailTimestamp,
+} from "@/lib/email-display";
+
+// Cap how many EmailLog rows we render inline on the detail page. Old rows
+// still exist; this is a soft "recent activity" view, not a complete archive
+// (we don't link to an archive yet — surface that if the cap ever bites).
+const EMAIL_LOG_LIMIT = 50;
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +68,22 @@ export default async function VolunteerDetailPage({ params }: Props) {
     },
   });
   if (!user) notFound();
+
+  // Don't pull `bodyHtml` / `bodyText` here — those are 5–20KB each and only
+  // needed on the standalone email page. The list view just needs metadata.
+  const emails = await db.emailLog.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "desc" },
+    take: EMAIL_LOG_LIMIT,
+    select: {
+      id: true,
+      subject: true,
+      template: true,
+      status: true,
+      createdAt: true,
+      error: true,
+    },
+  });
 
   const isSelf = user.id === admin.id;
   const isAdminUser = user.role === Role.ADMIN;
@@ -238,6 +264,63 @@ export default async function VolunteerDetailPage({ params }: Props) {
                     <BookingList heading="History" items={past.map(toRow)} />
                   )}
                 </div>
+              )}
+            </Section>
+
+            <Section
+              title={
+                emails.length >= EMAIL_LOG_LIMIT
+                  ? `Emails sent (${EMAIL_LOG_LIMIT}+)`
+                  : `Emails sent (${emails.length})`
+              }
+            >
+              {emails.length === 0 ? (
+                <Empty>
+                  We haven&rsquo;t emailed this volunteer yet. Booking
+                  confirmations, password resets and invites will show up here
+                  as they go out.
+                </Empty>
+              ) : (
+                <ul className="divide-y divide-border rounded-md border border-border bg-card">
+                  {emails.map((e) => {
+                    const badge = EMAIL_STATUS_BADGE[e.status];
+                    return (
+                      <li key={e.id}>
+                        <Link
+                          href={`/admin/emails/${e.id}`}
+                          className="flex flex-wrap items-start justify-between gap-3 p-4 hover:bg-foreground/5"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                              {EMAIL_TEMPLATE_LABELS[e.template]}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-semibold">
+                              {e.subject}
+                            </p>
+                            <p className="mt-1 text-xs text-foreground/65">
+                              {formatEmailTimestamp(e.createdAt)}
+                            </p>
+                            {e.error && (
+                              <p className="mt-1 truncate text-xs text-tomato">
+                                {e.error}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-3">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${badge.cls}`}
+                            >
+                              {badge.label}
+                            </span>
+                            <span className="text-xs font-semibold text-leaf-deep">
+                              View →
+                            </span>
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </Section>
           </div>

@@ -124,6 +124,7 @@ model User {
   oauthAccounts      OAuthAccount[]
   passkeys           Passkey[]
   uploadedDocs       Document[]          @relation("DocumentUploader")
+  emailLogs          EmailLog[]
   impersonationsRun     ImpersonationLog[]  @relation("ImpersonationAdmin")
   impersonationsAsTarget ImpersonationLog[] @relation("ImpersonationTarget")
 }
@@ -407,4 +408,60 @@ model Document {
 
   @@index([category, deletedAt])
   @@index([visibility, deletedAt])
+}
+
+// Which transactional template a logged email was rendered from. Lives in
+// `emails/*.tsx` and is wrapped by a typed sender in `src/lib/email.tsx`. The
+// enum is the audit-trail label coordinators see in admin — keep it stable
+// even if a template file is renamed, because old EmailLog rows still point
+// at the old name.
+enum EmailTemplate {
+  VERIFY_EMAIL
+  WELCOME
+  PASSWORD_RESET
+  BOOKING_CONFIRMATION
+  BOOKING_CANCELLED
+  VOLUNTEER_INVITE
+}
+
+// Outcome of a send attempt. SENT = handed to Resend without error;
+// DEV_LOGGED = no `RESEND_API_KEY` set, so the rendered body was console.log'd
+// (dev only); FAILED = Resend rejected or threw. We log every attempt so
+// "the volunteer says they never got the email" is answerable from admin
+// without diving into Resend's dashboard.
+enum EmailLogStatus {
+  SENT
+  DEV_LOGGED
+  FAILED
+}
+
+// Audit trail for every transactional email rendered by `src/lib/email.tsx`.
+// Admins can see what we sent to a volunteer (subject + rendered HTML/text)
+// from the volunteer detail page — handy when a volunteer asks "what did
+// your booking confirmation actually say?" or "why didn't I get a verification
+// email?". Both bodyHtml and bodyText are stored so the admin preview can
+// render faithfully without re-running the template (the original input data
+// isn't reconstructable from a log row).
+//
+// `userId` is nullable + SetNull so deleting a volunteer doesn't nuke the
+// audit trail, and so emails to addresses without a matching User row still
+// get logged. `toEmail` is denormalized for the same reason. `providerId`
+// is the Resend message id when status=SENT — useful for matching up with
+// Resend's dashboard delivery info.
+model EmailLog {
+  id         String         @id @default(cuid())
+  userId     String?
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  toEmail    String
+  subject    String
+  template   EmailTemplate
+  status     EmailLogStatus
+  providerId String?
+  error      String?        @db.Text
+  bodyHtml   String         @db.Text
+  bodyText   String         @db.Text
+  createdAt  DateTime       @default(now())
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
