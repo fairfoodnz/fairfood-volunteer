@@ -456,7 +456,12 @@ model EmailLog {
   subject    String
   template   EmailTemplate
   status     EmailLogStatus
-  providerId String?
+  // Resend message id when status=SENT. Unique so the historical-backfill
+  // script (`scripts/backfill-resend-emails.ts`) can be re-run safely:
+  // an `EmailLog_providerId_key` collision means we already imported that
+  // Resend row. Postgres treats NULLs as distinct, so DEV_LOGGED / FAILED
+  // rows (which have no providerId) don't collide with each other.
+  providerId String?        @unique
   error      String?        @db.Text
   bodyHtml   String         @db.Text
   bodyText   String         @db.Text
