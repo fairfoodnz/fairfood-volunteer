@@ -1,6 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 type ProgrammeOption = { slug: string; title: string };
@@ -40,19 +47,23 @@ export function ShiftForm({
 
       <div className="space-y-2">
         <Label htmlFor="programSlug">Programme</Label>
-        <select
-          id="programSlug"
+        <Select
           name="programSlug"
           required
-          defaultValue={defaults?.programSlug}
-          className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+          defaultValue={defaults?.programSlug ?? programs[0]?.slug}
+          items={Object.fromEntries(programs.map((p) => [p.slug, p.title]))}
         >
-          {programs.map((p) => (
-            <option key={p.slug} value={p.slug}>
-              {p.title}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger id="programSlug" className="h-11 w-full">
+            <SelectValue placeholder="Choose a programme" />
+          </SelectTrigger>
+          <SelectContent>
+            {programs.map((p) => (
+              <SelectItem key={p.slug} value={p.slug}>
+                {p.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

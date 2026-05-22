@@ -7,6 +7,13 @@ import {
   ShiftBulkTable,
   type ShiftRow,
 } from "@/components/admin/shift-bulk-table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const metadata = { title: "Manage shifts · Admin" };
 export const dynamic = "force-dynamic";
@@ -130,19 +137,28 @@ export default async function ManageShiftsPage({
               >
                 Programme
               </label>
-              <select
-                id="shift-programme"
+              <Select
                 name="programme"
                 defaultValue={programmeId ?? "all"}
-                className="h-10 rounded-md border border-border bg-background px-2 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                items={{
+                  all: "All programmes",
+                  ...Object.fromEntries(
+                    programmes.map((p) => [p.id, p.title]),
+                  ),
+                }}
               >
-                <option value="all">All programmes</option>
-                {programmes.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="shift-programme" className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All programmes</SelectItem>
+                  {programmes.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <button
                 type="submit"
                 className="inline-flex h-10 items-center rounded-md bg-foreground/5 px-3 text-sm font-semibold hover:bg-foreground/10"

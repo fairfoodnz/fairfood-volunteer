@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   addSlotBlock,
   removeSlotBlock,
   type SlotBlockState,
@@ -118,18 +125,24 @@ export function SlotBlocks({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="kind">Group type</Label>
-            <select
-              id="kind"
+            <Select
               name="kind"
               defaultValue={SlotBlockKind.CORPORATE}
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-1"
+              items={Object.fromEntries(
+                SLOT_BLOCK_KIND_OPTIONS.map((o) => [o.value, o.label]),
+              )}
             >
-              {SLOT_BLOCK_KIND_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="kind" className="h-11 w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SLOT_BLOCK_KIND_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="note">
