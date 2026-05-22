@@ -130,13 +130,14 @@ export async function startImpersonation(
 /**
  * Restore the admin's original session and close out any open audit rows.
  * Idempotent — calling without an active impersonation is a no-op (lets the
- * banner's "stop" button stay simple).
+ * banner's "stop" button stay simple). Returns true when something was
+ * actually stopped so callers can pick an appropriate redirect.
  */
-export async function stopImpersonation(): Promise<void> {
+export async function stopImpersonation(): Promise<boolean> {
   const cookieStore = await cookies();
   const adminToken = cookieStore.get(IMPERSONATOR_COOKIE)?.value;
   const currentToken = cookieStore.get(SESSION_COOKIE)?.value;
-  if (!adminToken) return;
+  if (!adminToken) return false;
 
   const adminSession = await db.session.findUnique({
     where: { tokenHash: hashSessionToken(adminToken) },
@@ -169,6 +170,7 @@ export async function stopImpersonation(): Promise<void> {
     // Admin session also expired — drop the cookie and let them sign back in.
     cookieStore.delete(SESSION_COOKIE);
   }
+  return true;
 }
 
 /**
@@ -183,23 +185,36 @@ export async function impersonationContext(): Promise<
 > {
   const cookieStore = await cookies();
   const adminToken = cookieStore.get(IMPERSONATOR_COOKIE)?.value;
-  if (!adminToken) return null;
+  const currentToken = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!adminToken || !currentToken) return null;
 
-  const adminSession = await db.session.findUnique({
-    where: { tokenHash: hashSessionToken(adminToken) },
-    select: {
-      expiresAt: true,
-      user: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          role: true,
+  // Both cookies must point at live sessions, AND the current one must
+  // actually be marked as an impersonation. Without the isImpersonation
+  // check, a stale ff_impersonator left behind after "Sign out" (instead of
+  // "Stop impersonating") would resurrect the banner the next time the same
+  // admin signed in, because their original 30-day session is still live.
+  const [currentSession, adminSession] = await Promise.all([
+    db.session.findUnique({
+      where: { tokenHash: hashSessionToken(currentToken) },
+      select: { isImpersonation: true },
+    }),
+    db.session.findUnique({
+      where: { tokenHash: hashSessionToken(adminToken) },
+      select: {
+        expiresAt: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
         },
       },
-    },
-  });
+    }),
+  ]);
+  if (!currentSession?.isImpersonation) return null;
   if (
     !adminSession ||
     adminSession.expiresAt < new Date() ||
