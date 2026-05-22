@@ -47,10 +47,28 @@ const MAX_INSERTS = process.env.BACKFILL_LIMIT
 
 // Page size: Resend caps at 100. Each list page is one API call, then we make
 // one more `get()` per email to pull the body — so 100 emails = 101 calls per
-// page. The script paces itself with a 50ms delay between body fetches to stay
-// well under Resend's documented 10 req/s soft limit.
+// page. The script paces itself with a 50ms delay between body fetches and
+// a 250ms pause between list pages, so even a Resend history with thousands
+// of pages stays well under the documented 10 req/s soft limit.
 const PAGE_SIZE = 100;
 const PER_REQUEST_DELAY_MS = 50;
+const PER_PAGE_DELAY_MS = 250;
+
+/**
+ * Resend `last_event` values that mean the email never made it to a real
+ * mailbox. Backfilling these as `status: SENT` would mis-attribute audit
+ * rows, so we skip them. `failed` rows in particular are tempting to log
+ * as `status: FAILED`, but Resend's list endpoint doesn't expose the
+ * failure reason and the body fetch returns null html/text — so the audit
+ * row would be near-empty. Going forward, FAILED is captured locally by
+ * `src/lib/email.tsx`.
+ */
+const NON_DELIVERED_EVENTS = new Set([
+  "failed",
+  "canceled",
+  "scheduled",
+  "queued",
+]);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -104,13 +122,7 @@ async function main() {
     for (const item of data) {
       stats.scanned += 1;
 
-      // Skip non-sent statuses (`canceled`, `scheduled`, `queued`, `failed`).
-      // `failed` events would be useful to log as status=FAILED, but Resend
-      // doesn't expose the failure reason via the list endpoint, and the
-      // body fetch returns null html/text for failed sends — so the audit
-      // row would be near-empty. Skip and rely on local FAILED logging
-      // going forward.
-      if (item.last_event === "failed" || item.last_event === "canceled") {
+      if (NON_DELIVERED_EVENTS.has(item.last_event)) {
         stats.skippedFailedSend += 1;
         continue;
       }
@@ -172,6 +184,10 @@ async function main() {
         console.log(
           `[backfill] would insert ${item.id} (matched user: ${user ? "yes" : "no"})`,
         );
+        // Incremented in dry-run too so `BACKFILL_LIMIT` still bounds the
+        // preview; the final stats line will read "inserted: N" even though
+        // nothing was written. Pair it with `(DRY RUN)` in the start banner
+        // when reading the output.
         stats.inserted += 1;
         if (stats.inserted >= MAX_INSERTS) break outer;
         continue;
@@ -215,6 +231,9 @@ async function main() {
       break;
     }
     after = data[data.length - 1].id;
+    // Pause briefly between list pages so a Resend history with thousands
+    // of pages doesn't pin the limiter at exactly 1 request/page back-to-back.
+    await sleep(PER_PAGE_DELAY_MS);
   }
 
   console.log(
