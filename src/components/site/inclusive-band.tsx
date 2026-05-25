@@ -2,12 +2,10 @@ import Link from "next/link";
 import {
   Accessibility,
   HeartHandshake,
-  Languages,
   type LucideIcon,
   SlidersHorizontal,
   Sprout,
   UsersRound,
-  Volume1,
   Waves,
 } from "lucide-react";
 
@@ -15,8 +13,6 @@ const tags: { label: string; icon: LucideIcon }[] = [
   { label: "Modified tasks", icon: SlidersHorizontal },
   { label: "Bring a support person", icon: HeartHandshake },
   { label: "Wheelchair accessible", icon: Accessibility },
-  { label: "Quiet shift options", icon: Volume1 },
-  { label: "Te reo welcome", icon: Languages },
   { label: "Group bookings", icon: UsersRound },
   { label: "Sensory-aware", icon: Waves },
   { label: "First-timers", icon: Sprout },
