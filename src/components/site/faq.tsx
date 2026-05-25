@@ -12,11 +12,11 @@ import {
 const faqs = [
   {
     q: "Do I need any experience to volunteer?",
-    a: "Nope — as long as you’ve got a pair of hands and are willing to do the mahi then we will welcome you at the kai tables.",
+    a: "Nope — as long as you are willing to do the mahi then we will welcome you at the kai tables.",
   },
   {
     q: "How old do I need to be?",
-    a: "Most shifts are for volunteers aged 16+. Anyone under 18 years old must come with a parent or guardian first. For younger rangatahi, get in touch — we run school groups under supervision.",
+    a: "Anyone under 18 years old must come with a parent or guardian first. We are a working warehouse and kitchen, so ages 16+ is recommended. For younger rangatahi, get in touch — we run school groups under supervision and can usually welcome tamariki ages 10+ with an adult helper.",
   },
   {
     q: "What should I wear and bring?",
