@@ -47,11 +47,14 @@ export async function SiteNav() {
               />
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Button asChild variant="ghost" size="sm">
                   <Link href="/auth/sign-in">Sign in</Link>
                 </Button>
                 <Button asChild size="sm" className="bg-leaf hover:bg-leaf-deep">
-                  <Link href="/shifts">Sign up to volunteer</Link>
+                  <Link href="/shifts">
+                    <span className="sm:hidden">Volunteer</span>
+                    <span className="hidden sm:inline">Sign up to volunteer</span>
+                  </Link>
                 </Button>
               </>
             )}
