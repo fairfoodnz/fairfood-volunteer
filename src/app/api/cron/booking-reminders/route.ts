@@ -33,6 +33,11 @@ import { appUrl } from "../../../../../emails/brand";
 export const dynamic = "force-dynamic";
 
 const FORCE_FLAG = "force"; // ?force=1 — opt-in override, see below
+// Upper bound on rows handled per run. A normal day has tens of bookings;
+// a holiday surge has hundreds. Capping here keeps memory predictable and
+// the loop bounded — if real volume ever exceeds this we'll batch across
+// runs with a cursor instead of unbounded findMany().
+const BATCH_SIZE = 500;
 
 function authorized(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -58,6 +63,11 @@ export async function POST(req: Request): Promise<Response> {
   // `?force=1` lets an admin re-run for a window that's already been stamped
   // (e.g. recovering from a Resend outage). Without it, stamped rows are
   // skipped — which is the normal idempotent path.
+  //
+  // Force only re-runs the *current* NZ-tomorrow window. To recover from an
+  // outage, fire force=1 while that window is still "tomorrow" — i.e. before
+  // NZ midnight on the day of the outage. Once the shift day arrives there
+  // is no self-service recovery path via this endpoint.
   const force = url.searchParams.get(FORCE_FLAG) === "1";
 
   const { start, end } = nzTomorrowUtcRange();
@@ -90,6 +100,7 @@ export async function POST(req: Request): Promise<Response> {
         },
       },
     },
+    take: BATCH_SIZE,
   });
 
   let sent = 0;
@@ -124,6 +135,24 @@ export async function POST(req: Request): Promise<Response> {
         manageUrl: `${appUrl}/me`,
       });
       sent += 1;
+      // In force mode we skipped the claim step, so the row may still be
+      // `reminderSentAt: null` (e.g. recovering from a rollback after a
+      // Resend outage). Stamp it now so a re-fire of the schedule on the
+      // same NZ day doesn't re-send to the same booking. Best-effort —
+      // a failed stamp doesn't fail the send.
+      if (force) {
+        await db.booking
+          .update({
+            where: { id: b.id },
+            data: { reminderSentAt: new Date() },
+          })
+          .catch((err) =>
+            console.error(
+              `[cron] reminderSentAt stamp failed for booking ${b.id} (force):`,
+              err,
+            ),
+          );
+      }
     } catch (e) {
       failed += 1;
       const reason = e instanceof Error ? e.message : String(e);
@@ -162,6 +191,7 @@ export async function POST(req: Request): Promise<Response> {
     skipped,
     failed,
     candidates: bookings.length,
+    force,
     window: { start: start.toISOString(), end: end.toISOString() },
     ...(failures.length ? { failures } : {}),
   });
