@@ -40,6 +40,9 @@ export function inferTemplateFromSubject(
   }
   // En-dash (—) is the canonical form; the ASCII hyphen variant covers
   // any historical send where the subject got typed with a plain dash.
+  if (s.startsWith("Reminder — your") || s.startsWith("Reminder - your")) {
+    return EmailTemplate.BOOKING_REMINDER;
+  }
   if (s.startsWith("Cancelled — your") || s.startsWith("Cancelled - your")) {
     return EmailTemplate.BOOKING_CANCELLED;
   }

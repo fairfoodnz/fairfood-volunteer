@@ -7,6 +7,7 @@ import VerifyEmail from "../../emails/verify-email";
 import WelcomeEmail from "../../emails/welcome";
 import BookingConfirmationEmail from "../../emails/booking-confirmation";
 import BookingCancelledEmail from "../../emails/booking-cancelled";
+import BookingReminderEmail from "../../emails/booking-reminder";
 import VolunteerInviteEmail from "../../emails/volunteer-invite";
 import { EmailLogStatus, EmailTemplate } from "@/generated/prisma";
 import { db } from "@/lib/db";
@@ -299,6 +300,41 @@ export async function sendVolunteerInviteEmail(opts: {
         claimUrl={opts.claimUrl}
         userName={opts.userName}
         expiresInDays={expiresInDays}
+      />
+    ),
+  });
+}
+
+/**
+ * Renders and sends the `emails/booking-reminder.tsx` template — a 24-hour
+ * heads-up fired by the daily cron at `/api/cron/booking-reminders`. No
+ * `.ics` is attached: the volunteer already got one on booking, and re-sending
+ * it as a reminder would either duplicate the event or (depending on UID
+ * handling) silently overwrite calendar tweaks they made.
+ */
+export async function sendBookingReminderEmail(opts: {
+  to: string;
+  userName?: string;
+  programTitle: string;
+  whenLabel: string;
+  location: string;
+  notes?: string;
+  manageUrl: string;
+  userId?: string;
+}) {
+  return sendEmail({
+    to: opts.to,
+    userId: opts.userId,
+    template: EmailTemplate.BOOKING_REMINDER,
+    subject: `Reminder — your ${opts.programTitle} shift is tomorrow (${opts.whenLabel})`,
+    react: (
+      <BookingReminderEmail
+        userName={opts.userName}
+        programTitle={opts.programTitle}
+        whenLabel={opts.whenLabel}
+        location={opts.location}
+        notes={opts.notes}
+        manageUrl={opts.manageUrl}
       />
     ),
   });

@@ -378,6 +378,12 @@ model Booking {
   shift     Shift         @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   status    BookingStatus @default(CONFIRMED)
   notes     String?       @db.Text
+  // Stamped by the daily reminder cron (/api/cron/booking-reminders) after a
+  // 24-hour-before email goes out. Null means "not yet reminded" — the cron's
+  // WHERE clause uses this as its idempotency guard, so a double-fire of the
+  // schedule cannot double-send. A partial index in the migration keeps the
+  // pending-rows lookup cheap.
+  reminderSentAt DateTime?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
@@ -422,6 +428,7 @@ enum EmailTemplate {
   BOOKING_CONFIRMATION
   BOOKING_CANCELLED
   VOLUNTEER_INVITE
+  BOOKING_REMINDER
 }
 
 // Outcome of a send attempt. SENT = handed to Resend without error;

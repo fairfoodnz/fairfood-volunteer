@@ -27,6 +27,10 @@ describe("inferTemplateFromSubject", () => {
       EmailTemplate.BOOKING_CANCELLED,
     ],
     [
+      "Reminder — your Kai Box shift is tomorrow (Mon 15 Jun · 9:00 am – 12:00 pm)",
+      EmailTemplate.BOOKING_REMINDER,
+    ],
+    [
       "Welcome to the new Fair Food volunteer portal — set your password",
       EmailTemplate.VOLUNTEER_INVITE,
     ],
