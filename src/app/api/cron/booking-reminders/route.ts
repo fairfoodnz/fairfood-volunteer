@@ -84,7 +84,6 @@ export async function POST(req: Request): Promise<Response> {
     select: {
       id: true,
       notes: true,
-      reminderSentAt: true,
       user: {
         select: {
           id: true,
