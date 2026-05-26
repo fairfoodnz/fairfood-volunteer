@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { fullName } from "@/lib/users";
+import { EmailLogStatus } from "@/generated/prisma";
+import { RetryEmailButton } from "@/components/admin/retry-email-button";
 import {
   EMAIL_STATUS_BADGE,
   EMAIL_TEMPLATE_LABELS,
@@ -107,6 +109,11 @@ export default async function EmailDetailPage({ params }: Props) {
             <p className="mt-2 whitespace-pre-wrap text-sm text-tomato">
               {row.error}
             </p>
+            {row.status === EmailLogStatus.FAILED && (
+              <div className="mt-4 border-t border-tomato/20 pt-4">
+                <RetryEmailButton emailLogId={row.id} tone="block" />
+              </div>
+            )}
           </div>
         )}
 
