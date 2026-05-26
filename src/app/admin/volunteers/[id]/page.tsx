@@ -7,7 +7,8 @@ import { fullName } from "@/lib/users";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ImpersonateForm } from "@/components/admin/impersonate-form";
-import { BookingStatus, Role } from "@/generated/prisma";
+import { BookingStatus, EmailLogStatus, Role } from "@/generated/prisma";
+import { RetryEmailButton } from "@/components/admin/retry-email-button";
 import {
   updateVolunteerNotesAction,
   setVolunteerRoleAction,
@@ -288,39 +289,45 @@ export default async function VolunteerDetailPage({ params }: Props) {
                 <ul className="divide-y divide-border rounded-md border border-border bg-card">
                   {emails.map((e) => {
                     const badge = EMAIL_STATUS_BADGE[e.status];
+                    const failed = e.status === EmailLogStatus.FAILED;
                     return (
-                      <li key={e.id}>
+                      <li
+                        key={e.id}
+                        className="flex flex-wrap items-start justify-between gap-3 p-4"
+                      >
                         <Link
                           href={`/admin/emails/${e.id}`}
-                          className="flex flex-wrap items-start justify-between gap-3 p-4 hover:bg-foreground/5"
+                          className="-m-2 min-w-0 flex-1 rounded-md p-2 hover:bg-foreground/5"
                         >
-                          <div className="min-w-0 flex-1">
-                            <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
-                              {EMAIL_TEMPLATE_LABELS[e.template]}
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                            {EMAIL_TEMPLATE_LABELS[e.template]}
+                          </p>
+                          <p className="mt-1 truncate text-sm font-semibold">
+                            {e.subject}
+                          </p>
+                          <p className="mt-1 text-xs text-foreground/65">
+                            {formatEmailTimestamp(e.createdAt)}
+                          </p>
+                          {e.error && (
+                            <p className="mt-1 truncate text-xs text-tomato">
+                              {e.error}
                             </p>
-                            <p className="mt-1 truncate text-sm font-semibold">
-                              {e.subject}
-                            </p>
-                            <p className="mt-1 text-xs text-foreground/65">
-                              {formatEmailTimestamp(e.createdAt)}
-                            </p>
-                            {e.error && (
-                              <p className="mt-1 truncate text-xs text-tomato">
-                                {e.error}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-3">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${badge.cls}`}
-                            >
-                              {badge.label}
-                            </span>
-                            <span className="text-xs font-semibold text-leaf-deep">
-                              View →
-                            </span>
-                          </div>
+                          )}
                         </Link>
+                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${badge.cls}`}
+                          >
+                            {badge.label}
+                          </span>
+                          {failed && <RetryEmailButton emailLogId={e.id} />}
+                          <Link
+                            href={`/admin/emails/${e.id}`}
+                            className="text-xs font-semibold text-leaf-deep hover:underline"
+                          >
+                            View →
+                          </Link>
+                        </div>
                       </li>
                     );
                   })}

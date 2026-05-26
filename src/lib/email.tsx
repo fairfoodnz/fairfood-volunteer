@@ -98,6 +98,34 @@ export async function sendEmail({
 }: SendArgs) {
   const html = await render(react);
   const text = await render(react, { plainText: true });
+  return deliverPreRendered({
+    to,
+    subject,
+    html,
+    text,
+    template,
+    userId: userId ?? null,
+    attachments,
+  });
+}
+
+/**
+ * Send a pre-rendered email (html + text) via Resend and write an EmailLog
+ * row for the attempt. Shared between `sendEmail` (which renders first) and
+ * `resendStoredEmail` (which replays a stored body for the admin "Retry"
+ * button). Throws on send failure after recording the FAILED log row, so
+ * callers see the provider's message without losing the audit trail.
+ */
+async function deliverPreRendered(args: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  template: EmailTemplate;
+  userId: string | null;
+  attachments?: EmailAttachment[];
+}) {
+  const { to, subject, html, text, template, userId, attachments } = args;
 
   if (!resend) {
     if (process.env.NODE_ENV === "production") {
@@ -112,7 +140,7 @@ export async function sendEmail({
       `\n📧 [email:dev] would send via Resend\n  to: ${to}\n  subject: ${subject}\n  from: ${FROM}\n${attachLine}--- text body ---\n${text}\n-----------------\n`,
     );
     await recordEmailLog({
-      userId: userId ?? null,
+      userId,
       toEmail: to,
       subject,
       template,
@@ -150,7 +178,7 @@ export async function sendEmail({
   }
 
   await recordEmailLog({
-    userId: userId ?? null,
+    userId,
     toEmail: to,
     subject,
     template,
@@ -166,6 +194,32 @@ export async function sendEmail({
     throw sendError;
   }
   return data;
+}
+
+/**
+ * Re-send an existing EmailLog's stored HTML/text via Resend. The original
+ * FAILED row stays put as audit trail; the retry attempt becomes its own
+ * EmailLog row, so coordinators see every attempt rather than the most
+ * recent overwriting the last. Attachments aren't replayed (they aren't
+ * stored on EmailLog) — fine for BOOKING_REMINDER, which is the main retry
+ * use case and never had one to begin with.
+ */
+export async function resendStoredEmail(row: {
+  toEmail: string;
+  subject: string;
+  bodyHtml: string;
+  bodyText: string;
+  template: EmailTemplate;
+  userId: string | null;
+}) {
+  return deliverPreRendered({
+    to: row.toEmail,
+    subject: row.subject,
+    html: row.bodyHtml,
+    text: row.bodyText,
+    template: row.template,
+    userId: row.userId,
+  });
 }
 
 /** Renders and sends the `emails/verify-email.tsx` template. */

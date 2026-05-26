@@ -38,6 +38,17 @@ const FORCE_FLAG = "force"; // ?force=1 — opt-in override, see below
 // the loop bounded — if real volume ever exceeds this we'll batch across
 // runs with a cursor instead of unbounded findMany().
 const BATCH_SIZE = 500;
+// Resend's default rate limit is 2 requests per second. A tight loop trips
+// `rate_limit_exceeded` after a handful of bookings, and the rollback path
+// is no help here — the next cron tick is 24 hours later, by which time
+// the shift has already happened. Pace the sends at one per ~600ms to stay
+// comfortably under the limit (≈1.67/sec). Lower this if you've upgraded
+// the Resend plan.
+const MIN_SEND_INTERVAL_MS = 600;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function authorized(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -106,6 +117,7 @@ export async function POST(req: Request): Promise<Response> {
   let skipped = 0;
   let failed = 0;
   const failures: { bookingId: string; reason: string }[] = [];
+  let lastSendAt = 0;
 
   for (const b of bookings) {
     // Claim the row first: an updateMany guarded by `reminderSentAt: null`
@@ -121,6 +133,10 @@ export async function POST(req: Request): Promise<Response> {
         continue;
       }
     }
+
+    const waitMs = lastSendAt + MIN_SEND_INTERVAL_MS - Date.now();
+    if (waitMs > 0) await sleep(waitMs);
+    lastSendAt = Date.now();
 
     try {
       await sendBookingReminderEmail({
