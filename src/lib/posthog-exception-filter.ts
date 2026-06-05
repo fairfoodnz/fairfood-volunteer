@@ -14,8 +14,8 @@ const THIRD_PARTY_NOISE = [
   "object not found matching id",
 ];
 
-/** Collect the human-readable text from a PostHog `$exception` event. */
-function exceptionText(event: CaptureResult): string {
+/** Collect the individual human-readable strings from a `$exception` event. */
+function exceptionStrings(event: CaptureResult): string[] {
   const props = event.properties ?? {};
   const parts: string[] = [];
 
@@ -34,7 +34,7 @@ function exceptionText(event: CaptureResult): string {
     }
   }
 
-  return parts.join(" ");
+  return parts;
 }
 
 /**
@@ -42,16 +42,19 @@ function exceptionText(event: CaptureResult): string {
  * third-party page-injected scripts (browser extensions). Returns `null` to
  * discard the event, or the event unchanged to keep it. Non-exception events
  * always pass through untouched.
+ *
+ * Each exception field is matched individually (not concatenated) so a needle
+ * can never straddle two fields and produce a cross-field false positive.
  */
 export function filterThirdPartyExceptions(
   event: CaptureResult | null,
 ): CaptureResult | null {
   if (!event || event.event !== "$exception") return event;
 
-  const haystack = exceptionText(event).toLowerCase();
-  if (THIRD_PARTY_NOISE.some((needle) => haystack.includes(needle))) {
-    return null;
-  }
+  const isNoise = exceptionStrings(event).some((field) => {
+    const haystack = field.toLowerCase();
+    return THIRD_PARTY_NOISE.some((needle) => haystack.includes(needle));
+  });
 
-  return event;
+  return isNoise ? null : event;
 }

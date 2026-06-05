@@ -37,6 +37,13 @@ describe("filterThirdPartyExceptions", () => {
     expect(filterThirdPartyExceptions(event)).toBeNull();
   });
 
+  it("matches the signature carried only in $exception_type", () => {
+    const event = exceptionEvent({
+      $exception_type: "Object Not Found Matching Id:5",
+    });
+    expect(filterThirdPartyExceptions(event)).toBeNull();
+  });
+
   it("keeps genuine application exceptions", () => {
     const event = exceptionEvent({
       $exception_message: "TypeError: Cannot read properties of undefined",
