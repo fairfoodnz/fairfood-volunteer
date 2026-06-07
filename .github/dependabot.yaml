@@ -8,6 +8,14 @@ updates:
       time: "09:00"
       timezone: Pacific/Auckland
     open-pull-requests-limit: 10
+    # pnpm 11's built-in `minimumReleaseAge` default (24h) makes CI's
+    # `pnpm install --frozen-lockfile` reject any package published in the
+    # last day. Dependabot otherwise opens bump PRs the instant a version
+    # lands, so the bumped packages fail that gate until they age out. A
+    # cooldown holds each update back until it's comfortably past 24h, so
+    # PRs land green instead of needing a delayed re-run.
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
     groups:
