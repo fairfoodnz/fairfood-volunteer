@@ -12,7 +12,19 @@ import { currentUser } from "@/lib/auth";
 import { BookingStatus } from "@/generated/prisma";
 import { ShiftsList, type ShiftCard, type ShiftDay } from "./shifts-list";
 
-export const metadata = { title: "Open shifts · Fair Food Volunteer" };
+const description =
+  "Browse open volunteer shifts with Fair Food in Avondale and book one that fits your week. Most run about three hours and finish with a cuppa together.";
+
+export const metadata = {
+  title: "Open shifts · Fair Food Volunteer",
+  description,
+  alternates: { canonical: "/shifts" },
+  openGraph: {
+    title: "Open shifts · Fair Food Volunteer",
+    description,
+    url: "/shifts",
+  },
+};
 export const dynamic = "force-dynamic";
 
 type Props = {

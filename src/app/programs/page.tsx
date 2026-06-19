@@ -4,7 +4,19 @@ import { SiteFooter } from "@/components/site/footer";
 import { CtaBand } from "@/components/site/cta-band";
 import { InclusiveBand } from "@/components/site/inclusive-band";
 
-export const metadata = { title: "Programmes · Fair Food Volunteer" };
+const description =
+  "Three ways to volunteer with Fair Food in Avondale — sorting kai boxes, cooking in the Conscious Kitchen, and inclusive volunteering. Find the programme that fits you.";
+
+export const metadata = {
+  title: "Programmes · Fair Food Volunteer",
+  description,
+  alternates: { canonical: "/programs" },
+  openGraph: {
+    title: "Programmes · Fair Food Volunteer",
+    description,
+    url: "/programs",
+  },
+};
 
 export default function ProgramsPage() {
   return (

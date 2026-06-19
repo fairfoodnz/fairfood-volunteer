@@ -10,6 +10,10 @@ import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 export const dynamic = "force-dynamic";
 
+// Admin is gated and disallowed in robots.txt; add a noindex meta as a
+// belt-and-suspenders against any URL that leaks into an index.
+export const metadata = { robots: { index: false, follow: false } };
+
 export default async function AdminLayout({
   children,
 }: {

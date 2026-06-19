@@ -14,6 +14,7 @@ export const metadata = {
   title: "Volunteer kete · Fair Food",
   description:
     "Handbooks, health & safety, and what to know before your first Fair Food shift.",
+  alternates: { canonical: "/resources" },
 };
 export const dynamic = "force-dynamic";
 

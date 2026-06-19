@@ -12,6 +12,7 @@ import {
   blockKindLabel,
 } from "@/lib/shifts";
 import { appOrigin, currentUser } from "@/lib/auth";
+import { absoluteUrl, SITE_URL } from "@/lib/seo";
 import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { BookForm } from "./book-form";
@@ -29,8 +30,14 @@ export async function generateMetadata({ params }: Props) {
     include: { program: true },
   });
   if (!shift) return {};
+  const title = `${shift.program.title} · ${formatShiftRange(shift.startsAt, shift.endsAt)}`;
+  const description = `Volunteer with Fair Food: ${shift.program.title} at ${shift.program.location}, ${formatShiftRange(shift.startsAt, shift.endsAt)}. Book your spot.`;
+  const canonical = `/shifts/${shift.id}`;
   return {
-    title: `${shift.program.title} · ${formatShiftRange(shift.startsAt, shift.endsAt)}`,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical },
   };
 }
 
@@ -71,8 +78,44 @@ export default async function ShiftPage({ params }: Props) {
   const rosterChips = buildRosterChips(shift.bookings, user?.id ?? null);
   const groupBlocks = summarizeBlocks(shift.blocks);
 
+  // schema.org Event — volunteer shifts are real events with a time and place,
+  // so this makes them eligible for richer search results. Past/cancelled
+  // states are reflected in eventStatus.
+  const eventLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: `${shift.program.title} volunteer shift`,
+    description: shift.program.description,
+    startDate: shift.startsAt.toISOString(),
+    endDate: shift.endsAt.toISOString(),
+    eventStatus: shift.cancelled
+      ? "https://schema.org/EventCancelled"
+      : "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    isAccessibleForFree: true,
+    url: absoluteUrl(`/shifts/${shift.id}`),
+    location: {
+      "@type": "Place",
+      name: shift.program.location,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Avondale, Auckland",
+        addressCountry: "NZ",
+      },
+    },
+    organizer: {
+      "@type": "NGO",
+      name: "Fair Food",
+      url: SITE_URL,
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventLd) }}
+      />
       <SiteNav />
       <main className="flex-1 py-12 md:py-16">
         <div className="container-x">

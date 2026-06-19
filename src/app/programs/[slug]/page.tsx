@@ -25,7 +25,18 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const program = await db.program.findUnique({ where: { slug } });
-  return program ? { title: `${program.title} · Fair Food Volunteer` } : {};
+  if (!program) return {};
+  const title = `${program.title} · Fair Food Volunteer`;
+  const description = (program.tagline || program.description || "")
+    .replace(/\s+/g, " ")
+    .slice(0, 160);
+  const canonical = `/programs/${program.slug}`;
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical },
+  };
 }
 
 export default async function ProgramPage({ params }: Props) {
