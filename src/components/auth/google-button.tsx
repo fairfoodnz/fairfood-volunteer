@@ -48,7 +48,11 @@ export function GoogleButton({
       variant="outline"
       className={`h-12 w-full gap-3 text-base font-medium ${className ?? ""}`}
     >
-      <Link href={href}>
+      {/* prefetch={false}: /auth/google 302-redirects to accounts.google.com,
+          and an RSC prefetch (connect-src) can't follow that cross-origin
+          redirect under our CSP. The prefetch only ever fails — clicking is a
+          top-level navigation and unaffected — so skip it to avoid the noise. */}
+      <Link href={href} prefetch={false}>
         <GoogleMark />
         {label}
       </Link>
