@@ -6,6 +6,7 @@ export const metadata = {
   title: "Privacy policy · Fair Food Volunteer",
   description:
     "How Fair Food NZ collects, uses, and looks after the personal information you share through the volunteer portal.",
+  alternates: { canonical: "/privacy" },
 };
 
 // Bump this whenever the substance of the policy changes.
