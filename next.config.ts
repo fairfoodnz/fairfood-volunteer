@@ -2,10 +2,13 @@ import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
 
-// Production CSP. We start in report-only — flip the header *key* from
-// "Content-Security-Policy-Report-Only" to "Content-Security-Policy" after a
-// few days of preview + production monitoring show no violations we don't
-// want (the in-browser console logs every block in report-only mode).
+// Production CSP — now enforcing. We ran "Content-Security-Policy-Report-Only"
+// for a monitoring window first; PostHog's `csp_violation` stream showed no
+// first-party breakage (only browser-extension and Google-Translate-overlay
+// noise plus harmless RSC-prefetch blocks), so we flipped the header *key* to
+// "Content-Security-Policy". `report-uri`/`report-to` stay wired up, so reports
+// keep flowing in enforce mode (disposition becomes "enforce") — to roll back,
+// change the key below back to "Content-Security-Policy-Report-Only".
 //
 // Skipped in dev: Turbopack HMR, React DevTools and the `eval`-driven dev
 // runtime would all throw violations. Production builds need none of that.
@@ -86,7 +89,7 @@ const SECURITY_HEADERS = [
           value: "max-age=63072000; includeSubDomains",
         },
         { key: "Reporting-Endpoints", value: REPORTING_ENDPOINTS },
-        { key: "Content-Security-Policy-Report-Only", value: PROD_CSP },
+        { key: "Content-Security-Policy", value: PROD_CSP },
       ]
     : []),
 ];
