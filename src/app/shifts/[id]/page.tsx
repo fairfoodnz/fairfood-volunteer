@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -12,6 +13,7 @@ import {
   blockKindLabel,
 } from "@/lib/shifts";
 import { appOrigin, currentUser } from "@/lib/auth";
+import { absoluteUrl, jsonLdScript, ORG_ID, ORG_SITE_URL } from "@/lib/seo";
 import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { BookForm } from "./book-form";
@@ -22,21 +24,10 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ id: string }> };
 
-export async function generateMetadata({ params }: Props) {
-  const { id } = await params;
-  const shift = await db.shift.findUnique({
-    where: { id },
-    include: { program: true },
-  });
-  if (!shift) return {};
-  return {
-    title: `${shift.program.title} · ${formatShiftRange(shift.startsAt, shift.endsAt)}`,
-  };
-}
-
-export default async function ShiftPage({ params }: Props) {
-  const { id } = await params;
-  const shift = await db.shift.findUnique({
+// Shared, request-deduplicated fetch: generateMetadata and the page component
+// both call this, and React.cache() coalesces them into a single DB query.
+const getShift = cache((id: string) =>
+  db.shift.findUnique({
     where: { id },
     include: {
       program: true,
@@ -52,7 +43,27 @@ export default async function ShiftPage({ params }: Props) {
       },
       blocks: { select: { slots: true, kind: true } },
     },
-  });
+  }),
+);
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const shift = await getShift(id);
+  if (!shift) return {};
+  const title = `${shift.program.title} · ${formatShiftRange(shift.startsAt, shift.endsAt)}`;
+  const description = `Volunteer with Fair Food: ${shift.program.title} at ${shift.program.location}, ${formatShiftRange(shift.startsAt, shift.endsAt)}. Book your spot.`;
+  const canonical = `/shifts/${shift.id}`;
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical },
+  };
+}
+
+export default async function ShiftPage({ params }: Props) {
+  const { id } = await params;
+  const shift = await getShift(id);
   if (!shift) notFound();
 
   const user = await currentUser();
@@ -71,8 +82,44 @@ export default async function ShiftPage({ params }: Props) {
   const rosterChips = buildRosterChips(shift.bookings, user?.id ?? null);
   const groupBlocks = summarizeBlocks(shift.blocks);
 
+  // schema.org Event — volunteer shifts are real events with a time and place,
+  // so this makes them eligible for richer search results. Past/cancelled
+  // states are reflected in eventStatus.
+  const eventLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: `${shift.program.title} volunteer shift`,
+    description: shift.program.description,
+    startDate: shift.startsAt.toISOString(),
+    endDate: shift.endsAt.toISOString(),
+    eventStatus: shift.cancelled
+      ? "https://schema.org/EventCancelled"
+      : "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    isAccessibleForFree: true,
+    url: absoluteUrl(`/shifts/${shift.id}`),
+    location: {
+      "@type": "Place",
+      // program.location is a free-form address string, so it carries the full
+      // location signal on its own — no hardcoded locality to drift out of sync.
+      name: shift.program.location,
+    },
+    organizer: {
+      "@type": "NGO",
+      // Reference the canonical Organization node emitted by siteJsonLd() and
+      // point at the main org site, so both resolve to the same entity.
+      "@id": ORG_ID,
+      name: "Fair Food",
+      url: ORG_SITE_URL,
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(eventLd) }}
+      />
       <SiteNav />
       <main className="flex-1 py-12 md:py-16">
         <div className="container-x">
