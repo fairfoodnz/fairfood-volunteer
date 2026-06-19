@@ -15,6 +15,17 @@ export const SITE_NAME = "Fair Food Volunteer";
 export const SITE_DESCRIPTION =
   "Help turn leftovers into lifelines for whānau who are doing it tough. Volunteer with Fair Food in Tāmaki Makaurau.";
 
+/** Fair Food's main marketing site — the canonical home of the organisation. */
+export const ORG_SITE_URL = "https://fairfood.org.nz";
+
+/**
+ * Stable schema.org node id for the Fair Food Organization. Every page emits
+ * the full Organization node (via `siteJsonLd`), so other structured data on
+ * the page (e.g. an Event's `organizer`) can reference it by `@id` and search
+ * engines resolve them to the same entity.
+ */
+export const ORG_ID = `${SITE_URL}/#organization`;
+
 /** Build an absolute URL from a root-relative path (e.g. `/programs`). */
 export function absoluteUrl(path = "/") {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
@@ -32,10 +43,10 @@ export function siteJsonLd() {
     "@graph": [
       {
         "@type": "NGO",
-        "@id": `${SITE_URL}/#organization`,
+        "@id": ORG_ID,
         name: "Fair Food",
         alternateName: "Fair Food NZ",
-        url: "https://fairfood.org.nz",
+        url: ORG_SITE_URL,
         logo: absoluteUrl("/icon.png"),
         description:
           "Fair Food rescues good kai that would otherwise go to waste and redistributes it to whānau across Tāmaki Makaurau.",
@@ -59,7 +70,7 @@ export function siteJsonLd() {
         url: SITE_URL,
         name: SITE_NAME,
         description: SITE_DESCRIPTION,
-        publisher: { "@id": `${SITE_URL}/#organization` },
+        publisher: { "@id": ORG_ID },
         inLanguage: "en-NZ",
       },
     ],

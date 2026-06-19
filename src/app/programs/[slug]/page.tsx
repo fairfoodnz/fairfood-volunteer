@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
@@ -22,9 +23,31 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
+// Shared, request-deduplicated fetch shared by generateMetadata and the page.
+// The `active` guard matches the page so a deactivated programme 404s in both
+// places (no stale metadata for a page that returns notFound).
+const getProgram = cache((slug: string) =>
+  db.program.findFirst({
+    where: { slug, active: true },
+    include: {
+      shifts: {
+        where: { startsAt: { gte: new Date() }, cancelled: false },
+        orderBy: { startsAt: "asc" },
+        take: 12,
+        include: {
+          _count: {
+            select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
+          },
+          blocks: { select: { slots: true, kind: true } },
+        },
+      },
+    },
+  }),
+);
+
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const program = await db.program.findUnique({ where: { slug } });
+  const program = await getProgram(slug);
   if (!program) return {};
   const title = `${program.title} · Fair Food Volunteer`;
   const description = (program.tagline || program.description || "")
@@ -42,22 +65,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function ProgramPage({ params }: Props) {
   const { slug } = await params;
 
-  const program = await db.program.findFirst({
-    where: { slug, active: true },
-    include: {
-      shifts: {
-        where: { startsAt: { gte: new Date() }, cancelled: false },
-        orderBy: { startsAt: "asc" },
-        take: 12,
-        include: {
-          _count: {
-            select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
-          },
-          blocks: { select: { slots: true, kind: true } },
-        },
-      },
-    },
-  });
+  const program = await getProgram(slug);
   if (!program) notFound();
 
   // Inclusive volunteering runs by arrangement with pre-registered groups: the
