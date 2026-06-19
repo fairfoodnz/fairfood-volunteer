@@ -3,111 +3,133 @@ import { fileURLToPath } from "node:url";
 import { ImageResponse } from "next/og";
 
 // File-based OpenGraph image for the whole site: Next applies this to every
-// route that doesn't ship its own opengraph-image. Generated at the edge with
-// Satori (no binary asset to keep in sync), using the Fair Food palette from
-// globals.css / emails/brand.ts.
-export const alt = "Fair Food — volunteer to turn leftovers into lifelines";
+// route that doesn't ship its own opengraph-image. A split card — Fair Food
+// logo + headline on a cream panel, a real food-rescue photo on the right —
+// generated at request time with Satori, using the brand palette and Poppins.
+export const alt =
+  "Fair Food — volunteer to turn leftovers into lifelines for whānau";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const CREAM = "#f8f2eb";
 const CHARCOAL = "#0f130e";
+const MUTED = "#5b5f57";
 const LEAF = "#3d9e34";
 const LEAF_DEEP = "#17780f";
 
-// Satori has no access to next/font, so the brand typeface (Poppins) must be
-// loaded explicitly from the colocated TTFs (Satori supports ttf/woff, not
-// woff2). Read from disk via fs — Node's fetch() can't read file:// URLs — but
-// resolve the path through `new URL(..., import.meta.url)` so Next traces and
-// bundles the fonts into the standalone build. Weights 600 and 800 cover every
-// label below.
-const fontPath = (file: string) =>
-  fileURLToPath(new URL(`./og-fonts/${file}`, import.meta.url));
+// Read sibling assets via static `new URL(..., import.meta.url)` literals so
+// Next/Turbopack can statically trace and bundle each one (a dynamic
+// `./dir/${file}` template collapses multiple assets to one). Satori can't
+// fetch file:// URLs, so we read with fs; the photo is a pre-cropped 1200×630
+// PNG (resvg decodes PNG most reliably — webp is unsupported, progressive JPEG
+// fails) and the fonts are TTF (no woff2 support).
+const read = (url: URL) => readFile(fileURLToPath(url));
 
-async function loadFonts() {
-  const [semibold, extrabold] = await Promise.all([
-    readFile(fontPath("Poppins-SemiBold.ttf")),
-    readFile(fontPath("Poppins-ExtraBold.ttf")),
+const dataUri = (buf: Buffer, mime: string) =>
+  `data:${mime};base64,${buf.toString("base64")}`;
+
+export default async function OpengraphImage() {
+  const [semibold, extrabold, bg, logo] = await Promise.all([
+    read(new URL("./og-fonts/Poppins-SemiBold.ttf", import.meta.url)),
+    read(new URL("./og-fonts/Poppins-ExtraBold.ttf", import.meta.url)),
+    read(new URL("./og-assets/og-bg.png", import.meta.url)),
+    read(new URL("./og-assets/logo.png", import.meta.url)),
   ]);
-  return [
+
+  const fonts = [
     { name: "Poppins", data: semibold, weight: 600 as const, style: "normal" as const },
     { name: "Poppins", data: extrabold, weight: 800 as const, style: "normal" as const },
   ];
-}
 
-export default async function OpengraphImage() {
-  const fonts = await loadFonts();
   return new ImageResponse(
     (
       <div
         style={{
+          position: "relative",
           width: "100%",
           height: "100%",
           display: "flex",
-          background: CREAM,
-          color: CHARCOAL,
           fontFamily: "Poppins",
         }}
       >
-        {/* Brand spine */}
-        <div style={{ display: "flex", width: 24, background: LEAF_DEEP }} />
+        {/* Full-bleed photo behind everything */}
+        <img
+          alt=""
+          src={dataUri(bg, "image/png")}
+          width={1200}
+          height={630}
+          style={{ position: "absolute", top: 0, left: 0 }}
+        />
+
+        {/* Cream content panel over the left ~half */}
         <div
           style={{
+            position: "relative",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            flex: 1,
-            padding: "72px 80px",
+            width: 588,
+            height: "100%",
+            background: CREAM,
+            borderRight: `16px solid ${LEAF_DEEP}`,
+            padding: "64px 64px 56px",
+            boxShadow: "10px 0 40px rgba(15,19,14,0.28)",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              fontSize: 26,
-              fontWeight: 600,
-              letterSpacing: 4,
-              textTransform: "uppercase",
-              color: LEAF_DEEP,
-            }}
-          >
+          <img
+            alt=""
+            src={dataUri(logo, "image/png")}
+            width={96}
+            height={96}
+            style={{ borderRadius: 48 }}
+          />
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
             <div
               style={{
                 display: "flex",
-                width: 18,
-                height: 18,
-                borderRadius: 9,
-                background: LEAF,
+                alignItems: "center",
+                gap: 14,
+                fontSize: 23,
+                fontWeight: 600,
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                color: LEAF_DEEP,
               }}
-            />
-            Volunteer with Fair Food
+            >
+              <div
+                style={{
+                  display: "flex",
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  background: LEAF,
+                }}
+              />
+              Volunteer with us
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: 60,
+                fontWeight: 800,
+                lineHeight: 1.04,
+                color: CHARCOAL,
+              }}
+            >
+              Turn leftovers into lifelines for whānau.
+            </div>
           </div>
 
           <div
             style={{
               display: "flex",
-              fontSize: 82,
-              fontWeight: 800,
-              lineHeight: 1.05,
-              maxWidth: 920,
-            }}
-          >
-            Turn leftovers into lifelines for whānau.
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontSize: 28,
+              fontSize: 25,
               fontWeight: 600,
-              color: "#5b5f57",
+              color: MUTED,
             }}
           >
-            <div style={{ display: "flex" }}>volunteer.fairfood.org.nz</div>
-            <div style={{ display: "flex" }}>Tāmaki Makaurau · Auckland</div>
+            volunteer.fairfood.org.nz · Tāmaki Makaurau
           </div>
         </div>
       </div>
