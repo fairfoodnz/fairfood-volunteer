@@ -13,7 +13,7 @@ import {
   blockKindLabel,
 } from "@/lib/shifts";
 import { appOrigin, currentUser } from "@/lib/auth";
-import { absoluteUrl, ORG_ID, ORG_SITE_URL } from "@/lib/seo";
+import { absoluteUrl, jsonLdScript, ORG_ID, ORG_SITE_URL } from "@/lib/seo";
 import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { BookForm } from "./book-form";
@@ -118,7 +118,7 @@ export default async function ShiftPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdScript(eventLd) }}
       />
       <SiteNav />
       <main className="flex-1 py-12 md:py-16">

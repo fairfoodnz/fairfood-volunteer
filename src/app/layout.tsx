@@ -3,7 +3,13 @@ import { Poppins } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL, siteJsonLd } from "@/lib/seo";
+import {
+  jsonLdScript,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+  siteJsonLd,
+} from "@/lib/seo";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -49,9 +55,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <script
           type="application/ld+json"
-          // Organization + WebSite graph — see lib/seo.ts. Static, no user
-          // input, so the serialized JSON is safe to inline.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd()) }}
+          // Organization + WebSite graph — see lib/seo.ts. Static today, but
+          // jsonLdScript escapes `<` so it stays safe if dynamic data is ever
+          // added to the graph.
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(siteJsonLd()) }}
         />
         <ImpersonationBanner />
         <TooltipProvider>{children}</TooltipProvider>

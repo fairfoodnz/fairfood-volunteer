@@ -32,6 +32,16 @@ export function absoluteUrl(path = "/") {
 }
 
 /**
+ * Serialize an object for inlining in a `<script type="application/ld+json">`.
+ * `JSON.stringify` leaves `<` unescaped, so a value containing `</script>`
+ * (e.g. admin-entered programme copy) could otherwise close the block early
+ * and inject raw HTML. `<` is valid JSON and parsers handle it fine.
+ */
+export function jsonLdScript(data: unknown) {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+/**
  * schema.org Organization + WebSite graph for the root layout. Rendered as a
  * single `application/ld+json` block so search engines can attribute the site
  * to Fair Food (knowledge panel / sitelinks eligibility). The address and
