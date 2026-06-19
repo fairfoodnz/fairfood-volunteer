@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { ImageResponse } from "next/og";
 
 // File-based OpenGraph image for the whole site: Next applies this to every
@@ -13,7 +15,28 @@ const CHARCOAL = "#0f130e";
 const LEAF = "#3d9e34";
 const LEAF_DEEP = "#17780f";
 
-export default function OpengraphImage() {
+// Satori has no access to next/font, so the brand typeface (Poppins) must be
+// loaded explicitly from the colocated TTFs (Satori supports ttf/woff, not
+// woff2). Read from disk via fs — Node's fetch() can't read file:// URLs — but
+// resolve the path through `new URL(..., import.meta.url)` so Next traces and
+// bundles the fonts into the standalone build. Weights 600 and 800 cover every
+// label below.
+const fontPath = (file: string) =>
+  fileURLToPath(new URL(`./og-fonts/${file}`, import.meta.url));
+
+async function loadFonts() {
+  const [semibold, extrabold] = await Promise.all([
+    readFile(fontPath("Poppins-SemiBold.ttf")),
+    readFile(fontPath("Poppins-ExtraBold.ttf")),
+  ]);
+  return [
+    { name: "Poppins", data: semibold, weight: 600 as const, style: "normal" as const },
+    { name: "Poppins", data: extrabold, weight: 800 as const, style: "normal" as const },
+  ];
+}
+
+export default async function OpengraphImage() {
+  const fonts = await loadFonts();
   return new ImageResponse(
     (
       <div
@@ -23,6 +46,7 @@ export default function OpengraphImage() {
           display: "flex",
           background: CREAM,
           color: CHARCOAL,
+          fontFamily: "Poppins",
         }}
       >
         {/* Brand spine */}
@@ -78,6 +102,7 @@ export default function OpengraphImage() {
               alignItems: "center",
               justifyContent: "space-between",
               fontSize: 28,
+              fontWeight: 600,
               color: "#5b5f57",
             }}
           >
@@ -87,6 +112,6 @@ export default function OpengraphImage() {
         </div>
       </div>
     ),
-    size,
+    { ...size, fonts },
   );
 }
