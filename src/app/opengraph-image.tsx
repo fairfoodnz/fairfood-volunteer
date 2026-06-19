@@ -129,6 +129,8 @@ export default async function OpengraphImage() {
               color: MUTED,
             }}
           >
+            {/* Canonical production domain by design — a social card should
+                always show the real domain, never a staging origin. */}
             volunteer.fairfood.org.nz · Tāmaki Makaurau
           </div>
         </div>
