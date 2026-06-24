@@ -142,9 +142,9 @@ async function seedAdmin() {
 
 export async function main() {
   try {
-    console.log("[seed.prod] Upserting programmes…");
+    console.log("[seed.prod] Ensuring programmes (create-if-missing)…");
     const programCount = await seedPrograms();
-    console.log(`[seed.prod]   ${programCount} programmes in sync.`);
+    console.log(`[seed.prod]   ${programCount} programme slugs confirmed.`);
 
     console.log("[seed.prod] Ensuring bootstrap admin…");
     await seedAdmin();
