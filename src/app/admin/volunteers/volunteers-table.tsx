@@ -291,18 +291,25 @@ export function VolunteersTable({
                 <Copy className="size-4" />
                 Copy {plural(count, "email")}
               </button>
-              <a
-                href={`/admin/volunteers/export?ids=${selectedRows
-                  .map((r) => r.id)
-                  .join(",")}`}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "bg-leaf text-cream hover:bg-leaf-deep",
-                )}
-              >
-                <Download className="size-4" />
-                Export {count}
-              </a>
+              {/* POST so a large selection's IDs ride in the body, not a URL
+                  that could blow past proxy length limits. */}
+              <form method="POST" action="/admin/volunteers/export">
+                <input
+                  type="hidden"
+                  name="ids"
+                  value={selectedRows.map((r) => r.id).join(",")}
+                />
+                <button
+                  type="submit"
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "bg-leaf text-cream hover:bg-leaf-deep",
+                  )}
+                >
+                  <Download className="size-4" />
+                  Export {count}
+                </button>
+              </form>
             </div>
           </div>
         </div>

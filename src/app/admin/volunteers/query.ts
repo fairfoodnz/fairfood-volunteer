@@ -150,6 +150,9 @@ function bookingScopeFilter(
     some.status = BookingStatus.CONFIRMED;
     shift.cancelled = false;
   }
+  // `new Date()` is the server's UTC "now", which is correct for the
+  // UTC-stored shift times. This resolver must therefore only run server-side
+  // (Server Component / route handler) — never at build time or on the client.
   if (scope === "upcoming") shift.startsAt = { gte: new Date() };
 
   if (Object.keys(shift).length) some.shift = shift;
