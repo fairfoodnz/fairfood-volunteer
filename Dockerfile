@@ -81,6 +81,20 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# sharp ships its native code as two separate per-platform packages: the
+# addon (@img/sharp-linuxmusl-x64, the .node) and the libvips shared libs it
+# dlopen()s at runtime (@img/sharp-libvips-linuxmusl-x64, libvips-cpp.so).
+# Next.js file tracing copies the addon but NOT the libvips .so it loads
+# natively — NFT can't follow a dlopen — so `import sharp` throws
+# ERR_DLOPEN_FAILED ("Could not load the sharp module … libvips-cpp.so … No
+# such file or directory") the first time it runs. That import sits in the
+# /admin programme image probe (src/lib/image-dimensions.ts), so the whole
+# programme create/update Server Action fails to load. Overlay the complete
+# sharp + @img trees from the builder onto NFT's partial copy — build and
+# runner are both node:24-alpine (musl x64), so the binaries match exactly.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/sharp ./node_modules/sharp
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@img ./node_modules/@img
+
 # Prisma schema + config — needed by `migrate deploy` at runtime.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
