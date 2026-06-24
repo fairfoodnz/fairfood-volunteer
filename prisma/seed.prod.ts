@@ -4,8 +4,9 @@
 //
 // Scope (kept deliberately small):
 //   1. The three real programmes (Kai Sorting, Conscious Kitchen, Inclusive
-//      Volunteering) — upserted by slug so the editorial copy stays in sync
-//      with what ships from the repo.
+//      Volunteering) — created by slug only if missing. Once a programme row
+//      exists the database is the source of truth: coordinators edit the
+//      editorial copy from /admin/programmes and this seed never overwrites it.
 //   2. One ADMIN user (admin@fairfood.org.nz) — created only if missing.
 //
 // Coordinators handle shifts, shift templates and uploaded resources from the
@@ -91,12 +92,17 @@ async function seedPrograms() {
       contactPhone: p.contactPhone,
       gettingHere: p.gettingHere,
     };
-    // Upsert keeps editorial copy in sync on every deploy without disturbing
-    // coordinator-managed data (templates, shifts, bookings — those FK to the
-    // programme but aren't touched here).
+    // Create-if-missing only. The DB is the source of truth for programme
+    // editorial copy once a row exists — coordinators edit title, tagline,
+    // description, schedule, contact details, etc. from /admin/programmes, and
+    // an `update` here would silently clobber those edits on every container
+    // boot (the Dockerfile runs this seed after `migrate deploy`). So we seed
+    // the literals only when the programme doesn't exist yet, and never touch
+    // an existing row — mirroring how seedAdmin() below keeps its update
+    // minimal for the same reason.
     await prisma.program.upsert({
       where: { slug: p.slug },
-      update: fields,
+      update: {},
       create: { slug: p.slug, ...fields },
     });
   }
