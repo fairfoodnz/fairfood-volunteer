@@ -62,12 +62,29 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   await requireAdmin();
 
+  // Route handlers don't get the framework's Server-Action CSRF mitigation, so
+  // guard this state-free download against cross-site form posts: a browser
+  // always sends Origin on a POST, and it must match our own host. (Missing
+  // Origin → a non-browser API client, which we allow.)
+  if (!isSameOrigin(request))
+    return new Response("Cross-origin request rejected.", { status: 403 });
+
   const form = await request.formData();
   const ids = parseIds(form.get("ids")?.toString() ?? null);
   if (!ids)
     return new Response("No volunteers selected.", { status: 400 });
 
   return csvResponse({ id: { in: ids } }, ID_ORDER, "selected");
+}
+
+function isSameOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === request.headers.get("host");
+  } catch {
+    return false;
+  }
 }
 
 function parseIds(raw: string | null): string[] | null {
