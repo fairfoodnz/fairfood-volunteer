@@ -34,7 +34,7 @@ jobs:
         # Reads the exact pnpm version from package.json's `packageManager`
         # field — no version pinned here so the two stay in lockstep.
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -62,7 +62,7 @@ jobs:
         # Reads the exact pnpm version from package.json's `packageManager`
         # field — no version pinned here so the two stay in lockstep.
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -115,7 +115,7 @@ jobs:
         # Reads the exact pnpm version from package.json's `packageManager`
         # field — no version pinned here so the two stay in lockstep.
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
