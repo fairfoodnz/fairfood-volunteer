@@ -61,7 +61,7 @@
     "react-email": "^6.7.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
-    "typescript": "^6",
+    "typescript": "^7",
     "vitest": "^4.1.10"
   }
 }
