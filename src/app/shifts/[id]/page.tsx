@@ -299,7 +299,7 @@ export default async function ShiftPage({ params }: Props) {
                   </div>
                 ) : isFull ? (
                   <Note title="This shift is full">
-                    Try another time slot, or join the waitlist by emailing us.
+                    Please sign up for another time slot.
                   </Note>
                 ) : (
                   <BookForm
