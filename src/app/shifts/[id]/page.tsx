@@ -5,7 +5,14 @@ import { db } from "@/lib/db";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
-import { formatShiftRange, INCLUSIVE_SLUG, INCLUSIVE_MAILTO } from "@/lib/programs";
+import {
+  formatShiftRange,
+  INCLUSIVE_SLUG,
+  INCLUSIVE_MAILTO,
+  isLinkVisible,
+  isListedPublicly,
+  NOINDEX,
+} from "@/lib/programs";
 import {
   sumBlocks,
   shiftAvailability,
@@ -18,7 +25,7 @@ import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { BookForm } from "./book-form";
 import { CancelBookingDialog } from "./cancel-booking";
-import { BookingStatus } from "@/generated/prisma";
+import { BookingStatus, Role } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +56,11 @@ const getShift = cache((id: string) =>
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const shift = await getShift(id);
-  if (!shift) return {};
+  // A shift on a private/archived programme gives nothing away in the <head>,
+  // even to the coordinator previewing it.
+  if (!shift || !isLinkVisible(shift.program.visibility)) {
+    return { robots: NOINDEX };
+  }
   const title = `${shift.program.title} · ${formatShiftRange(shift.startsAt, shift.endsAt)}`;
   const description = `Volunteer with Fair Food: ${shift.program.title} at ${shift.program.location}, ${formatShiftRange(shift.startsAt, shift.endsAt)}. Book your spot.`;
   const canonical = `/shifts/${shift.id}`;
@@ -58,6 +69,7 @@ export async function generateMetadata({ params }: Props) {
     description,
     alternates: { canonical },
     openGraph: { title, description, url: canonical },
+    ...(isListedPublicly(shift.program.visibility) ? {} : { robots: NOINDEX }),
   };
 }
 
@@ -69,6 +81,13 @@ export default async function ShiftPage({ params }: Props) {
   const user = await currentUser();
   const myBooking =
     (user && shift.bookings.find((b) => b.userId === user.id)) || null;
+
+  // A shift on a private or archived programme has no public page. The people
+  // who legitimately need it are the coordinators and the volunteers already
+  // rostered on it (their /me dashboard, booking email and calendar invite all
+  // link here) — everyone else gets a 404.
+  const publiclyBookable = isLinkVisible(shift.program.visibility);
+  if (!publiclyBookable && !myBooking && user?.role !== Role.ADMIN) notFound();
 
   const bookedCount = shift.bookings.length;
   const blockedCount = sumBlocks(shift.blocks);
@@ -116,10 +135,13 @@ export default async function ShiftPage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdScript(eventLd) }}
-      />
+      {/* Structured data is a discovery surface — public programmes only. */}
+      {isListedPublicly(shift.program.visibility) && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(eventLd) }}
+        />
+      )}
       <SiteNav />
       <main className="flex-1 py-12 md:py-16">
         <div className="container-x">
@@ -256,11 +278,19 @@ export default async function ShiftPage({ params }: Props) {
                 ) : inPast ? (
                   <Note title="That shift has passed">
                     Want to come along to the next one?
+                    {/* The listing only carries public programmes, so an
+                        admin-run one points at the full roster instead. */}
                     <Link
-                      href={`/shifts?programme=${shift.program.slug}`}
+                      href={
+                        publiclyBookable
+                          ? `/shifts?programme=${shift.program.slug}`
+                          : "/shifts"
+                      }
                       className="mt-3 inline-flex items-center gap-2 font-semibold text-leaf-deep underline-offset-4 hover:underline"
                     >
-                      See upcoming {shift.program.title} shifts →
+                      {publiclyBookable
+                        ? `See upcoming ${shift.program.title} shifts →`
+                        : "See open shifts →"}
                     </Link>
                   </Note>
                 ) : myBooking ? (
@@ -297,6 +327,18 @@ export default async function ShiftPage({ params }: Props) {
                       <CancelBookingDialog bookingId={myBooking.id} />
                     </div>
                   </div>
+                ) : !publiclyBookable ? (
+                  <Note title="The team books this session">
+                    Spots here are arranged directly with our coordinators.
+                    Email{" "}
+                    <a
+                      className="font-semibold text-leaf-deep underline underline-offset-4"
+                      href="mailto:volunteering@fairfood.org.nz"
+                    >
+                      volunteering@fairfood.org.nz
+                    </a>{" "}
+                    if you think you should be on this roster.
+                  </Note>
                 ) : isFull ? (
                   <Note title="This shift is full">
                     Please sign up for another time slot.

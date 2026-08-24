@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   CORPORATE_MAILTO,
+  PROGRAMME_VISIBILITY_OPTIONS,
+  isLinkVisible,
+  isListedPublicly,
+  isSchedulable,
+  programmeVisibilityHint,
+  programmeVisibilityLabel,
   INCLUSIVE_MAILTO,
   INCLUSIVE_SLUG,
   dayOfWeek,
@@ -117,5 +123,35 @@ describe("constants", () => {
     expect(INCLUSIVE_SLUG).toBe("inclusive");
     expect(CORPORATE_MAILTO).toContain("mailto:volunteering@fairfood.org.nz");
     expect(INCLUSIVE_MAILTO).toContain("mailto:volunteering@fairfood.org.nz");
+  });
+});
+
+describe("programme visibility", () => {
+  const all = ["PUBLIC", "UNLISTED", "PRIVATE", "ARCHIVED"] as const;
+
+  it("only lists public programmes in browsable surfaces", () => {
+    expect(all.filter(isListedPublicly)).toEqual(["PUBLIC"]);
+  });
+
+  it("lets public and unlisted programmes be reached by link", () => {
+    expect(all.filter(isLinkVisible)).toEqual(["PUBLIC", "UNLISTED"]);
+  });
+
+  it("keeps every state except archived schedulable", () => {
+    expect(all.filter(isSchedulable)).toEqual(["PUBLIC", "UNLISTED", "PRIVATE"]);
+  });
+
+  it("anything listed publicly is also reachable by link", () => {
+    for (const v of all) {
+      if (isListedPublicly(v)) expect(isLinkVisible(v)).toBe(true);
+    }
+  });
+
+  it("offers one labelled option per state, most visible first", () => {
+    expect(PROGRAMME_VISIBILITY_OPTIONS.map((o) => o.value)).toEqual([...all]);
+    for (const option of PROGRAMME_VISIBILITY_OPTIONS) {
+      expect(programmeVisibilityLabel(option.value)).toBe(option.label);
+      expect(programmeVisibilityHint(option.value)).toBe(option.hint);
+    }
   });
 });

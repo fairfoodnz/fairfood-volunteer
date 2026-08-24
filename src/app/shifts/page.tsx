@@ -37,7 +37,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
   // Inclusive volunteering is enquiry-only (arranged with pre-registered
   // groups), so it never appears as a filter chip or in the bookable roster.
   const programmes = await db.program.findMany({
-    where: { active: true, slug: { not: INCLUSIVE_SLUG } },
+    where: { visibility: "PUBLIC", slug: { not: INCLUSIVE_SLUG } },
     orderBy: { order: "asc" },
     select: { slug: true, title: true },
   });
@@ -62,10 +62,16 @@ export default async function ShiftsPage({ searchParams }: Props) {
       where: {
         cancelled: false,
         startsAt: { gte: new Date() },
-        program:
-          filter !== "ALL"
+        // Unlisted and private programmes never appear in the roster, only
+        // via their own link (unlisted) or an admin-made booking (private).
+        // `filter` is already checked against the public list above; the
+        // visibility clause repeats it so the query is safe on its own.
+        program: {
+          visibility: "PUBLIC",
+          ...(filter !== "ALL"
             ? { slug: filter }
-            : { slug: { not: INCLUSIVE_SLUG } },
+            : { slug: { not: INCLUSIVE_SLUG } }),
+        },
       },
       orderBy: { startsAt: "asc" },
       include: {

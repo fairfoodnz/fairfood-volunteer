@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { ProgramVisibility } from "@/generated/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { slugify, INCLUSIVE_SLUG } from "@/lib/programs";
 import { isThemeKey, DEFAULT_THEME } from "@/lib/programme-theme";
@@ -48,7 +49,12 @@ const FieldsSchema = z.object({
   gettingHere: z.string().trim().max(1000).optional().or(z.literal("")),
   theme: z.string().trim(),
   order: z.coerce.number().int().min(0).max(9999),
-  active: z.coerce.boolean(),
+  // Sourced from the Prisma enum itself, so a new visibility state can't be
+  // added to the schema and silently rejected here. No default: a missing
+  // field must fail the save, never quietly publish a hidden programme.
+  visibility: z.enum(ProgramVisibility, {
+    error: "Choose who can see this programme.",
+  }),
 });
 
 type Fields = z.infer<typeof FieldsSchema>;
@@ -65,8 +71,7 @@ function parseFields(formData: FormData) {
     gettingHere: formData.get("gettingHere") ?? "",
     theme: formData.get("theme") ?? DEFAULT_THEME,
     order: formData.get("order") || 0,
-    // Unchecked checkboxes are absent from FormData.
-    active: formData.get("active") != null,
+    visibility: formData.get("visibility"),
   });
 }
 
@@ -141,7 +146,7 @@ function dataFromFields(f: Fields) {
     gettingHere: f.gettingHere || null,
     theme: isThemeKey(f.theme) ? f.theme : DEFAULT_THEME,
     order: f.order,
-    active: f.active,
+    visibility: f.visibility,
   };
 }
 

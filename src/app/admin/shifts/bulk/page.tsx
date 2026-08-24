@@ -6,8 +6,10 @@ export const metadata = { title: "Bulk schedule · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function BulkSchedulePage() {
+  // Everything but archived: a private programme still needs shifts scheduled,
+  // it just never advertises them.
   const programmes = await db.program.findMany({
-    where: { active: true },
+    where: { visibility: { not: "ARCHIVED" } },
     orderBy: { order: "asc" },
     select: {
       id: true,

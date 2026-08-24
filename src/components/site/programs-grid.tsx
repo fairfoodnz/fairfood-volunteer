@@ -5,8 +5,10 @@ import { programHref, INCLUSIVE_SLUG } from "@/lib/programs";
 import { programmeTheme } from "@/lib/programme-theme";
 
 export async function ProgramsGrid() {
+  // PUBLIC only — unlisted and private programmes are reachable by link (or
+  // not at all), never by browsing.
   const programs = await db.program.findMany({
-    where: { active: true },
+    where: { visibility: "PUBLIC" },
     orderBy: { order: "asc" },
     include: {
       _count: {

@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { formatShiftRange } from "@/lib/programs";
+import {
+  formatShiftRange,
+  programHref,
+  programmeVisibilityHint,
+} from "@/lib/programs";
+import { ProgrammeVisibilityBadge } from "@/components/admin/programme-visibility-badge";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { fullName } from "@/lib/users";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { Button } from "@/components/ui/button";
@@ -64,7 +70,14 @@ export default async function AdminShiftPage({ params }: Props) {
 
           <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="eyebrow text-leaf-deep">{shift.program.title}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="eyebrow text-leaf-deep">{shift.program.title}</p>
+                {shift.program.visibility !== "PUBLIC" && (
+                  <ProgrammeVisibilityBadge
+                    visibility={shift.program.visibility}
+                  />
+                )}
+              </div>
               <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
                 {formatShiftRange(shift.startsAt, shift.endsAt)}
               </h1>
@@ -91,6 +104,22 @@ export default async function AdminShiftPage({ params }: Props) {
               )}
             </div>
           </header>
+
+          {/* Nobody should have to remember which programmes are hidden while
+              they're staring at a roster — say it here, next to the roster. */}
+          {shift.program.visibility !== "PUBLIC" && (
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-cream-deep px-5 py-3 text-sm">
+              <p className="text-foreground/80">
+                {programmeVisibilityHint(shift.program.visibility)}
+              </p>
+              {shift.program.visibility === "UNLISTED" && (
+                <CopyLinkButton
+                  path={programHref(shift.program.slug)}
+                  label="Copy programme link"
+                />
+              )}
+            </div>
+          )}
 
           {shift.notes && (
             <p className="mb-8 rounded-md border-l-2 border-leaf bg-cream-deep px-5 py-3 text-sm">

@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { programmeTheme } from "@/lib/programme-theme";
+import { programHref } from "@/lib/programs";
+import { ProgrammeVisibilityBadge } from "@/components/admin/programme-visibility-badge";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 
 export const metadata = { title: "Programmes · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function ProgrammesPage() {
   const programmes = await db.program.findMany({
-    orderBy: [{ order: "asc" }, { title: "asc" }],
+    orderBy: [{ visibility: "asc" }, { order: "asc" }, { title: "asc" }],
     include: { _count: { select: { shifts: true } } },
   });
 
@@ -63,8 +66,19 @@ export default async function ProgrammesPage() {
                     <tr key={p.id} className="border-t border-border">
                       <td className="px-4 py-3">
                         <div className="font-medium">{p.title}</div>
-                        <div className="font-mono text-[11px] text-foreground/55">
-                          /programs/{p.slug}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-[11px] text-foreground/55">
+                            {programHref(p.slug)}
+                          </span>
+                          {/* For an unlisted programme the link is the way in,
+                              so make it grabbable from the list itself. */}
+                          {p.visibility === "UNLISTED" && (
+                            <CopyLinkButton
+                              path={programHref(p.slug)}
+                              label="Copy"
+                              className="h-6 px-2 text-[11px]"
+                            />
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -78,15 +92,7 @@ export default async function ProgrammesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {p.active ? (
-                          <span className="rounded-full bg-leaf/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-leaf-deep">
-                            Live
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
-                            Hidden
-                          </span>
-                        )}
+                        <ProgrammeVisibilityBadge visibility={p.visibility} />
                       </td>
                       <td className="px-4 py-3 tabular-nums text-foreground/80">
                         {p._count.shifts}

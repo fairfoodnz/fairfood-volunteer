@@ -33,6 +33,20 @@ test.describe("public marketing + browse", () => {
     ).toBeVisible();
   });
 
+  test("a private programme is invisible to the public", async ({ page }) => {
+    // Fixture: "School Holiday Crew" is seeded PRIVATE (prisma/seed.dev.ts) —
+    // the coordinator-run case. It must not appear anywhere a visitor browses,
+    // and its own URL must 404 rather than render.
+    await page.goto("/programs");
+    await expect(page.getByText(/School Holiday Crew/i)).toHaveCount(0);
+
+    await page.goto("/shifts");
+    await expect(page.getByText(/School Holiday Crew/i)).toHaveCount(0);
+
+    const response = await page.goto("/programs/school-holiday-crew");
+    expect(response?.status()).toBe(404);
+  });
+
   test("a shift detail page invites an anonymous visitor to sign up", async ({
     page,
   }) => {

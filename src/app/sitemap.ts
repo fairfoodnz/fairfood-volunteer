@@ -10,8 +10,10 @@ const BASE_URL =
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Only genuinely public programmes belong in the sitemap — an unlisted link
+  // that search engines index is not unlisted (the pages also send noindex).
   const programmes = await db.program.findMany({
-    where: { active: true },
+    where: { visibility: "PUBLIC" },
     select: { slug: true, updatedAt: true },
   });
 

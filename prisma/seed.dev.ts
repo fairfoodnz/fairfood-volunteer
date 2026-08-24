@@ -2,6 +2,7 @@ import {
   BookingStatus,
   HeardAbout,
   PrismaClient,
+  ProgramVisibility,
   Role,
 } from "../src/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -20,12 +21,16 @@ const SEED_PASSWORD_HASH =
 // stay untouched.
 const SEED_EMAIL_DOMAIN = "seed.fairfood.test";
 
+// The demo programme that only exists in /admin — see its entry below.
+const PRIVATE_PROGRAMME_SLUG = "school-holiday-crew";
+
 const WEEKS_BACK = 4;
 const WEEKS_FORWARD = 6;
 
 const programs = [
   {
     slug: "kai-box",
+    visibility: ProgramVisibility.PUBLIC,
     title: "Kai Sorting",
     tagline: "Sort, pack, share",
     description:
@@ -55,6 +60,7 @@ const programs = [
   },
   {
     slug: "conscious-kitchen",
+    visibility: ProgramVisibility.PUBLIC,
     title: "Conscious Kitchen",
     tagline: "Cook with us",
     description:
@@ -78,6 +84,7 @@ const programs = [
   },
   {
     slug: "inclusive",
+    visibility: ProgramVisibility.PUBLIC,
     title: "Inclusive Volunteering",
     tagline: "Built for every body",
     description:
@@ -109,6 +116,26 @@ const programs = [
         note: "Young Onset Dementia Collective",
       },
       { label: "Midweek session", start: "10:00", end: "12:00", capacity: 6 },
+    ],
+  },
+  {
+    slug: PRIVATE_PROGRAMME_SLUG,
+    visibility: ProgramVisibility.PRIVATE,
+    title: "School Holiday Crew",
+    tagline: "Booked by our team",
+    description:
+      "A closed session we run with one school group at a time. It never appears on the website — coordinators add the volunteers to the roster themselves.",
+    schedule: null,
+    order: 4,
+    image: null,
+    theme: "ocean",
+    contactEmail: "volunteering@fairfood.org.nz",
+    contactPhone: "(09) 555-1234",
+    gettingHere:
+      "Free street parking. We’re a five-minute walk from Avondale train station.",
+    weeklySlots: [{ day: 4, start: "13:00", end: "15:30", capacity: 20 }],
+    templates: [
+      { label: "Holiday session", start: "13:00", end: "15:30", capacity: 20 },
     ],
   },
 ];
@@ -659,6 +686,7 @@ async function seedPrograms() {
   const programIds: Record<string, string> = {};
   for (const p of programs) {
     const fields = {
+      visibility: p.visibility,
       title: p.title,
       tagline: p.tagline,
       description: p.description,
@@ -835,13 +863,10 @@ async function seedBookings(
   userByEmail: Map<string, string>,
 ) {
   const now = new Date();
-  // Bucket shifts by program for quick preference-based sampling.
-  const byProgram: Record<string, CreatedShift[]> = {
-    "kai-box": [],
-    "conscious-kitchen": [],
-    inclusive: [],
-  };
-  for (const s of shifts) byProgram[s.programSlug].push(s);
+  // Bucket shifts by program for quick preference-based sampling. Built from
+  // the shifts themselves so adding a programme above needs no edit here.
+  const byProgram: Record<string, CreatedShift[]> = {};
+  for (const s of shifts) (byProgram[s.programSlug] ??= []).push(s);
 
   // Track per-shift booking count so we don't blow past capacity.
   const filled: Map<string, number> = new Map();
@@ -862,7 +887,7 @@ async function seedBookings(
           : Math.floor(rand() * 2); // 0–1 (new)
 
     // Build candidate pool from preferred programs.
-    const pool = v.prefers.flatMap((pref) => byProgram[PREF_TO_SLUG[pref]]);
+    const pool = v.prefers.flatMap((pref) => byProgram[PREF_TO_SLUG[pref]] ?? []);
     // Inclusive volunteers should mostly land on inclusive shifts they prefer; that's
     // already handled by `prefers`. For Atarangi, restrict to Monday shifts (her group).
     const restricted =
@@ -921,6 +946,29 @@ async function seedBookings(
         createdCount++;
       } catch {
         // Unique violation — same user already booked this shift in shuffle. Skip.
+      }
+    }
+  }
+
+  // The private programme is coordinator-run: nobody self-books it, so its
+  // upcoming sessions get a roster the way an admin would build one — a fixed
+  // handful of profile-complete volunteers, no randomness.
+  const privateShifts = byProgram[PRIVATE_PROGRAMME_SLUG] ?? [];
+  const rosterable = vols.filter((v) => v.profileComplete && userByEmail.has(v.email));
+  for (const shift of privateShifts) {
+    if (shift.endsAt < now) continue;
+    for (const v of rosterable.slice(0, 6)) {
+      try {
+        await prisma.booking.create({
+          data: {
+            userId: userByEmail.get(v.email)!,
+            shiftId: shift.id,
+            status: BookingStatus.CONFIRMED,
+          },
+        });
+        createdCount++;
+      } catch {
+        // Already booked by the loop above — nothing to do.
       }
     }
   }
