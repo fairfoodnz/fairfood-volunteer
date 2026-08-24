@@ -10,25 +10,30 @@ import {
   formatShiftRange,
   INCLUSIVE_SLUG,
   INCLUSIVE_MAILTO,
+  isLinkVisible,
+  isListedPublicly,
+  NOINDEX,
 } from "@/lib/programs";
+import { currentUser } from "@/lib/auth";
 import {
   sumBlocks,
   shiftAvailability,
   summarizeBlocks,
   blockKindLabel,
 } from "@/lib/shifts";
-import { BookingStatus } from "@/generated/prisma";
+import { BookingStatus, Role } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
 // Shared, request-deduplicated fetch shared by generateMetadata and the page.
-// The `active` guard matches the page so a deactivated programme 404s in both
-// places (no stale metadata for a page that returns notFound).
+// Visibility is enforced after the fetch (not in the WHERE) so admins can open
+// a private programme to preview it; both callers apply the same rule, so a
+// hidden programme never leaks metadata for a page that returns notFound.
 const getProgram = cache((slug: string) =>
   db.program.findFirst({
-    where: { slug, active: true },
+    where: { slug },
     include: {
       shifts: {
         where: { startsAt: { gte: new Date() }, cancelled: false },
@@ -48,7 +53,9 @@ const getProgram = cache((slug: string) =>
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const program = await getProgram(slug);
-  if (!program) return {};
+  // Private/archived programmes reveal nothing in the <head>, even on the
+  // admin preview — no title, no description, and never indexable.
+  if (!program || !isLinkVisible(program.visibility)) return { robots: NOINDEX };
   const title = `${program.title} · Fair Food Volunteer`;
   const description = (program.tagline || program.description || "")
     .replace(/\s+/g, " ")
@@ -59,6 +66,8 @@ export async function generateMetadata({ params }: Props) {
     description,
     alternates: { canonical },
     openGraph: { title, description, url: canonical },
+    // An unlisted programme that Google indexes is not unlisted.
+    ...(isListedPublicly(program.visibility) ? {} : { robots: NOINDEX }),
   };
 }
 
@@ -67,6 +76,14 @@ export default async function ProgramPage({ params }: Props) {
 
   const program = await getProgram(slug);
   if (!program) notFound();
+
+  // PRIVATE and ARCHIVED programmes have no public page. Coordinators can still
+  // open one to check their copy before sharing it, so the 404 is scoped to
+  // everyone else rather than baked into the query.
+  if (!isLinkVisible(program.visibility)) {
+    const viewer = await currentUser();
+    if (viewer?.role !== Role.ADMIN) notFound();
+  }
 
   // Inclusive volunteering runs by arrangement with pre-registered groups: the
   // page stays so people can see we offer it, but it routes to email rather

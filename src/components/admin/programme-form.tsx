@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { slugify, programmeImageSrc } from "@/lib/programs";
+import {
+  slugify,
+  programmeImageSrc,
+  programHref,
+  PROGRAMME_VISIBILITY_OPTIONS,
+} from "@/lib/programs";
+import type { ProgramVisibility } from "@/generated/prisma";
 import { PROGRAMME_THEMES, THEME_KEYS } from "@/lib/programme-theme";
 import {
   createProgramme,
@@ -16,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 
 type ProgrammeRecord = {
   id: string;
@@ -31,7 +37,7 @@ type ProgrammeRecord = {
   gettingHere: string | null;
   theme: string;
   order: number;
-  active: boolean;
+  visibility: ProgramVisibility;
   imageUrl: string | null;
   imageKey: string | null;
 };
@@ -46,7 +52,9 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
 
   const [title, setTitle] = useState(program?.title ?? "");
   const [theme, setTheme] = useState(program?.theme ?? "cream");
-  const [active, setActive] = useState(program?.active ?? true);
+  const [visibility, setVisibility] = useState<ProgramVisibility>(
+    program?.visibility ?? "PUBLIC",
+  );
   const [newImage, setNewImage] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -101,7 +109,6 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
   return (
     <form action={formAction} className="space-y-6">
       {isEdit && <input type="hidden" name="id" value={program!.id} />}
-      {active && <input type="hidden" name="active" value="1" />}
 
       {error && (
         <div
@@ -302,33 +309,82 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="order">Display order</Label>
-              <Input
-                id="order"
-                name="order"
-                type="number"
-                min={0}
-                max={9999}
-                defaultValue={program?.order ?? 0}
-                className="h-11"
-              />
-              <p className="text-xs text-foreground/55">
-                Lower numbers show first.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label>Visibility</Label>
-              <label className="flex h-11 items-center gap-2.5 rounded-md border border-border px-3 text-sm">
-                <Checkbox
-                  checked={active}
-                  onCheckedChange={(v) => setActive(Boolean(v))}
-                />
-                <span>{active ? "Live on the site" : "Hidden (draft)"}</span>
-              </label>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="order">Display order</Label>
+            <Input
+              id="order"
+              name="order"
+              type="number"
+              min={0}
+              max={9999}
+              defaultValue={program?.order ?? 0}
+              className="h-11"
+            />
+            <p className="text-xs text-foreground/55">
+              Lower numbers show first.
+            </p>
           </div>
+
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">
+              Who can see this programme?
+            </legend>
+            <div className="space-y-2">
+              {PROGRAMME_VISIBILITY_OPTIONS.map((opt) => {
+                const selected = visibility === opt.value;
+                return (
+                  <label
+                    key={opt.value}
+                    className={cn(
+                      "flex cursor-pointer gap-3 rounded-md border px-3 py-2.5 text-sm transition-colors",
+                      selected
+                        ? "border-leaf ring-2 ring-leaf/30"
+                        : "border-border hover:border-foreground/35",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value={opt.value}
+                      checked={selected}
+                      onChange={() => setVisibility(opt.value)}
+                      className="mt-0.5 size-4 shrink-0 accent-leaf"
+                    />
+                    <span>
+                      <span className="font-medium">{opt.label}</span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-foreground/60">
+                        {opt.hint}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
+            {/* The link is the access control for an unlisted programme, so
+                put it where the coordinator just chose that state. Only on
+                edit — a new programme has no saved slug to share yet. */}
+            {isEdit && visibility === "UNLISTED" && (
+              <div className="rounded-md border border-border bg-cream-deep px-3 py-3">
+                <p className="text-xs text-foreground/70">
+                  Share this link with your group — it&rsquo;s the only way in.
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <code className="font-mono text-[11px] text-foreground/80">
+                    {programHref(program!.slug)}
+                  </code>
+                  <CopyLinkButton path={programHref(program!.slug)} />
+                </div>
+              </div>
+            )}
+            {visibility === "PRIVATE" && (
+              <p className="rounded-md border border-border bg-cream-deep px-3 py-3 text-xs text-foreground/70">
+                Nobody can reach this programme from the website. Add people to
+                its shifts yourself with &ldquo;Add volunteer&rdquo; on the
+                shift page.
+              </p>
+            )}
+          </fieldset>
         </div>
       </div>
 

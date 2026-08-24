@@ -31,7 +31,7 @@ export default async function VolunteersPage({
   const { where, orderBy, programme } = resolved;
 
   const programmes = await db.program.findMany({
-    orderBy: [{ active: "desc" }, { title: "asc" }],
+    orderBy: [{ visibility: "asc" }, { title: "asc" }],
     select: { slug: true, title: true },
   });
   const programmeTitle =

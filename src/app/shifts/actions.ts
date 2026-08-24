@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { sumBlocks } from "@/lib/shifts";
-import { formatShiftRange, INCLUSIVE_SLUG } from "@/lib/programs";
+import { formatShiftRange, INCLUSIVE_SLUG, isLinkVisible } from "@/lib/programs";
 import {
   buildBookingCalendarEvent,
   buildICS,
@@ -69,7 +69,9 @@ export async function bookShiftAction(
     include: {
       _count: { select: { bookings: { where: { status: BookingStatus.CONFIRMED } } } },
       blocks: { select: { slots: true } },
-      program: { select: { title: true, location: true, slug: true } },
+      program: {
+        select: { title: true, location: true, slug: true, visibility: true },
+      },
     },
   });
   if (!shift) return { error: "Shift not found." };
@@ -78,6 +80,15 @@ export async function bookShiftAction(
     return {
       error:
         "Inclusive volunteering is arranged directly with our team — email volunteering@fairfood.org.nz and we’ll set it up.",
+    };
+  }
+  // Private/archived programmes are rostered by coordinators in /admin. Their
+  // pages 404 publicly, so reaching this needs a hand-made POST — answer
+  // plainly rather than pretending the shift doesn't exist.
+  if (!isLinkVisible(shift.program.visibility)) {
+    return {
+      error:
+        "This session is booked by our team — email volunteering@fairfood.org.nz and we’ll sort out a spot.",
     };
   }
   if (shift._count.bookings + sumBlocks(shift.blocks) >= shift.capacity) {
@@ -210,7 +221,9 @@ export async function bookShiftsAction(
     include: {
       _count: { select: { bookings: { where: { status: BookingStatus.CONFIRMED } } } },
       blocks: { select: { slots: true } },
-      program: { select: { title: true, location: true, slug: true } },
+      program: {
+        select: { title: true, location: true, slug: true, visibility: true },
+      },
     },
   });
   const byId = new Map(shifts.map((s) => [s.id, s]));
@@ -234,6 +247,14 @@ export async function bookShiftsAction(
         shiftId: id,
         reason:
           "Inclusive volunteering is arranged directly with our team — email volunteering@fairfood.org.nz.",
+      });
+      continue;
+    }
+    if (!isLinkVisible(shift.program.visibility)) {
+      failures.push({
+        shiftId: id,
+        reason:
+          "This session is booked by our team — email volunteering@fairfood.org.nz.",
       });
       continue;
     }

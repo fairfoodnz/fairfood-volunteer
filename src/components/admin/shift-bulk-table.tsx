@@ -3,6 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { ProgramVisibility } from "@/generated/prisma";
+import { ProgrammeVisibilityBadge } from "@/components/admin/programme-visibility-badge";
 import { toast } from "sonner";
 import { AlertTriangle, Trash2, CalendarX2, X } from "lucide-react";
 import {
@@ -27,6 +29,8 @@ export type ShiftRow = {
   id: string;
   when: string;
   programme: string;
+  /** Drives the badge that flags a shift nobody can find on the website. */
+  programmeVisibility: ProgramVisibility;
   capacity: number;
   /** CONFIRMED + ATTENDED bookings — volunteers actually holding a spot. */
   confirmed: number;
@@ -183,7 +187,14 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
                       )}
                     </td>
                     <td className="px-4 py-3 text-foreground/80">
-                      {s.programme}
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        {s.programme}
+                        {s.programmeVisibility !== "PUBLIC" && (
+                          <ProgrammeVisibilityBadge
+                            visibility={s.programmeVisibility}
+                          />
+                        )}
+                      </span>
                     </td>
                     <td className="px-4 py-3 tabular-nums">
                       <span className="font-semibold">

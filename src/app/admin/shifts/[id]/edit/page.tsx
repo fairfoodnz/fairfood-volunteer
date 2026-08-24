@@ -14,22 +14,22 @@ type Props = { params: Promise<{ id: string }> };
 export default async function EditShiftPage({ params }: Props) {
   const { id } = await params;
 
-  const [shift, activePrograms] = await Promise.all([
+  const [shift, schedulablePrograms] = await Promise.all([
     db.shift.findUnique({ where: { id }, include: { program: true } }),
     db.program.findMany({
-      where: { active: true },
+      where: { visibility: { not: "ARCHIVED" } },
       orderBy: { order: "asc" },
       select: { slug: true, title: true },
     }),
   ]);
   if (!shift) notFound();
 
-  // Keep the shift's current programme selectable even if it's been hidden.
-  const programs = activePrograms.some((p) => p.slug === shift.program.slug)
-    ? activePrograms
+  // Keep the shift's current programme selectable even if it's been archived.
+  const programs = schedulablePrograms.some((p) => p.slug === shift.program.slug)
+    ? schedulablePrograms
     : [
         { slug: shift.program.slug, title: shift.program.title },
-        ...activePrograms,
+        ...schedulablePrograms,
       ];
 
   return (

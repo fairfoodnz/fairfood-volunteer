@@ -6,8 +6,9 @@ export const metadata = { title: "New shift · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function NewShiftPage() {
+  // Archived programmes are the only ones you can't roster new shifts onto.
   const programs = await db.program.findMany({
-    where: { active: true },
+    where: { visibility: { not: "ARCHIVED" } },
     orderBy: { order: "asc" },
   });
 

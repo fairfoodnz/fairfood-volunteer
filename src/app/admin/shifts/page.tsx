@@ -103,7 +103,7 @@ export default async function ManageShiftsPage({
 
   const [programmes, total] = await Promise.all([
     db.program.findMany({
-      orderBy: [{ active: "desc" }, { order: "asc" }],
+      orderBy: [{ visibility: "asc" }, { order: "asc" }],
       select: { id: true, title: true },
     }),
     db.shift.count({ where }),
@@ -119,7 +119,7 @@ export default async function ManageShiftsPage({
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
         include: {
-          program: { select: { title: true } },
+          program: { select: { title: true, visibility: true } },
           blocks: { select: { slots: true } },
           _count: {
             select: { bookings: { where: { status: { in: [...ACTIVE] } } } },
@@ -132,6 +132,7 @@ export default async function ManageShiftsPage({
     id: s.id,
     when: formatShiftRange(s.startsAt, s.endsAt),
     programme: s.program.title,
+    programmeVisibility: s.program.visibility,
     capacity: s.capacity,
     confirmed: s._count.bookings,
     blockedSlots: sumBlocks(s.blocks),

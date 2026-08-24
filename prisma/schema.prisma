@@ -51,6 +51,30 @@ enum DocumentVisibility {
   ADMIN
 }
 
+// Where a Program shows up. One field, four mutually exclusive states, because
+// coordinators think about this as a single question ("who can see this?") and
+// two independent flags would let them build states nobody can reason about.
+//
+//   PUBLIC   — listed on the marketing site, /programs and /shifts; bookable.
+//   UNLISTED — hidden from every listing and the sitemap, but anyone holding
+//              the direct link can open it and book. For sessions arranged with
+//              a group where self-serve sign-up is still wanted.
+//   PRIVATE  — no public surface at all. Only admins (and volunteers already
+//              rostered on one of its shifts) can open its pages; sign-ups
+//              happen in /admin via "Add volunteer". This is the "hidden
+//              programme I control from the backend" case.
+//   ARCHIVED — retired. Hidden like PRIVATE and additionally dropped from the
+//              admin scheduling pickers so nobody rosters new shifts onto it.
+//
+// Anything other than PUBLIC is also served with a noindex robots directive —
+// an unlisted link that Google indexes is not unlisted.
+enum ProgramVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+  ARCHIVED
+}
+
 // The kind of off-platform group that a SlotBlock is holding spots for. Public
 // surfaces show a generic "Corporate group joining" / "School group joining"
 // pill so regular volunteers can see who else will be in the warehouse with
@@ -297,7 +321,9 @@ model Program {
   // Card theme key — see src/lib/programme-theme.ts.
   theme        String   @default("cream")
   order        Int      @default(0)
-  active       Boolean  @default(true)
+  // Who can see this programme — see ProgramVisibility. Replaced the older
+  // `active` boolean (true → PUBLIC, false → ARCHIVED in the migration).
+  visibility   ProgramVisibility @default(PUBLIC)
   shifts       Shift[]
   templates    ShiftTemplate[]
   createdAt    DateTime @default(now())
