@@ -20,7 +20,7 @@
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@react-email/components": "^1.0.12",
-    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^13.3.3",
     "arctic": "^3.7.0",
     "bcryptjs": "^3.0.3",
