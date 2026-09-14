@@ -114,6 +114,11 @@ describe("filterThirdPartyExceptions", () => {
       expect(filterThirdPartyExceptions(event)).toBe(event);
     });
 
+    it("tolerates malformed frames without throwing", () => {
+      const event = stackOverflow(CHROME_IOS, [null, 42, ...injectedFrames]);
+      expect(filterThirdPartyExceptions(event)).toBeNull();
+    });
+
     it("keeps a stack overflow from any other browser", () => {
       const event = stackOverflow(SAFARI, injectedFrames);
       expect(filterThirdPartyExceptions(event)).toBe(event);

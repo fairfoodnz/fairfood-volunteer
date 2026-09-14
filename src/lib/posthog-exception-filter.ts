@@ -55,8 +55,8 @@ const GOOGLE_IOS_APP = /\b(?:CriOS|GSA)\//;
 const STACK_OVERFLOW = "maximum call stack size exceeded";
 
 /** True when a frame was executed from a `.js`/`.mjs` file (our bundles). */
-function isScriptFileFrame(frame: { filename?: unknown }): boolean {
-  if (typeof frame.filename !== "string") return false;
+function isScriptFileFrame(frame: { filename?: unknown } | null): boolean {
+  if (typeof frame?.filename !== "string") return false;
   try {
     return /\.m?js$/i.test(new URL(frame.filename).pathname);
   } catch {
