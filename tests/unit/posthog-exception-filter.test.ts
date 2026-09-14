@@ -54,6 +54,86 @@ describe("filterThirdPartyExceptions", () => {
     expect(filterThirdPartyExceptions(event)).toBe(event);
   });
 
+  describe("Google iOS injected-script stack overflow", () => {
+    const CHROME_IOS =
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/153.0.7980.45 Mobile/15E148 Safari/604.1";
+    const GOOGLE_APP =
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/435.4.965413651 Mobile/15E148 Safari/604.1";
+    const SAFARI =
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1";
+
+    function frame(filename: string, fn: string) {
+      return {
+        platform: "web:javascript",
+        filename,
+        function: fn,
+        lineno: 226,
+        colno: 63,
+        in_app: true,
+      };
+    }
+
+    // The shape captured in production: recursing `Nk`/`Pk` frames that point
+    // at the page URL, called from frames attributed to the current route.
+    const injectedFrames = [
+      frame("https://volunteer.fairfood.org.nz/shifts", "?"),
+      frame("https://volunteer.fairfood.org.nz/", "Pk"),
+      frame("https://volunteer.fairfood.org.nz/", "Nk"),
+    ];
+
+    function stackOverflow(userAgent: string, frames: unknown[]) {
+      return exceptionEvent({
+        $raw_user_agent: userAgent,
+        $exception_list: [
+          {
+            type: "RangeError",
+            value: "Maximum call stack size exceeded.",
+            stacktrace: { type: "raw", frames },
+          },
+        ],
+      });
+    }
+
+    it("drops it on Chrome for iOS when every frame is the page URL", () => {
+      expect(filterThirdPartyExceptions(stackOverflow(CHROME_IOS, injectedFrames))).toBeNull();
+    });
+
+    it("drops it on the Google app", () => {
+      expect(filterThirdPartyExceptions(stackOverflow(GOOGLE_APP, injectedFrames))).toBeNull();
+    });
+
+    it("drops the frameless variant", () => {
+      expect(filterThirdPartyExceptions(stackOverflow(CHROME_IOS, []))).toBeNull();
+    });
+
+    it("keeps a stack overflow with a frame from our bundles", () => {
+      const event = stackOverflow(CHROME_IOS, [
+        frame("https://volunteer.fairfood.org.nz/_next/static/chunks/0f3a9c.js", "render"),
+        ...injectedFrames,
+      ]);
+      expect(filterThirdPartyExceptions(event)).toBe(event);
+    });
+
+    it("keeps a stack overflow from any other browser", () => {
+      const event = stackOverflow(SAFARI, injectedFrames);
+      expect(filterThirdPartyExceptions(event)).toBe(event);
+    });
+
+    it("keeps other exceptions on Google iOS apps", () => {
+      const event = exceptionEvent({
+        $raw_user_agent: CHROME_IOS,
+        $exception_list: [
+          {
+            type: "TypeError",
+            value: "Cannot read properties of undefined",
+            stacktrace: { type: "raw", frames: injectedFrames },
+          },
+        ],
+      });
+      expect(filterThirdPartyExceptions(event)).toBe(event);
+    });
+  });
+
   it("never touches non-exception events", () => {
     const pageview = {
       uuid: "00000000-0000-0000-0000-000000000001",
