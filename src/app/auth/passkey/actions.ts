@@ -4,7 +4,6 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
   type AuthenticationResponseJSON,
-  type AuthenticatorTransportFuture,
   type PublicKeyCredentialRequestOptionsJSON,
 } from "@simplewebauthn/server";
 import { createSession, postAuthDestination } from "@/lib/auth";
@@ -95,9 +94,7 @@ export async function finishPasskeyLogin(
         id: passkey.credentialId,
         publicKey: passkey.publicKey,
         counter: passkey.counter,
-        transports: decodeTransports(passkey.transports) as
-          | AuthenticatorTransportFuture[]
-          | undefined,
+        transports: decodeTransports(passkey.transports),
       },
     });
   } catch (err) {

@@ -42,6 +42,11 @@ updates:
         patterns:
           - "radix-ui"
           - "@radix-ui/*"
+      # The browser and server packages share WebAuthn JSON types, so a major
+      # bump of one alone never type-checks - they must move together.
+      simplewebauthn:
+        patterns:
+          - "@simplewebauthn/*"
 
   - package-ecosystem: github-actions
     directory: /
