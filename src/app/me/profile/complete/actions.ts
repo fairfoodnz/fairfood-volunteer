@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { requireUser, safeNextPath } from "@/lib/auth";
 import { HeardAbout } from "@/generated/prisma";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { FirstNameSchema, LastNameSchema } from "@/lib/name-fields";
+import { hasEnglishName } from "@/lib/users";
 
 const HeardAboutValues = [
   HeardAbout.FRIEND,
@@ -62,10 +64,38 @@ const QuestionnaireSchema = z
     },
   );
 
+/**
+ * Only asked when the stored name isn't in English letters - a Google profile
+ * in another script, or the email-prefix fallback the Google callback uses when
+ * no name is supplied. Email sign-ups already passed the rule at sign-up.
+ */
+const NameSchema = z.object({
+  firstName: FirstNameSchema,
+  lastName: LastNameSchema,
+});
+
+/** Raw submitted strings, echoed back so a failed submit keeps every answer. */
+export type QuestionnaireValues = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  birthday: string;
+  heardAbout: string;
+  heardAboutOther: string;
+  whyInterested: string;
+  arrestHistory: string;
+  arrestDetails: string;
+  healthConditions: string;
+  healthDetails: string;
+};
+
 export type QuestionnaireState = {
   error?: string;
+  values?: QuestionnaireValues;
   fieldErrors?: Partial<
     Record<
+      | "firstName"
+      | "lastName"
       | "phone"
       | "birthday"
       | "heardAbout"
@@ -85,6 +115,31 @@ export async function completeProfileAction(
   formData: FormData,
 ): Promise<QuestionnaireState> {
   const user = await requireUser();
+  const text = (key: keyof QuestionnaireValues) => {
+    const v = formData.get(key);
+    return typeof v === "string" ? v : "";
+  };
+  const values: QuestionnaireValues = {
+    firstName: text("firstName"),
+    lastName: text("lastName"),
+    phone: text("phone"),
+    birthday: text("birthday"),
+    heardAbout: text("heardAbout"),
+    heardAboutOther: text("heardAboutOther"),
+    whyInterested: text("whyInterested"),
+    arrestHistory: text("arrestHistory"),
+    arrestDetails: text("arrestDetails"),
+    healthConditions: text("healthConditions"),
+    healthDetails: text("healthDetails"),
+  };
+  // Decided from the stored name, not a form flag, so the rule can't be skipped.
+  const needsName = !hasEnglishName(user);
+  const parsedName = needsName
+    ? NameSchema.safeParse({
+        firstName: formData.get("firstName"),
+        lastName: formData.get("lastName") || undefined,
+      })
+    : null;
 
   const parsed = QuestionnaireSchema.safeParse({
     phone: formData.get("phone"),
@@ -99,9 +154,13 @@ export async function completeProfileAction(
     next: formData.get("next") || undefined,
   });
 
-  if (!parsed.success) {
+  if (!parsed.success || (parsedName && !parsedName.success)) {
     const fieldErrors: QuestionnaireState["fieldErrors"] = {};
-    for (const issue of parsed.error.issues) {
+    const issues = [
+      ...(parsedName?.error?.issues ?? []),
+      ...(parsed.error?.issues ?? []),
+    ];
+    for (const issue of issues) {
       const key = issue.path[0];
       if (
         typeof key === "string" &&
@@ -110,12 +169,18 @@ export async function completeProfileAction(
         fieldErrors[key as keyof typeof fieldErrors] = issue.message;
       }
     }
-    return { fieldErrors };
+    return { fieldErrors, values };
   }
 
   await db.user.update({
     where: { id: user.id },
     data: {
+      ...(parsedName?.success
+        ? {
+            firstName: parsedName.data.firstName,
+            lastName: parsedName.data.lastName || null,
+          }
+        : {}),
       phone: parsed.data.phone,
       birthday: parsed.data.birthday,
       heardAbout: parsed.data.heardAbout,

@@ -16,12 +16,34 @@ test.describe("sign up", () => {
     await expect(page).toHaveURL(/\/auth\/sign-up/);
   });
 
+  test("rejects a name that isn't in the English alphabet", async ({ page }) => {
+    const email = `e2e-script-${Date.now()}@example.com`;
+    await page.goto("/auth/sign-up");
+    await page.locator("#firstName").fill("振莹");
+    await page.locator("#lastName").fill("Tāmaki");
+    await page.locator("#email").fill(email);
+    await page.locator("#password").fill("supersecret1");
+    await page.locator("#confirm").fill("supersecret1");
+    await page.getByRole("button", { name: /Create account/i }).click();
+
+    await expect(
+      page.getByText("Please write your name using the English alphabet."),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/auth\/sign-up/);
+    // The failed submit keeps what was typed (macrons are allowed, so the last
+    // name raises no error of its own).
+    await expect(page.locator("#firstName")).toHaveValue("振莹");
+    await expect(page.locator("#lastName")).toHaveValue("Tāmaki");
+    await expect(page.locator("#email")).toHaveValue(email);
+  });
+
   test("creates an account and routes into the onboarding questionnaire", async ({
     page,
   }) => {
     const email = `e2e-signup-${Date.now()}@example.com`;
     await page.goto("/auth/sign-up");
-    await page.locator("#firstName").fill("E2E");
+    // Names must use the English alphabet, so no digits in test data.
+    await page.locator("#firstName").fill("Eve");
     await page.locator("#lastName").fill("New Volunteer");
     await page.locator("#email").fill(email);
     await page.locator("#password").fill("supersecret1");

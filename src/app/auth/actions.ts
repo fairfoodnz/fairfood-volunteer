@@ -21,6 +21,7 @@ import {
   sendWelcomeEmail,
 } from "@/lib/email";
 import { stopImpersonation } from "@/lib/impersonation";
+import { FirstNameSchema, LastNameSchema } from "@/lib/name-fields";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 const PASSWORD_MIN = 8;
@@ -61,8 +62,8 @@ const SignInSchema = z.object({
 const SignUpSchema = z
   .object({
     email: z.string().email(),
-    firstName: z.string().trim().min(1).max(80),
-    lastName: z.string().trim().max(80).optional(),
+    firstName: FirstNameSchema,
+    lastName: LastNameSchema,
     password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
     confirm: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
     next: z.string().optional(),
@@ -75,6 +76,9 @@ const SignUpSchema = z
 export type SignInState = { error?: string };
 export type SignUpState = {
   error?: string;
+  /** Echoed back on validation failure so React's post-action form reset
+   *  doesn't wipe what the volunteer typed. Never includes passwords. */
+  values?: { email: string; firstName: string; lastName: string };
   fieldErrors?: Partial<
     Record<"email" | "firstName" | "lastName" | "password" | "confirm", string>
   >;
@@ -120,6 +124,15 @@ export async function signUpAction(
   _prev: SignUpState,
   formData: FormData,
 ): Promise<SignUpState> {
+  const text = (key: string) => {
+    const v = formData.get(key);
+    return typeof v === "string" ? v : "";
+  };
+  const values = {
+    email: text("email"),
+    firstName: text("firstName"),
+    lastName: text("lastName"),
+  };
   const parsed = SignUpSchema.safeParse({
     email: formData.get("email"),
     firstName: formData.get("firstName"),
@@ -136,7 +149,7 @@ export async function signUpAction(
         fieldErrors[key as keyof typeof fieldErrors] = issue.message;
       }
     }
-    return { fieldErrors };
+    return { fieldErrors, values };
   }
 
   const lower = parsed.data.email.trim().toLowerCase();
@@ -146,6 +159,7 @@ export async function signUpAction(
       fieldErrors: {
         email: "An account already exists for this email. Sign in instead.",
       },
+      values,
     };
   }
 

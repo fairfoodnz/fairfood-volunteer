@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { currentUser } from "@/lib/auth";
 import { sumBlocks } from "@/lib/shifts";
+import { hasEnglishName } from "@/lib/users";
 import { formatShiftRange, INCLUSIVE_SLUG, isLinkVisible } from "@/lib/programs";
 import {
   buildBookingCalendarEvent,
@@ -55,6 +56,14 @@ export async function bookShiftAction(
   if (!user.profileCompletedAt) {
     redirect(
       `/me/profile/complete?next=${encodeURIComponent(`/shifts/${parsed.data.shiftId}`)}`,
+    );
+  }
+  // Names show on the public "Going" list and coordinator rosters, so they
+  // must be in English letters. Accounts from before that rule (or a Google
+  // profile in another script) fix it here, then come straight back.
+  if (!hasEnglishName(user)) {
+    redirect(
+      `/me/profile?next=${encodeURIComponent(`/shifts/${parsed.data.shiftId}`)}`,
     );
   }
   if (!user.emailVerifiedAt) {
@@ -200,6 +209,9 @@ export async function bookShiftsAction(
   if (!user) redirect(`/auth/sign-up?next=${encodeURIComponent(returnTo)}`);
   if (!user.profileCompletedAt) {
     redirect(`/me/profile/complete?next=${encodeURIComponent(returnTo)}`);
+  }
+  if (!hasEnglishName(user)) {
+    redirect(`/me/profile?next=${encodeURIComponent(returnTo)}`);
   }
   if (!user.emailVerifiedAt) {
     return {
