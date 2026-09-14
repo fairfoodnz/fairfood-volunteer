@@ -64,6 +64,9 @@ export function QuestionnaireForm({
   // ignores a changed defaultValue) instead of wiping every answer.
   const d = state.values ?? { ...defaults, firstName: "", lastName: "", ...name };
   const formKey = state.values ? JSON.stringify(state.values) : "initial";
+  // Seeded once from `defaults` on purpose. This state lives in this component,
+  // not under the keyed <form>, so a failed submit's remount doesn't reset it:
+  // the controlled Select and the "Tell us more" field keep the volunteer's pick.
   const [heardAbout, setHeardAbout] = useState<HeardAbout | "">(
     defaults.heardAbout,
   );
