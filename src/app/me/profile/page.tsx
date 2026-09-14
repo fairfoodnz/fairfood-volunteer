@@ -1,51 +1,21 @@
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { Languages } from "lucide-react";
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireUser, safeNextPath } from "@/lib/auth";
+import { hasEnglishName } from "@/lib/users";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { ProfileForm } from "./form";
 
 export const metadata = { title: "Profile · Fair Food Volunteer" };
 export const dynamic = "force-dynamic";
 
-const ProfileSchema = z.object({
-  firstName: z.string().trim().min(1).max(80),
-  lastName: z.string().trim().max(80).optional(),
-  phone: z.string().trim().max(40).optional(),
-  pronouns: z.string().trim().max(40).optional(),
-  emergencyName: z.string().trim().max(120).optional(),
-  emergencyPhone: z.string().trim().max(40).optional(),
-  accessNeeds: z.string().trim().max(2000).optional(),
-});
+type Props = { searchParams: Promise<{ next?: string }> };
 
-async function saveProfile(formData: FormData) {
-  "use server";
+export default async function ProfilePage({ searchParams }: Props) {
   const user = await requireUser();
-  const data = ProfileSchema.parse({
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName") || undefined,
-    phone: formData.get("phone") || undefined,
-    pronouns: formData.get("pronouns") || undefined,
-    emergencyName: formData.get("emergencyName") || undefined,
-    emergencyPhone: formData.get("emergencyPhone") || undefined,
-    accessNeeds: formData.get("accessNeeds") || undefined,
-  });
-  // Empty last name clears the column (mononym) rather than leaving the old value.
-  await db.user.update({
-    where: { id: user.id },
-    data: { ...data, lastName: data.lastName ?? null },
-  });
-  revalidatePath("/me/profile");
-  revalidatePath("/me");
-}
-
-export default async function ProfilePage() {
-  const user = await requireUser();
-  const fresh = await db.user.findUnique({ where: { id: user.id } });
+  const { next } = await searchParams;
+  const fresh = await db.user.findUniqueOrThrow({ where: { id: user.id } });
+  const needsEnglishName = !hasEnglishName(fresh);
 
   return (
     <>
@@ -61,109 +31,38 @@ export default async function ProfilePage() {
             the day. Edit anytime.
           </p>
 
-          <form action={saveProfile} className="mt-10 space-y-8">
-            <Card title="The basics">
-              <Field
-                label="First name"
-                name="firstName"
-                defaultValue={fresh?.firstName}
-                required
-              />
-              <Field
-                label="Last name"
-                name="lastName"
-                defaultValue={fresh?.lastName ?? ""}
-              />
-              <Field label="Email" value={fresh?.email} disabled />
-              <Field label="Phone" name="phone" defaultValue={fresh?.phone ?? ""} />
-              <Field
-                label="Pronouns"
-                name="pronouns"
-                defaultValue={fresh?.pronouns ?? ""}
-                placeholder="e.g. she/they"
-              />
-            </Card>
-
-            <Card title="Emergency contact">
-              <Field
-                label="Name"
-                name="emergencyName"
-                defaultValue={fresh?.emergencyName ?? ""}
-              />
-              <Field
-                label="Phone"
-                name="emergencyPhone"
-                defaultValue={fresh?.emergencyPhone ?? ""}
-              />
-            </Card>
-
-            <Card title="Access needs">
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="accessNeeds">
-                  Anything we can do to make your shifts easier?
-                </Label>
-                <Textarea
-                  id="accessNeeds"
-                  name="accessNeeds"
-                  rows={4}
-                  placeholder="Mobility, sensory, support person, anything else."
-                  defaultValue={fresh?.accessNeeds ?? ""}
-                />
+          {needsEnglishName && (
+            <div className="mt-8 flex gap-3 rounded-md border border-tomato/30 bg-tomato/5 px-5 py-4">
+              <Languages className="mt-0.5 size-5 shrink-0 text-tomato" aria-hidden />
+              <div className="space-y-1">
+                <p className="font-semibold text-foreground">
+                  Please write your name using the English alphabet
+                </p>
+                <p className="text-sm text-foreground/75">
+                  It&rsquo;s how coordinators read the roster and how other
+                  volunteers see you on a shift. Update it below
+                  {next ? " and we’ll take you back to your booking" : ""}.
+                </p>
               </div>
-            </Card>
-
-            <div className="flex justify-end">
-              <Button type="submit" size="lg" className="bg-leaf hover:bg-leaf-deep">
-                Save profile
-              </Button>
             </div>
-          </form>
+          )}
+
+          <ProfileForm
+            email={fresh.email}
+            next={next ? safeNextPath(next) : undefined}
+            defaults={{
+              firstName: fresh.firstName,
+              lastName: fresh.lastName ?? "",
+              phone: fresh.phone ?? "",
+              pronouns: fresh.pronouns ?? "",
+              emergencyName: fresh.emergencyName ?? "",
+              emergencyPhone: fresh.emergencyPhone ?? "",
+              accessNeeds: fresh.accessNeeds ?? "",
+            }}
+          />
         </div>
       </main>
       <SiteFooter />
     </>
-  );
-}
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-md border border-border bg-card p-6 md:p-8">
-      <h2 className="display mb-5 text-xl font-semibold">{title}</h2>
-      <div className="grid gap-5 sm:grid-cols-2">{children}</div>
-    </section>
-  );
-}
-
-function Field({
-  label,
-  name,
-  defaultValue,
-  value,
-  placeholder,
-  required,
-  disabled,
-}: {
-  label: string;
-  name?: string;
-  defaultValue?: string;
-  value?: string;
-  placeholder?: string;
-  required?: boolean;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={name}>{label}</Label>
-      <Input
-        id={name}
-        name={name}
-        defaultValue={defaultValue}
-        value={value}
-        placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-        className="h-11"
-      />
-    </div>
   );
 }

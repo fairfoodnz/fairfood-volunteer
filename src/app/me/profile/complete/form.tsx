@@ -20,6 +20,9 @@ import {
   type QuestionnaireState,
 } from "./actions";
 
+const yesNo = (v: string): "yes" | "no" | "" =>
+  v === "yes" || v === "no" ? v : "";
+
 const HEARD_ABOUT_OPTIONS: { value: HeardAbout; label: string }[] = [
   { value: HeardAbout.FRIEND, label: "A friend or whānau" },
   { value: HeardAbout.SOCIAL, label: "Social media" },
@@ -43,9 +46,12 @@ type Defaults = {
 
 export function QuestionnaireForm({
   defaults,
+  name,
   next,
 }: {
   defaults: Defaults;
+  /** Present only when the stored name isn't in English letters yet. */
+  name?: { firstName: string; lastName: string };
   next?: string;
 }) {
   const [state, action, pending] = useActionState<QuestionnaireState, FormData>(
@@ -53,6 +59,11 @@ export function QuestionnaireForm({
     {},
   );
   const fe = state.fieldErrors ?? {};
+  // React resets the form after every action, so a failed submit re-seeds the
+  // uncontrolled fields from what was sent (remounting via `key`, since Base UI
+  // ignores a changed defaultValue) instead of wiping every answer.
+  const d = state.values ?? { ...defaults, firstName: "", lastName: "", ...name };
+  const formKey = state.values ? JSON.stringify(state.values) : "initial";
   const [heardAbout, setHeardAbout] = useState<HeardAbout | "">(
     defaults.heardAbout,
   );
@@ -67,7 +78,47 @@ export function QuestionnaireForm({
   }, []);
 
   return (
-    <form action={action} className="space-y-8" noValidate>
+    <form key={formKey} action={action} className="space-y-8" noValidate>
+      {name && (
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <FieldRow>
+              <Label htmlFor="firstName">
+                First name <Req />
+              </Label>
+              <Input
+                id="firstName"
+                name="firstName"
+                autoComplete="given-name"
+                placeholder="e.g. Aroha"
+                defaultValue={d.firstName}
+                aria-invalid={fe.firstName ? true : undefined}
+                aria-describedby="name-helper"
+                className="h-11"
+              />
+              <Err>{fe.firstName}</Err>
+            </FieldRow>
+            <FieldRow>
+              <Label htmlFor="lastName">Last name</Label>
+              <Input
+                id="lastName"
+                name="lastName"
+                autoComplete="family-name"
+                placeholder="e.g. Williams"
+                defaultValue={d.lastName}
+                aria-invalid={fe.lastName ? true : undefined}
+                aria-describedby="name-helper"
+                className="h-11"
+              />
+              <Err>{fe.lastName}</Err>
+            </FieldRow>
+          </div>
+          <Helper id="name-helper">
+            Use the English alphabet so the team can read the roster. Macrons and accents are fine.
+          </Helper>
+        </div>
+      )}
+
       <FormSection>
         <FieldRow>
           <Label htmlFor="phone">
@@ -80,7 +131,7 @@ export function QuestionnaireForm({
             inputMode="tel"
             autoComplete="tel"
             placeholder="021…"
-            defaultValue={defaults.phone}
+            defaultValue={d.phone}
             aria-invalid={fe.phone ? true : undefined}
             className="h-11"
           />
@@ -95,7 +146,7 @@ export function QuestionnaireForm({
           <DatePicker
             id="birthday"
             name="birthday"
-            defaultValue={defaults.birthday}
+            defaultValue={d.birthday}
             min={birthdayBounds.min}
             max={birthdayBounds.max}
             captionLayout="dropdown"
@@ -146,7 +197,7 @@ export function QuestionnaireForm({
               <Input
                 id="heardAboutOther"
                 name="heardAboutOther"
-                defaultValue={defaults.heardAboutOther}
+                defaultValue={d.heardAboutOther}
                 aria-invalid={fe.heardAboutOther ? true : undefined}
                 className="mt-2 h-11"
               />
@@ -163,7 +214,7 @@ export function QuestionnaireForm({
             id="whyInterested"
             name="whyInterested"
             rows={3}
-            defaultValue={defaults.whyInterested}
+            defaultValue={d.whyInterested}
             placeholder="A sentence or two is plenty."
             aria-invalid={fe.whyInterested ? true : undefined}
             className="resize-none"
@@ -179,8 +230,8 @@ export function QuestionnaireForm({
           helper="Visible only to the volunteer coordinator. Answering yes doesn't disqualify you — we just like to have a chat first."
           followUpName="arrestDetails"
           followUpLabel="Anything you'd like us to share with the coordinator? (optional)"
-          defaultValue={defaults.arrestHistory}
-          followUpDefault={defaults.arrestDetails}
+          defaultValue={yesNo(d.arrestHistory)}
+          followUpDefault={d.arrestDetails}
           error={fe.arrestHistory}
           followUpError={fe.arrestDetails}
         />
@@ -190,8 +241,8 @@ export function QuestionnaireForm({
           helper="Used only on the day to keep you safe — allergies, mobility needs, anything we should be aware of."
           followUpName="healthDetails"
           followUpLabel="Anything you'd like us to know? (optional)"
-          defaultValue={defaults.healthConditions}
-          followUpDefault={defaults.healthDetails}
+          defaultValue={yesNo(d.healthConditions)}
+          followUpDefault={d.healthDetails}
           error={fe.healthConditions}
           followUpError={fe.healthDetails}
         />
@@ -320,8 +371,12 @@ function Req() {
   return <span className="ml-1 text-tomato">*</span>;
 }
 
-function Helper({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs text-foreground/55">{children}</p>;
+function Helper({ id, children }: { id?: string; children: React.ReactNode }) {
+  return (
+    <p id={id} className="text-xs text-foreground/55">
+      {children}
+    </p>
+  );
 }
 
 function Err({ children }: { children?: React.ReactNode }) {

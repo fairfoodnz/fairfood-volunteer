@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireUser, safeNextPath } from "@/lib/auth";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { hasEnglishName, isEnglishName } from "@/lib/users";
 import { QuestionnaireForm } from "./form";
 
 export const metadata = { title: "Welcome · Fair Food Volunteer" };
@@ -20,6 +21,7 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
   }
 
   const fresh = await db.user.findUnique({ where: { id: user.id } });
+  const needsName = !hasEnglishName(user);
 
   return (
     <>
@@ -28,7 +30,7 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
         <div className="container-x mx-auto max-w-2xl">
           <header className="mb-10 space-y-3">
             <p className="eyebrow text-leaf-deep">
-              Kia ora, {user.firstName}
+              {needsName ? "Kia ora" : `Kia ora, ${user.firstName}`}
             </p>
             <h1 className="display text-balance text-3xl font-bold leading-tight md:text-4xl">
               Let&rsquo;s get you sorted before your first shift.
@@ -64,6 +66,18 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
                       : "",
                 healthDetails: fresh?.healthDetails ?? "",
               }}
+              name={
+                needsName
+                  ? {
+                      // Keep whichever part already passes; blank the rest.
+                      firstName: isEnglishName(user.firstName) ? user.firstName : "",
+                      lastName:
+                        user.lastName && isEnglishName(user.lastName)
+                          ? user.lastName
+                          : "",
+                    }
+                  : undefined
+              }
               next={next}
             />
           </div>

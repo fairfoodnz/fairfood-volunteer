@@ -11,6 +11,31 @@
  */
 export type PersonName = { firstName: string; lastName: string | null };
 
+/**
+ * Names must be written in the English (Latin) alphabet so coordinators can
+ * read rosters and volunteers can find each other on the "Going" list.
+ * Precomposed and combining diacritics stay allowed (Tāmaki, José, Zoë), as do
+ * spaces, hyphens, apostrophes and full stops (Mary-Jane O'Neil Jr.). At least
+ * one letter is required so punctuation alone doesn't pass.
+ *
+ * This is the single source of the rule: sign-up, profile edits, the onboarding
+ * questionnaire (via the Zod fields in lib/name-fields.ts) and the booking gate
+ * all go through it.
+ */
+const ENGLISH_NAME = /^(?=.*\p{Script=Latin})[\p{Script=Latin}\p{M} '’.-]+$/u;
+
+export const ENGLISH_NAME_MESSAGE =
+  "Please write your name using the English alphabet.";
+
+export function isEnglishName(value: string): boolean {
+  return ENGLISH_NAME.test(value.trim());
+}
+
+/** True when every part of the stored name satisfies `isEnglishName`. */
+export function hasEnglishName(p: PersonName): boolean {
+  return isEnglishName(p.firstName) && (!p.lastName || isEnglishName(p.lastName));
+}
+
 /** "First Last", collapsing to just "First" when there's no last name. */
 export function fullName(p: PersonName): string {
   return p.lastName ? `${p.firstName} ${p.lastName}` : p.firstName;

@@ -12,25 +12,37 @@ export function SignUpForm({ next }: { next?: string }) {
     {},
   );
   const fe = state.fieldErrors ?? {};
+  // React resets the form after every action; remounting on the echoed values
+  // re-seeds the uncontrolled inputs (Base UI ignores a changed defaultValue).
+  const formKey = state.values ? JSON.stringify(state.values) : "initial";
 
   return (
-    <form action={formAction} className="space-y-5" noValidate>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Field
-          label="First name"
-          id="firstName"
-          autoComplete="given-name"
-          placeholder="e.g. Aroha"
-          error={fe.firstName}
-          required
-        />
-        <Field
-          label="Last name"
-          id="lastName"
-          autoComplete="family-name"
-          placeholder="e.g. Williams"
-          error={fe.lastName}
-        />
+    <form key={formKey} action={formAction} className="space-y-5" noValidate>
+      <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <Field
+            label="First name"
+            id="firstName"
+            autoComplete="given-name"
+            placeholder="e.g. Aroha"
+            defaultValue={state.values?.firstName}
+            describedBy="name-helper"
+            error={fe.firstName}
+            required
+          />
+          <Field
+            label="Last name"
+            id="lastName"
+            autoComplete="family-name"
+            placeholder="e.g. Williams"
+            defaultValue={state.values?.lastName}
+            describedBy="name-helper"
+            error={fe.lastName}
+          />
+        </div>
+        <p id="name-helper" className="text-xs text-foreground/55">
+          Use the English alphabet so the team can read the roster. Macrons and accents are fine.
+        </p>
       </div>
       <Field
         label="Email"
@@ -38,6 +50,7 @@ export function SignUpForm({ next }: { next?: string }) {
         type="email"
         autoComplete="email"
         placeholder="you@example.com"
+        defaultValue={state.values?.email}
         error={fe.email}
         required
       />
@@ -87,6 +100,8 @@ function Field({
   autoComplete,
   placeholder,
   helper,
+  describedBy,
+  defaultValue,
   error,
   required,
 }: {
@@ -96,10 +111,13 @@ function Field({
   autoComplete?: string;
   placeholder?: string;
   helper?: string;
+  /** Id of a helper rendered outside the field (e.g. shared across a row). */
+  describedBy?: string;
+  defaultValue?: string;
   error?: string;
   required?: boolean;
 }) {
-  const helperId = helper ? `${id}-helper` : undefined;
+  const helperId = helper ? `${id}-helper` : describedBy;
   const errorId = error ? `${id}-error` : undefined;
   return (
     <div className="space-y-2">
@@ -113,6 +131,7 @@ function Field({
         type={type}
         autoComplete={autoComplete}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={[helperId, errorId].filter(Boolean).join(" ") || undefined}
