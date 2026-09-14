@@ -7,7 +7,6 @@ import { z } from "zod";
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
-  type AuthenticatorTransportFuture,
   type PublicKeyCredentialCreationOptionsJSON,
   type RegistrationResponseJSON,
 } from "@simplewebauthn/server";
@@ -89,9 +88,7 @@ export async function beginPasskeyRegistration(): Promise<RegisterBeginState> {
       attestationType: "none",
       excludeCredentials: existing.map((c) => ({
         id: c.credentialId,
-        transports: decodeTransports(c.transports) as
-          | AuthenticatorTransportFuture[]
-          | undefined,
+        transports: decodeTransports(c.transports),
       })),
       authenticatorSelection: {
         residentKey: "required",

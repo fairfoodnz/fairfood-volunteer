@@ -4,7 +4,9 @@ const CI = !!process.env.CI;
 // Override PORT to run against a free port when :3000 is taken by another
 // dev server (Playwright would otherwise reuse that foreign server).
 const PORT = Number(process.env.PORT ?? 3000);
-const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${PORT}`;
+// `localhost`, not `127.0.0.1`: WebAuthn rejects IP addresses as an RP ID, so
+// the passkey specs can only run on a hostname. NEXT_PUBLIC_APP_URL must match.
+const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./tests/e2e",

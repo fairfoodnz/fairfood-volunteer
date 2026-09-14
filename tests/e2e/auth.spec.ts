@@ -85,3 +85,49 @@ test.describe("sign in", () => {
     ).toBeVisible();
   });
 });
+
+// Full WebAuthn round trip against Chromium's virtual authenticator, so a
+// @simplewebauthn upgrade that breaks the ceremony fails here, not in prod.
+// Uses a fresh account so the shared seeded users never gain a passkey.
+test.describe("passkeys", () => {
+  test("register a passkey, then sign in with it", async ({ page }) => {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("WebAuthn.enable");
+    await cdp.send("WebAuthn.addVirtualAuthenticator", {
+      options: {
+        protocol: "ctap2",
+        transport: "internal",
+        hasResidentKey: true,
+        hasUserVerification: true,
+        isUserVerified: true,
+        automaticPresenceSimulation: true,
+      },
+    });
+
+    await page.goto("/auth/sign-up");
+    await page.locator("#firstName").fill("Pania");
+    await page.locator("#lastName").fill("Passkey");
+    await page.locator("#email").fill(`e2e-passkey-${Date.now()}@example.com`);
+    await page.locator("#password").fill("supersecret1");
+    await page.locator("#confirm").fill("supersecret1");
+    await page.getByRole("button", { name: /Create account/i }).click();
+    await page.waitForURL("**/me/profile/complete");
+
+    await page.goto("/me/security");
+    await page.getByLabel("Add a passkey").fill("E2E authenticator");
+    await page.getByRole("button", { name: "Add passkey" }).click();
+    await expect(page.getByText("Passkey added.")).toBeVisible();
+    await expect(page.getByText("E2E authenticator")).toBeVisible();
+    await expect(page.getByText(/not used yet/)).toBeVisible();
+
+    // Drop the session; the credential stays on the virtual authenticator.
+    await page.context().clearCookies();
+    await page.goto("/auth/sign-in");
+    await page.getByRole("button", { name: "Sign in with a passkey" }).click();
+    await page.waitForURL((url) => !url.pathname.startsWith("/auth/"));
+
+    await page.goto("/me/security");
+    await expect(page.getByText("E2E authenticator")).toBeVisible();
+    await expect(page.getByText(/last used/)).toBeVisible();
+  });
+});

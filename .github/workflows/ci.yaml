@@ -86,8 +86,9 @@ jobs:
       # best-effort (caught + logged), so the flows still pass.
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fairfood?schema=public
       AUTH_SECRET: ci-placeholder-secret-not-used-at-runtime
-      # Build-time-inlined; must match the origin Playwright drives.
-      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      # Build-time-inlined; must match the origin Playwright drives. A hostname,
+      # not 127.0.0.1 - WebAuthn rejects IP addresses as an RP ID.
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
       S3_ENDPOINT: http://localhost:3900
       S3_REGION: garage
       S3_BUCKET: fairfood
