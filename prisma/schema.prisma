@@ -117,6 +117,13 @@ model User {
   // Onboarding questionnaire — required before booking a shift.
   // profileCompletedAt being non-null gates bookShiftAction.
   birthday          DateTime?
+  // Self-declared "I haven't volunteered with Fair Food before". Null means the
+  // question was never put to them — accounts that finished the questionnaire
+  // before this field existed. Coordinators use it to spot who needs an
+  // induction on the day; see isFirstTimer() in lib/users.ts, which retires the
+  // badge once a shift has been marked attended so one answer can't label
+  // someone a newcomer forever.
+  volunteeredBefore Boolean?
   heardAbout        HeardAbout?
   heardAboutOther   String?
   whyInterested     String?             @db.Text
@@ -151,6 +158,30 @@ model User {
   emailLogs          EmailLog[]
   impersonationsRun     ImpersonationLog[]  @relation("ImpersonationAdmin")
   impersonationsAsTarget ImpersonationLog[] @relation("ImpersonationTarget")
+  settingEdits          SiteSetting[]       @relation("SiteSettingEditor")
+}
+
+// Coordinator-editable copy — the wording of volunteer-facing notes and
+// questions that the team wants to reword without a deploy.
+//
+// A key/value table rather than columns on a singleton row: which strings are
+// editable changes with the product, and adding one should mean a new entry in
+// the registry (src/lib/site-copy.ts), not a migration. Every key has a
+// fallback in that registry, so a database with no rows at all still renders
+// the intended copy — these rows are overrides, never the source of truth for
+// whether a surface exists.
+model SiteSetting {
+  key         String   @id
+  value       String   @db.Text
+  // Who last edited it, for the "last edited by" line in /admin/settings.
+  // SetNull on the FK so removing an admin keeps the copy (and the timestamp)
+  // rather than cascading a delete into live site wording.
+  updatedById String?
+  updatedBy   User?    @relation("SiteSettingEditor", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@index([updatedById])
 }
 
 // A linked third-party identity (currently only Google). One row per

@@ -6,6 +6,7 @@ import { useActionState } from "react";
 import { Check, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProgramArt } from "@/components/site/illustrations";
+import { FirstTimeCheckbox } from "@/components/site/first-time-checkbox";
 import { bookShiftsAction, type BookManyState } from "./actions";
 import { blockKindLabel, type BlockSummary } from "@/lib/shifts";
 
@@ -46,12 +47,18 @@ export function ShiftsList({
   groupedShifts,
   initialSelection,
   authed,
+  firstTimePrompt,
   isEmpty,
 }: {
   groupedShifts: ShiftDay[];
   initialSelection: string[];
   /** When false, the sticky bar's primary CTA sends them through sign-up. */
   authed: boolean;
+  /**
+   * Label for the "first time here" tick box in the selection bar, or null
+   * when we already know the answer (see lib/first-time.ts).
+   */
+  firstTimePrompt: string | null;
   isEmpty: boolean;
 }) {
   // Build the set of bookable IDs once so we can intersect with the selection
@@ -164,8 +171,14 @@ export function ShiftsList({
         ))}
       </div>
 
-      {/* Spacer so the sticky bar never covers the last card on mobile. */}
-      {selectedCount > 0 && <div aria-hidden className="h-28" />}
+      {/* Spacer so the sticky bar never covers the last card on mobile. The
+          bar grows by a row when the first-time tick box is in it. */}
+      {selectedCount > 0 && (
+        <div
+          aria-hidden
+          className={authed && firstTimePrompt ? "h-44" : "h-28"}
+        />
+      )}
 
       {state.error && selectedCount === 0 && (
         <p
@@ -181,6 +194,7 @@ export function ShiftsList({
           count={selectedCount}
           pending={pending}
           authed={authed}
+          firstTimePrompt={firstTimePrompt}
           selectedIds={orderedSelected}
           onClear={clearSelection}
           error={state.error ?? null}
@@ -353,6 +367,7 @@ function SelectionBar({
   count,
   pending,
   authed,
+  firstTimePrompt,
   selectedIds,
   onClear,
   error,
@@ -360,6 +375,7 @@ function SelectionBar({
   count: number;
   pending: boolean;
   authed: boolean;
+  firstTimePrompt: string | null;
   selectedIds: string[];
   onClear: () => void;
   error: string | null;
@@ -379,51 +395,56 @@ function SelectionBar({
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80"
       style={{ paddingBottom: "max(env(safe-area-inset-bottom), 0.75rem)" }}
     >
-      <div className="container-x flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col">
-          <p className="font-semibold text-foreground">
-            {count} shift{count === 1 ? "" : "s"} selected
-          </p>
-          {error ? (
-            <p role="alert" className="text-xs text-tomato">
-              {error}
+      <div className="container-x space-y-2.5">
+        {authed && firstTimePrompt && (
+          <FirstTimeCheckbox label={firstTimePrompt} className="py-2.5" />
+        )}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-col">
+            <p className="font-semibold text-foreground">
+              {count} shift{count === 1 ? "" : "s"} selected
             </p>
-          ) : (
-            <p className="text-xs text-foreground/65">
-              {authed
-                ? "We'll email you a confirmation for each one."
-                : "We'll set you up in two minutes and book them all."}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onClear}
-            disabled={pending}
-            className="h-11"
-          >
-            Clear
-          </Button>
-          {authed ? (
+            {error ? (
+              <p role="alert" className="text-xs text-tomato">
+                {error}
+              </p>
+            ) : (
+              <p className="text-xs text-foreground/65">
+                {authed
+                  ? "We'll email you a confirmation for each one."
+                  : "We'll set you up in two minutes and book them all."}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <Button
-              type="submit"
+              type="button"
+              variant="ghost"
+              onClick={onClear}
               disabled={pending}
-              className="h-11 bg-leaf px-5 text-base font-semibold hover:bg-leaf-deep"
+              className="h-11"
             >
-              {pending ? "Booking…" : `Book ${count > 1 ? "all" : "shift"} →`}
+              Clear
             </Button>
-          ) : (
-            <Button
-              asChild
-              className="h-11 bg-leaf px-5 text-base font-semibold hover:bg-leaf-deep"
-            >
-              <Link href={signInHref}>
-                Sign up &amp; book {count > 1 ? "all" : ""}→
-              </Link>
-            </Button>
-          )}
+            {authed ? (
+              <Button
+                type="submit"
+                disabled={pending}
+                className="h-11 bg-leaf px-5 text-base font-semibold hover:bg-leaf-deep"
+              >
+                {pending ? "Booking…" : `Book ${count > 1 ? "all" : "shift"} →`}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                className="h-11 bg-leaf px-5 text-base font-semibold hover:bg-leaf-deep"
+              >
+                <Link href={signInHref}>
+                  Sign up &amp; book {count > 1 ? "all" : ""}→
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

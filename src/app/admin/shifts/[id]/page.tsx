@@ -8,7 +8,7 @@ import {
 } from "@/lib/programs";
 import { ProgrammeVisibilityBadge } from "@/components/admin/programme-visibility-badge";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
-import { fullName } from "@/lib/users";
+import { fullName, isFirstTimer } from "@/lib/users";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { Button } from "@/components/ui/button";
 import { CancelShiftDialog } from "@/components/admin/cancel-shift-dialog";
@@ -44,6 +44,38 @@ export default async function AdminShiftPage({ params }: Props) {
   const cancelled = shift.bookings.filter(
     (b) => b.status === BookingStatus.CANCELLED || b.status === BookingStatus.NO_SHOW,
   );
+
+  // Who on this roster has never worked a shift with us — the induction list.
+  // Attendance is counted excluding this shift, so a past roster still shows
+  // who was new on the day even after everyone's been marked attended.
+  const rosterUserIds = Array.from(new Set(shift.bookings.map((b) => b.userId)));
+  const attendedElsewhere = rosterUserIds.length
+    ? await db.booking.groupBy({
+        by: ["userId"],
+        where: {
+          userId: { in: rosterUserIds },
+          status: BookingStatus.ATTENDED,
+          shiftId: { not: shift.id },
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const attendedCounts = new Map(
+    attendedElsewhere.map((row) => [row.userId, row._count._all]),
+  );
+  const firstTimerIds = new Set(
+    shift.bookings
+      .filter((b) =>
+        isFirstTimer({
+          volunteeredBefore: b.user.volunteeredBefore,
+          attendedCount: attendedCounts.get(b.userId) ?? 0,
+        }),
+      )
+      .map((b) => b.id),
+  );
+  const firstTimersBooked = confirmed.filter((b) =>
+    firstTimerIds.has(b.id),
+  ).length;
 
   const blocked = sumBlocks(shift.blocks);
   const { free } = shiftAvailability(shift.capacity, confirmed.length, blocked);
@@ -83,6 +115,8 @@ export default async function AdminShiftPage({ params }: Props) {
               </h1>
               <p className="mt-1 text-sm text-foreground/65">
                 {confirmed.length} booked
+                {firstTimersBooked > 0 &&
+                  ` · ${firstTimersBooked} first-timer${firstTimersBooked === 1 ? "" : "s"}`}
                 {blocked > 0 && ` · ${blocked} blocked`} · {free} of{" "}
                 {shift.capacity} open
                 {shift.cancelled && (
@@ -163,7 +197,17 @@ export default async function AdminShiftPage({ params }: Props) {
                 {confirmed.map((b) => (
                   <li key={b.id} className="grid gap-3 p-4 md:grid-cols-[1fr_auto] md:items-center">
                     <div>
-                      <p className="font-semibold">{fullName(b.user)}</p>
+                      <p className="flex flex-wrap items-center gap-2 font-semibold">
+                        {fullName(b.user)}
+                        {firstTimerIds.has(b.id) && (
+                          <span
+                            className="rounded-full bg-clay/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-clay"
+                            title="Told us they've never volunteered with Fair Food, and has no attended shift on record."
+                          >
+                            First shift
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-foreground/65">
                         {b.user.email}
                         {b.user.phone && ` · ${b.user.phone}`}

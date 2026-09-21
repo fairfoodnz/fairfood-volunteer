@@ -10,6 +10,7 @@ import {
 } from "@/lib/shifts";
 import { currentUser } from "@/lib/auth";
 import { BookingStatus } from "@/generated/prisma";
+import { firstTimePrompt } from "@/lib/first-time";
 import { ShiftsList, type ShiftCard, type ShiftDay } from "./shifts-list";
 
 const description =
@@ -103,6 +104,8 @@ export default async function ShiftsPage({ searchParams }: Props) {
       )
     : new Set<string>();
 
+  const firstTimeLabel = await firstTimePrompt(user);
+
   const initialSelection = (sp.selected ?? "")
     .split(",")
     .map((s) => s.trim())
@@ -187,6 +190,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
             groupedShifts={groupedForClient}
             initialSelection={initialSelection}
             authed={!!user}
+            firstTimePrompt={firstTimeLabel}
             isEmpty={groupedForClient.length === 0}
           />
         </section>

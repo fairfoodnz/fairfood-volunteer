@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { YesNoField } from "@/components/site/yes-no-field";
 import {
   saveProfileAction,
   type ProfileState,
@@ -15,10 +16,13 @@ import {
 export function ProfileForm({
   email,
   defaults,
+  copy,
   next,
 }: {
   email: string;
   defaults: ProfileValues;
+  /** Coordinator-editable wording — see /admin/settings. */
+  copy: { firstTimeQuestion: string; firstTimeHelper: string };
   next?: string;
 }) {
   const [state, formAction, pending] = useActionState<ProfileState, FormData>(
@@ -72,6 +76,20 @@ export function ProfileForm({
         />
       </Card>
 
+      <Card title="Volunteering with us">
+        <div className="sm:col-span-2">
+          <YesNoField
+            name="volunteeredBefore"
+            legend={copy.firstTimeQuestion}
+            helper={copy.firstTimeHelper}
+            noLabel="No, I'm new here"
+            yesLabel="Yes, I've been before"
+            defaultValue={yesNo(v.volunteeredBefore)}
+            error={fe.volunteeredBefore}
+          />
+        </div>
+      </Card>
+
       <Card title="Emergency contact">
         <Field
           label="Name"
@@ -120,6 +138,9 @@ export function ProfileForm({
     </form>
   );
 }
+
+const yesNo = (value: string): "yes" | "no" | "" =>
+  value === "yes" || value === "no" ? value : "";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (

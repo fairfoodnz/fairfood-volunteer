@@ -9,10 +9,14 @@ First-time questionnaire shown *after sign-in, before any shift booking*. Driven
 1. **Name** (read-only, taken from sign-up; show as confirmation, allow inline edit)
 2. **Phone** *(required)* — `tel`, `autocomplete="tel"`, NZ format hint
 3. **Birthday** *(required)* — three selects (day / month / year) or native `<input type="date">`. Hint: "We bake a little extra on your kai day."
-4. **How did you hear about Fair Food?** *(required)* — `<select>` with options: Friend or whānau, Social media, Search, Workplace, Event, Other; "Other" reveals a free-text field
-5. **Why are you interested in volunteering?** *(required)* — `Textarea`, 3 rows, 500 char soft limit, helper "A sentence or two is plenty."
-6. **Have you been arrested or incarcerated?** *(required Yes/No)* — radio pair, large click target; if Yes, conditional `Textarea` "Anything you'd like us to know? (kept private to the volunteer coordinator)" with progressive disclosure
-7. **Do you have any health conditions we should know about?** *(required Yes/No)* — same pattern, "kept private, used only on the day to keep you safe"
+4. **Have you volunteered with Fair Food before?** *(required Yes/No)* — radio pair (shared `YesNoField`), no follow-up. Question + helper wording is coordinator-editable in `/admin/settings`; defaults live in `src/lib/site-copy.ts`
+5. **How did you hear about Fair Food?** *(required)* — `<select>` with options: Friend or whānau, Social media, Search, Workplace, Event, Other; "Other" reveals a free-text field
+6. **Why are you interested in volunteering?** *(required)* — `Textarea`, 3 rows, 500 char soft limit, helper "A sentence or two is plenty."
+7. **Have you been arrested or incarcerated?** *(required Yes/No)* — radio pair, large click target; if Yes, conditional `Textarea` "Anything you'd like us to know? (kept private to the volunteer coordinator)" with progressive disclosure
+8. **Do you have any health conditions we should know about?** *(required Yes/No)* — same pattern, "kept private, used only on the day to keep you safe"
+
+## Health & safety note
+Above the card, before any field: the shared `EnglishRequirementNote` (quiet-note pattern — `border-l-2 border-leaf bg-cream-deep`). Informational, never a gate. Same component and wording render on `/me/profile`; the copy is edited in `/admin/settings`.
 
 ## Layout
 - Single `container-x` page, max content width `max-w-2xl mx-auto`

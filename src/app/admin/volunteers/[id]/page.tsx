@@ -185,6 +185,15 @@ export default async function VolunteerDetailPage({ params }: Props) {
                     <Field label="Birthday">
                       {user.birthday ? NZ_DATE.format(user.birthday) : "—"}
                     </Field>
+                    <Field label="Volunteered before">
+                      {user.volunteeredBefore === null
+                        ? "Not asked"
+                        : user.volunteeredBefore
+                          ? "Yes — volunteered with us before signing up"
+                          : attendedCount > 0
+                            ? `No — has since done ${attendedCount} shift${attendedCount === 1 ? "" : "s"}`
+                            : "No — first-timer"}
+                    </Field>
                     <Field label="Heard about us">
                       {user.heardAbout
                         ? HEARD_ABOUT_LABELS[user.heardAbout] ?? user.heardAbout

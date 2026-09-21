@@ -5,15 +5,22 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FirstTimeCheckbox } from "@/components/site/first-time-checkbox";
 import { bookShiftAction, type BookState } from "../actions";
 import type { PersonName } from "@/lib/users";
 
 export function BookForm({
   shiftId,
   user,
+  firstTimePrompt,
 }: {
   shiftId: string;
   user: (PersonName & { email: string }) | null;
+  /**
+   * Label for the "first time here" tick box, or null when we already have
+   * their answer. Worded by coordinators in /admin/settings.
+   */
+  firstTimePrompt: string | null;
 }) {
   const [state, action, pending] = useActionState<BookState, FormData>(
     bookShiftAction,
@@ -35,6 +42,10 @@ export function BookForm({
           </p>
         )}
       </div>
+
+      {user && firstTimePrompt && (
+        <FirstTimeCheckbox label={firstTimePrompt} />
+      )}
 
       {user && (
         <div className="space-y-1.5">
