@@ -1,44 +1,55 @@
-# /admin/flagged — Volunteers needing a chat
+# /admin/flagged - Volunteers needing a chat
 
 **Inherits** `MASTER.md`. Privacy-first surface, admin-only.
 
 ## Purpose
-Lists users where `arrestHistory === true` OR `healthConditions === true`. Coordinators review before approving shifts. **This data is sensitive — design for restraint, not visibility.**
+Lists users where `arrestHistory === true` OR `healthConditions === true`. Coordinators have a chat before the volunteer's first shift, then mark them reviewed. **This data is sensitive - design for restraint, not visibility.**
+
+The page is a **work queue, not a register**. The question it answers is "who do I need to talk to next?", so the default view is only the people still waiting, ordered by how soon they turn up. (The original design was two flat lists and assumed ~30 people; production passed 60 and it stopped being usable.)
 
 ## Access
 Route guarded by `role === ADMIN`. Render 404 (not 403) for non-admins to avoid leaking the page's existence.
 
-## Layout
-- Page header: eyebrow "Admin · Volunteers", h1 "Needs review"
-- Sub-copy: "These volunteers flagged something on their profile. Have a chat before their first shift. Don't share these notes outside the coordinator team."
-- Two horizontal-scroll-safe sections, with mono divider labels:
-  - `arrest history` — list of cards
-  - `health conditions` — list of cards
-- A volunteer flagged on both shows under both sections (don't dedupe — coordinator may scan one at a time)
+## Information architecture
+1. **Header** - eyebrow "Volunteers", h1 "Needs review", the don't-share sub-copy.
+2. **Progress band** - one `bg-forest text-cream` panel, three figures: *Waiting for a chat* (the big number), *With a shift coming up* (+ when the next one is), *Reviewed so far* (n of total + leaf progress bar). Dot-grid texture only, no gradients. On mobile the big number spans the top and the other two sit side by side so the band stays under one screen.
+3. **Views** - underline links with live counts: **To review** (default, bare URL) · **Reviewed** · **Everyone**. Real links with `aria-current`, not ARIA tabs.
+4. **Filters** - disclosure-type segmented control (Any / Arrest history / Health) and a name/email search. All state lives in the URL (`view`, `type`, `q`); defaults stay out of it. View counts honour type + search.
+5. **Groups**, in this order, empty ones dropped:
+   - **Shift coming up** - unreviewed with an upcoming confirmed booking, soonest shift first. Countdown pill per row; today/tomorrow gets the solid `bg-forest` pill.
+   - **Nothing booked yet** - unreviewed, no deadline, newest flag first.
+   - **Reviewed** - most recently reviewed first.
 
-## Volunteer card (default state: COLLAPSED)
+**One row per person.** Someone flagged on both questions is one row with two chips, not two cards - the type filter is how a coordinator scans one kind at a time.
+
+All of the view logic is pure and lives in `src/app/admin/flagged/query.ts` (unit-tested in `tests/unit/flagged.test.ts`). The page fetches every flagged volunteer once and derives counts, groups and the band from the same array so they can't disagree.
+
+## Row (default state: COLLAPSED)
 ```
-[avatar/initial]  Sarah W.            Joined 12 Apr 2026          [Reveal notes ▾]
-                  sarah@…  ·  021…    Last booked: Sat 3 May
+(AW)  Anaru W.  [First shift]      [In 5 days] Sat 26 Sept, 9:00 am  Kai Sorting      [Reveal notes v]
+      [ARREST HISTORY] [HEALTH]    Flagged 24 Aug 2026
 ```
-- `rounded-md border border-border bg-card p-5`
-- Name uses first name + last initial *in admin*, full name on reveal (keep the privacy ladder consistent with the volunteer-facing roster)
-- Right-aligned "Reveal notes" button — `variant="outline"` size `sm`. Until clicked, the answer details are hidden from the DOM entirely (not just `hidden`), so a screenshot/screen-share doesn't accidentally show them.
+- Rows sit in one `rounded-xl border bg-card` list with `divide-y`, not separate cards - 60+ people need the density.
+- Name is first name + last initial until revealed (same privacy ladder as the volunteer-facing roster).
+- "First shift" badge comes from `isFirstTimer()` - never re-derive it.
+- Reviewed rows swap the initials for a leaf tick.
 
 ## Revealed state
-- Pushes a `bg-cream-deep` block below the card header with the notes
-- Adds a mono timestamp "Revealed by you · 14:32" at top of the block (audit cue, not actually logged)
-- Includes a "Mark as reviewed" button — sets a `reviewedAt` field on the User; reviewed cards collapse to a thin row at the bottom of each section in a `text-foreground/55` style
+- **Notes, full name, email and phone are not in the page at all until "Reveal notes" is clicked.** The list query doesn't select them; `revealFlagAction` fetches them on demand, and "Hide notes" drops them from the DOM again. A screen-share or screenshot of the list leaks nothing.
+- Left column "Get in touch": mailto, tel, link to their next shift, link to the full volunteer profile.
+- Right column: one quiet-note block (`border-l-2 border-leaf bg-cream-deep`) per disclosure. A "yes" with blank details says so and prompts a follow-up.
+- Mono cue "Revealed by you · 2:32 pm" (audit cue, not actually logged).
+- "Mark as reviewed" is the single primary action; on a reviewed row it becomes an outline "Move back to review". Both toast with **Undo**. Marking reviewed also refreshes the sidebar badge.
 
-## Empty state
-"Nothing flagged right now." — dashed card, same pattern as `MASTER.md` empty state.
+## Empty states
+Dashed card, `MASTER.md` pattern, one inline link each: filters matched nobody → "Clear filters"; queue empty → "All caught up" + link to Reviewed; nothing flagged at all → "Nothing flagged right now."
 
 ## Mobile
-- Cards stack full-width
-- Reveal action keeps the same row position; do not switch to a modal on mobile — the inline disclosure is the privacy affordance
+- Rows stack: identity, shift line, full-width reveal button.
+- Reveal stays inline; do not switch to a modal on mobile - the inline disclosure is the privacy affordance.
 
 ## What NOT to do
-- No bulk export, no CSV download, no "select all and email" — this data does not leave the page
-- No notification dot in the main nav linking here (would advertise that someone flagged something)
-- No tomato/red colour — these aren't dangerous people, they're volunteers we need to chat with. Use the neutral palette only.
-- No search/filter input — keep the list short by design. If it grows past ~30 entries the coordinator should be using a different tool.
+- No bulk export, no CSV download, no "select all and email", no bulk "mark all reviewed" - this data does not leave the page, and a review means a conversation happened.
+- No tomato/red colour - these aren't dangerous people, they're volunteers we need to chat with. Urgency is carried by ordering and the solid forest pill, never by alarm colours.
+- Never ship notes or contact details in the initial render, even visually hidden.
+- No te reo sprinkles - admin surfaces stay plain English.
