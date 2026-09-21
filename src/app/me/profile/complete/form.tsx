@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { HeardAbout } from "@/generated/prisma";
+import { RadioCard, YesNoField } from "@/components/site/yes-no-field";
 import {
   completeProfileAction,
   type QuestionnaireState,
@@ -35,6 +36,7 @@ const HEARD_ABOUT_OPTIONS: { value: HeardAbout; label: string }[] = [
 type Defaults = {
   phone: string;
   birthday: string;
+  volunteeredBefore: "yes" | "no" | "";
   heardAbout: HeardAbout | "";
   heardAboutOther: string;
   whyInterested: string;
@@ -46,10 +48,13 @@ type Defaults = {
 
 export function QuestionnaireForm({
   defaults,
+  copy,
   name,
   next,
 }: {
   defaults: Defaults;
+  /** Coordinator-editable wording — see /admin/settings. */
+  copy: { firstTimeQuestion: string; firstTimeHelper: string };
   /** Present only when the stored name isn't in English letters yet. */
   name?: { firstName: string; lastName: string };
   next?: string;
@@ -160,6 +165,16 @@ export function QuestionnaireForm({
           <Helper>Just to check you&rsquo;re 13 or over — that&rsquo;s all we use it for.</Helper>
           <Err>{fe.birthday}</Err>
         </FieldRow>
+
+        <YesNoField
+          name="volunteeredBefore"
+          legend={copy.firstTimeQuestion}
+          helper={copy.firstTimeHelper}
+          noLabel="No, this'll be my first time"
+          yesLabel="Yes, I've been before"
+          defaultValue={yesNo(d.volunteeredBefore)}
+          error={fe.volunteeredBefore}
+        />
 
         <FieldRow>
           <Label htmlFor="heardAbout">
@@ -334,39 +349,6 @@ function FlagGroup({
         <Err>{followUpError}</Err>
       </div>
     </fieldset>
-  );
-}
-
-function RadioCard({
-  name,
-  value,
-  label,
-  defaultChecked,
-}: {
-  name: string;
-  value: string;
-  label: string;
-  defaultChecked?: boolean;
-}) {
-  return (
-    <label className="group cursor-pointer rounded-md border border-border bg-card px-4 py-3 text-sm font-medium transition-colors has-[input:checked]:border-leaf has-[input:checked]:bg-leaf/5 has-[input:checked]:text-leaf-deep">
-      <input
-        type="radio"
-        name={name}
-        value={value}
-        defaultChecked={defaultChecked}
-        className="peer sr-only"
-      />
-      <span className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className="grid h-5 w-5 place-items-center rounded-full border border-border transition-colors group-has-[input:checked]:border-leaf-deep"
-        >
-          <span className="block h-2.5 w-2.5 scale-0 rounded-full bg-leaf-deep transition-transform group-has-[input:checked]:scale-100" />
-        </span>
-        {label}
-      </span>
-    </label>
   );
 }
 

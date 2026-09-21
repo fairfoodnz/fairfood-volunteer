@@ -12,6 +12,7 @@ import {
   Users,
   UserPlus,
   FileText,
+  MessageSquareText,
   ExternalLink,
   LogOut,
 } from "lucide-react";
@@ -83,6 +84,16 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
     label: "Resources",
     links: [
       { href: "/admin/documents", label: "Documents", icon: FileText },
+    ],
+  },
+  {
+    label: "Settings",
+    links: [
+      {
+        href: "/admin/settings",
+        label: "Volunteer wording",
+        icon: MessageSquareText,
+      },
     ],
   },
 ];

@@ -27,6 +27,7 @@ const COLUMNS = [
   "Phone",
   "Role",
   "Profile complete",
+  "Volunteered before",
   "Confirmed bookings",
   "Last booking",
   "Joined",
@@ -128,6 +129,8 @@ async function csvResponse(
     u.phone ?? "",
     u.role,
     u.profileCompletedAt ? "Yes" : "No",
+    // Blank, not "No": a volunteer who was never asked hasn't said no.
+    u.volunteeredBefore === null ? "" : u.volunteeredBefore ? "Yes" : "No",
     String(u._count.bookings),
     u.bookings[0] ? NZ_DATE.format(u.bookings[0].createdAt) : "",
     NZ_DATE.format(u.createdAt),

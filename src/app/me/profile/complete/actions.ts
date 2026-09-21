@@ -41,6 +41,9 @@ const QuestionnaireSchema = z
       .date({ message: "Pick the date you were born." })
       .refine((d) => d >= earliestBirthday(), "That birthday looks too far back.")
       .refine((d) => d <= latestBirthday(), "Volunteers need to be at least 13."),
+    volunteeredBefore: z.enum(["yes", "no"], {
+      message: "Please let us know — it's how we spot who needs an induction.",
+    }),
     heardAbout: z.enum(HeardAboutValues, {
       message: "Pick one so we know how you found us.",
     }),
@@ -80,6 +83,7 @@ export type QuestionnaireValues = {
   lastName: string;
   phone: string;
   birthday: string;
+  volunteeredBefore: string;
   heardAbout: string;
   heardAboutOther: string;
   whyInterested: string;
@@ -98,6 +102,7 @@ export type QuestionnaireState = {
       | "lastName"
       | "phone"
       | "birthday"
+      | "volunteeredBefore"
       | "heardAbout"
       | "heardAboutOther"
       | "whyInterested"
@@ -124,6 +129,7 @@ export async function completeProfileAction(
     lastName: text("lastName"),
     phone: text("phone"),
     birthday: text("birthday"),
+    volunteeredBefore: text("volunteeredBefore"),
     heardAbout: text("heardAbout"),
     heardAboutOther: text("heardAboutOther"),
     whyInterested: text("whyInterested"),
@@ -144,6 +150,7 @@ export async function completeProfileAction(
   const parsed = QuestionnaireSchema.safeParse({
     phone: formData.get("phone"),
     birthday: formData.get("birthday"),
+    volunteeredBefore: formData.get("volunteeredBefore"),
     heardAbout: formData.get("heardAbout"),
     heardAboutOther: formData.get("heardAboutOther") || undefined,
     whyInterested: formData.get("whyInterested"),
@@ -183,6 +190,7 @@ export async function completeProfileAction(
         : {}),
       phone: parsed.data.phone,
       birthday: parsed.data.birthday,
+      volunteeredBefore: parsed.data.volunteeredBefore === "yes",
       heardAbout: parsed.data.heardAbout,
       heardAboutOther:
         parsed.data.heardAbout === HeardAbout.OTHER
@@ -225,7 +233,10 @@ export async function completeProfileAction(
   posthog.capture({
     distinctId: user.id,
     event: "profile_completed",
-    properties: { heard_about: parsed.data.heardAbout },
+    properties: {
+      heard_about: parsed.data.heardAbout,
+      first_timer: parsed.data.volunteeredBefore === "no",
+    },
   });
   await posthog.flush();
 

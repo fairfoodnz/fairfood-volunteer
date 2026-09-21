@@ -49,3 +49,23 @@ export function initials(p: PersonName): string {
   const i = (p.firstName.charAt(0) + (p.lastName?.charAt(0) ?? "")).toUpperCase();
   return i || "K";
 }
+
+/**
+ * A volunteer the coordinator should walk through an induction on the day:
+ * they told us they'd never volunteered with Fair Food, and no shift of theirs
+ * has been marked attended yet.
+ *
+ * The attendance half matters — a single questionnaire answer must not badge
+ * someone a newcomer for the rest of their time here. The first "Mark
+ * attended" retires the badge on its own, with nothing for a coordinator to
+ * remember to clear.
+ *
+ * A null `volunteeredBefore` (accounts predating the question) is treated as
+ * "we don't know", never as "new".
+ */
+export function isFirstTimer(p: {
+  volunteeredBefore: boolean | null;
+  attendedCount: number;
+}): boolean {
+  return p.volunteeredBefore === false && p.attendedCount === 0;
+}

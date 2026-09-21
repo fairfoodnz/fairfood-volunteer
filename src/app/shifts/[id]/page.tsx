@@ -23,6 +23,7 @@ import { appOrigin, currentUser } from "@/lib/auth";
 import { absoluteUrl, jsonLdScript, ORG_ID, ORG_SITE_URL } from "@/lib/seo";
 import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { AddToCalendar } from "@/components/site/add-to-calendar";
+import { firstTimePrompt } from "@/lib/first-time";
 import { BookForm } from "./book-form";
 import { CancelBookingDialog } from "./cancel-booking";
 import { BookingStatus, Role } from "@/generated/prisma";
@@ -79,6 +80,7 @@ export default async function ShiftPage({ params }: Props) {
   if (!shift) notFound();
 
   const user = await currentUser();
+  const firstTimeLabel = await firstTimePrompt(user);
   const myBooking =
     (user && shift.bookings.find((b) => b.userId === user.id)) || null;
 
@@ -346,6 +348,7 @@ export default async function ShiftPage({ params }: Props) {
                 ) : (
                   <BookForm
                     shiftId={shift.id}
+                    firstTimePrompt={firstTimeLabel}
                     user={
                       user
                         ? {

@@ -4,6 +4,8 @@ import { requireUser, safeNextPath } from "@/lib/auth";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { hasEnglishName, isEnglishName } from "@/lib/users";
+import { getSiteCopy } from "@/lib/site-copy";
+import { EnglishRequirementNote } from "@/components/site/english-requirement-note";
 import { QuestionnaireForm } from "./form";
 
 export const metadata = { title: "Welcome · Fair Food Volunteer" };
@@ -20,7 +22,10 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
     redirect(safeNextPath(next, "/me/profile"));
   }
 
-  const fresh = await db.user.findUnique({ where: { id: user.id } });
+  const [fresh, copy] = await Promise.all([
+    db.user.findUnique({ where: { id: user.id } }),
+    getSiteCopy(),
+  ]);
   const needsName = !hasEnglishName(user);
 
   return (
@@ -41,10 +46,26 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
             </p>
           </header>
 
+          <EnglishRequirementNote
+            className="mb-8"
+            title={copy.englishRequirementTitle}
+            body={copy.englishRequirementBody}
+          />
+
           <div className="rounded-md border border-border bg-card p-6 shadow-sm md:p-8">
             <QuestionnaireForm
+              copy={{
+                firstTimeQuestion: copy.firstTimeQuestion,
+                firstTimeHelper: copy.firstTimeHelper,
+              }}
               defaults={{
                 phone: fresh?.phone ?? "",
+                volunteeredBefore:
+                  fresh?.volunteeredBefore === true
+                    ? "yes"
+                    : fresh?.volunteeredBefore === false
+                      ? "no"
+                      : "",
                 birthday: fresh?.birthday
                   ? fresh.birthday.toISOString().slice(0, 10)
                   : "",

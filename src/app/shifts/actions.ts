@@ -23,6 +23,35 @@ const BookSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
 });
 
+/**
+ * Records "this is my first time" from the booking-form tick box, which is only
+ * shown to volunteers who predate the questionnaire question (see
+ * FirstTimeCheckbox). Three rules hold this together:
+ *
+ *  - an unticked box is never read as "yes, I've volunteered before" — silence
+ *    stays unknown rather than being turned into an answer nobody gave;
+ *  - it only ever fills a blank, so it cannot overwrite what someone told us on
+ *    the questionnaire or their profile;
+ *  - it's best-effort — the booking is already committed and is what the
+ *    volunteer came here for, so a failed write must not surface as a failed
+ *    booking.
+ */
+async function recordFirstTimeIfAsked(
+  user: { id: string; volunteeredBefore: boolean | null },
+  formData: FormData,
+): Promise<void> {
+  if (user.volunteeredBefore !== null) return;
+  if (formData.get("firstTime") !== "yes") return;
+  try {
+    await db.user.updateMany({
+      where: { id: user.id, volunteeredBefore: null },
+      data: { volunteeredBefore: false },
+    });
+  } catch (e) {
+    console.error("Failed to record first-time volunteer flag:", e);
+  }
+}
+
 const BookManySchema = z.object({
   shiftIds: z.array(z.string().min(1)).min(1).max(20),
 });
@@ -106,6 +135,8 @@ export async function bookShiftAction(
   if (shift.startsAt < new Date()) {
     return { error: "That shift has already started." };
   }
+
+  await recordFirstTimeIfAsked(user, formData);
 
   let booking;
   try {
@@ -219,6 +250,8 @@ export async function bookShiftsAction(
         "Please verify your email before booking — check your inbox for the link, or resend it from your dashboard.",
     };
   }
+
+  await recordFirstTimeIfAsked(user, formData);
 
   // KNOWN RACE (TOCTOU): the capacity check below reads counts from a snapshot
   // taken once before the loop, so two concurrent requests can both pass the

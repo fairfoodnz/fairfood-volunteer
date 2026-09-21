@@ -834,6 +834,12 @@ async function seedUsers() {
         arrestDetails: v.arrestDetails,
         healthConditions: v.healthConditions,
         healthDetails: v.healthDetails,
+        // Demo answers for "have you volunteered with us before?": newcomers
+        // say no (so rosters show "First shift" badges), regulars say yes, and
+        // anyone still mid-funnel is left unanswered — which is also what an
+        // account predating the question looks like, and what makes the
+        // booking-form tick box appear.
+        volunteeredBefore: v.profileComplete ? v.cadence !== "new" : null,
         profileCompletedAt: v.profileComplete ? new Date() : null,
         emailVerifiedAt: new Date(),
         flagReviewedAt: v.reviewed ? new Date() : null,

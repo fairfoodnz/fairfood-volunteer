@@ -15,6 +15,10 @@ const ProfileSchema = z.object({
   emergencyName: z.string().trim().max(120).optional(),
   emergencyPhone: z.string().trim().max(40).optional(),
   accessNeeds: z.string().trim().max(2000).optional(),
+  // Optional here, unlike the onboarding questionnaire: a volunteer who joined
+  // before we started asking shouldn't be blocked from fixing their phone
+  // number by a question they've never been shown.
+  volunteeredBefore: z.enum(["yes", "no"]).optional(),
 });
 
 export type ProfileValues = {
@@ -25,6 +29,7 @@ export type ProfileValues = {
   emergencyName: string;
   emergencyPhone: string;
   accessNeeds: string;
+  volunteeredBefore: string;
 };
 
 export type ProfileState = {
@@ -51,6 +56,7 @@ export async function saveProfileAction(
     emergencyName: text("emergencyName"),
     emergencyPhone: text("emergencyPhone"),
     accessNeeds: text("accessNeeds"),
+    volunteeredBefore: text("volunteeredBefore"),
   };
 
   const parsed = ProfileSchema.safeParse({
@@ -61,6 +67,7 @@ export async function saveProfileAction(
     emergencyName: values.emergencyName || undefined,
     emergencyPhone: values.emergencyPhone || undefined,
     accessNeeds: values.accessNeeds || undefined,
+    volunteeredBefore: values.volunteeredBefore || undefined,
   });
   if (!parsed.success) {
     const fieldErrors: ProfileState["fieldErrors"] = {};
@@ -73,10 +80,19 @@ export async function saveProfileAction(
     return { fieldErrors, values };
   }
 
-  // Empty last name clears the column (mononym) rather than leaving the old value.
+  const { volunteeredBefore, ...fields } = parsed.data;
   await db.user.update({
     where: { id: user.id },
-    data: { ...parsed.data, lastName: parsed.data.lastName || null },
+    data: {
+      ...fields,
+      // Empty last name clears the column (mononym) rather than leaving the old value.
+      lastName: fields.lastName || null,
+      // No answer means "not answered" — keep whatever we already had rather
+      // than wiping a previous one on an unrelated profile save.
+      ...(volunteeredBefore
+        ? { volunteeredBefore: volunteeredBefore === "yes" }
+        : {}),
+    },
   });
   revalidatePath("/me/profile");
   revalidatePath("/me");

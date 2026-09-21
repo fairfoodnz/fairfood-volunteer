@@ -2,6 +2,8 @@ import { Languages } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser, safeNextPath } from "@/lib/auth";
 import { hasEnglishName } from "@/lib/users";
+import { getSiteCopy } from "@/lib/site-copy";
+import { EnglishRequirementNote } from "@/components/site/english-requirement-note";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProfileForm } from "./form";
@@ -14,7 +16,10 @@ type Props = { searchParams: Promise<{ next?: string }> };
 export default async function ProfilePage({ searchParams }: Props) {
   const user = await requireUser();
   const { next } = await searchParams;
-  const fresh = await db.user.findUniqueOrThrow({ where: { id: user.id } });
+  const [fresh, copy] = await Promise.all([
+    db.user.findUniqueOrThrow({ where: { id: user.id } }),
+    getSiteCopy(),
+  ]);
   const needsEnglishName = !hasEnglishName(fresh);
 
   return (
@@ -47,8 +52,18 @@ export default async function ProfilePage({ searchParams }: Props) {
             </div>
           )}
 
+          <EnglishRequirementNote
+            className="mt-8"
+            title={copy.englishRequirementTitle}
+            body={copy.englishRequirementBody}
+          />
+
           <ProfileForm
             email={fresh.email}
+            copy={{
+              firstTimeQuestion: copy.firstTimeQuestion,
+              firstTimeHelper: copy.firstTimeHelper,
+            }}
             next={next ? safeNextPath(next) : undefined}
             defaults={{
               firstName: fresh.firstName,
@@ -58,6 +73,12 @@ export default async function ProfilePage({ searchParams }: Props) {
               emergencyName: fresh.emergencyName ?? "",
               emergencyPhone: fresh.emergencyPhone ?? "",
               accessNeeds: fresh.accessNeeds ?? "",
+              volunteeredBefore:
+                fresh.volunteeredBefore === true
+                  ? "yes"
+                  : fresh.volunteeredBefore === false
+                    ? "no"
+                    : "",
             }}
           />
         </div>
