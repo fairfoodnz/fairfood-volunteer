@@ -8,6 +8,11 @@ import { fullName } from "@/lib/users";
 
 const UserIdSchema = z.string().min(1);
 
+const ReviewedSchema = z.object({
+  userId: UserIdSchema,
+  reviewed: z.boolean(),
+});
+
 export type FlagDisclosure = {
   fullName: string;
   email: string;
@@ -55,9 +60,12 @@ export async function revealFlagAction(
 
 export async function setFlagReviewedAction(userId: string, reviewed: boolean) {
   await requireAdmin();
+  // A Server Action is a callable endpoint - the `boolean` type only binds our
+  // own client bundle, so a truthy string must not pass for "reviewed".
+  const parsed = ReviewedSchema.parse({ userId, reviewed });
   await db.user.update({
-    where: { id: UserIdSchema.parse(userId) },
-    data: { flagReviewedAt: reviewed ? new Date() : null },
+    where: { id: parsed.userId },
+    data: { flagReviewedAt: parsed.reviewed ? new Date() : null },
   });
   // The layout owns the sidebar's unreviewed badge, so refresh it too.
   revalidatePath("/admin", "layout");
