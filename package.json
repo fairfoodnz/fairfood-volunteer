@@ -15,7 +15,7 @@
     "email:dev": "email dev --dir ./emails --port 3001"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1135.0",
+    "@aws-sdk/client-s3": "^3.1137.0",
     "@base-ui/react": "^1.8.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
@@ -32,8 +32,8 @@
     "next": "16.3.6",
     "next-themes": "^0.4.6",
     "papaparse": "^5.7.0",
-    "posthog-js": "^1.433.10",
-    "posthog-node": "^5.52.4",
+    "posthog-js": "^1.434.5",
+    "posthog-node": "^5.52.5",
     "react": "19.3.0",
     "react-day-picker": "^10.0.1",
     "react-dom": "19.3.0",
@@ -54,13 +54,13 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv": "^18.0.1",
+    "dotenv": "^18.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "prisma": "^7.10.0",
     "react-email": "^6.9.5",
     "tailwindcss": "^4",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^6",
     "vitest": "^5.0.1"
   }
