@@ -67,13 +67,14 @@ RUN apk add --no-cache openssl \
 # Isolated install of the Prisma CLI (for `migrate deploy` and `db seed`)
 # plus tsx (used by the seed script). Kept in /opt so it can't conflict
 # with the standalone bundle's node_modules.
-# Versions must match package.json — bump together.
+# Versions must match the versions pnpm-lock.yaml resolves — bump together.
+# CI enforces this (scripts/check-migrator-pins.mjs).
 RUN mkdir -p /opt/migrator \
  && cd /opt/migrator \
  && npm init -y >/dev/null \
  && npm install --omit=optional --no-package-lock --no-audit --no-fund \
-      prisma@7.8.0 @prisma/client@7.8.0 @prisma/adapter-pg@7.8.0 \
-      dotenv@17.4.2 tsx@4.22.1 \
+      prisma@7.10.0 @prisma/client@7.10.0 @prisma/adapter-pg@7.10.0 \
+      dotenv@18.0.1 tsx@4.23.13 \
  && chown -R nextjs:nodejs /opt/migrator
 
 # Standalone bundle (includes its own minimal node_modules traced by NFT)
