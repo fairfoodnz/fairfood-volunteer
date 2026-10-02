@@ -41,6 +41,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Dockerfile migrator pins match the lockfile
+        run: node scripts/check-migrator-pins.mjs
+
       - name: Generate Prisma client
         run: pnpm exec prisma generate
 

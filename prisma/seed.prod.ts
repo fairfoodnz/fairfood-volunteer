@@ -20,15 +20,18 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
 
-// Bootstrap admin account. Sign-in uses password "admin123" — change it
-// immediately after the first login from /me/security (or by triggering a
-// password reset). The bcrypt hash below is bcryptjs.hashSync("admin123", 10)
-// pre-computed at authoring time so this script doesn't need bcryptjs at
-// runtime (the /opt/migrator install in the Dockerfile is intentionally minimal
-// — see CLAUDE.md). It matches the cost factor in src/lib/auth.ts.
+// Bootstrap admin account. It is created WITHOUT a password: the coordinator
+// claims it by requesting a reset at /auth/forgot-password for this address
+// (the reset email proves inbox control and also marks the email verified).
+// Shipping a default password in a public repo would leave production open to
+// anyone who reads this file between deploy and first login.
 const ADMIN_EMAIL = "admin@fairfood.org.nz";
-const ADMIN_PASSWORD_HASH =
-  "$2b$10$1ww8kgt9YrkZsZdB34xQL.P7oer4bx.5QMUoXwgbYkD.1RXaLuZiO"; // "admin123"
+
+// bcryptjs.hashSync("admin123", 10) — the default password earlier versions
+// of this seed shipped. Kept only so seedAdmin() can recognise an account that
+// was never rotated and revoke it; it is never written.
+const LEGACY_DEFAULT_ADMIN_HASH =
+  "$2b$10$1ww8kgt9YrkZsZdB34xQL.P7oer4bx.5QMUoXwgbYkD.1RXaLuZiO";
 
 const programs = [
   {
@@ -117,10 +120,9 @@ async function seedAdmin() {
   // The `update` payload is intentionally minimal: it self-heals the role
   // back to ADMIN if someone downgraded the bootstrap account, but never
   // touches `passwordHash`, `firstName`, `lastName`, `profileCompletedAt`,
-  // or `emailVerifiedAt`. After first login the coordinator will rotate the
+  // or `emailVerifiedAt`. After first login the coordinator will set a
   // password and probably fill in a real name — overwriting either of those
-  // on every boot would silently re-enable the well-known default password
-  // and clobber their edits.
+  // on every boot would clobber their edits.
   await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: { role: Role.ADMIN },
@@ -129,7 +131,7 @@ async function seedAdmin() {
       firstName: "Admin",
       lastName: null,
       role: Role.ADMIN,
-      passwordHash: ADMIN_PASSWORD_HASH,
+      passwordHash: null,
       // Pre-mark the bootstrap account profile-complete + email-verified so the
       // booking gates and verification banner don't get in the way of the
       // coordinator's first sign-in. Real volunteer accounts go through the
@@ -138,6 +140,21 @@ async function seedAdmin() {
       emailVerifiedAt: new Date(),
     },
   });
+
+  // Databases seeded by an older version still carry the public "admin123"
+  // password. Clear it (and kill any sessions minted with it) so the account
+  // can only be claimed through the reset email. Only matches the exact
+  // legacy hash, so a rotated password is never touched.
+  const revoked = await prisma.user.updateMany({
+    where: { email: ADMIN_EMAIL, passwordHash: LEGACY_DEFAULT_ADMIN_HASH },
+    data: { passwordHash: null },
+  });
+  if (revoked.count > 0) {
+    await prisma.session.deleteMany({ where: { user: { email: ADMIN_EMAIL } } });
+    console.warn(
+      `[seed.prod]   Revoked the legacy default password on ${ADMIN_EMAIL} and signed it out everywhere.`,
+    );
+  }
 }
 
 export async function main() {
@@ -149,7 +166,7 @@ export async function main() {
     console.log("[seed.prod] Ensuring bootstrap admin…");
     await seedAdmin();
     console.log(
-      `[seed.prod]   ${ADMIN_EMAIL} present with ADMIN role. If this is a fresh DB, the default password is "admin123" — change it on first login.`,
+      `[seed.prod]   ${ADMIN_EMAIL} present with ADMIN role. On a fresh DB it has no password — claim it via /auth/forgot-password.`,
     );
 
     console.log("[seed.prod] Done.");
