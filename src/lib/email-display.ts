@@ -37,7 +37,7 @@ export const EMAIL_STATUS_BADGE: Record<
   },
   FAILED: {
     label: "Failed",
-    cls: "bg-tomato/15 text-tomato",
+    cls: "bg-tomato/15 text-tomato-deep",
   },
 };
 

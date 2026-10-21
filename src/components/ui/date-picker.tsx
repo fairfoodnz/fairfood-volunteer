@@ -58,6 +58,8 @@ type DatePickerProps = {
    */
   captionLayout?: React.ComponentProps<typeof Calendar>["captionLayout"]
   "aria-invalid"?: boolean
+  "aria-describedby"?: string
+  "aria-required"?: boolean
   className?: string
 }
 
@@ -73,6 +75,8 @@ export function DatePicker({
   max,
   captionLayout = "label",
   "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
+  "aria-required": ariaRequired,
   className,
 }: DatePickerProps) {
   const isControlled = value !== undefined
@@ -97,9 +101,11 @@ export function DatePicker({
         id={id}
         disabled={disabled}
         aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
+        aria-required={ariaRequired}
         data-empty={!selected}
         className={cn(
-          "flex h-8 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 py-1 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[empty=true]:text-muted-foreground md:text-sm dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+          "flex h-11 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-card px-2.5 py-1 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[empty=true]:text-muted-foreground md:text-sm",
           className
         )}
       >

@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/patterns/form-field";
+import { FormMessage } from "@/components/auth/form-message";
 import { signUpAction, type SignUpState } from "../actions";
 
 export function SignUpForm({ next }: { next?: string }) {
@@ -18,140 +19,82 @@ export function SignUpForm({ next }: { next?: string }) {
 
   return (
     <form key={formKey} action={formAction} className="space-y-5" noValidate>
-      <div className="space-y-2">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <Field
-            label="First name"
-            id="firstName"
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <FormField
+          id="firstName"
+          label="First name"
+          helper="English alphabet, please. Macrons and accents are fine."
+          error={fe.firstName}
+          required
+        >
+          <Input
+            name="firstName"
             autoComplete="given-name"
             placeholder="e.g. Aroha"
             defaultValue={state.values?.firstName}
-            describedBy="name-helper"
-            error={fe.firstName}
             required
           />
-          <Field
-            label="Last name"
-            id="lastName"
+        </FormField>
+        <FormField id="lastName" label="Last name" error={fe.lastName}>
+          <Input
+            name="lastName"
             autoComplete="family-name"
             placeholder="e.g. Williams"
             defaultValue={state.values?.lastName}
-            describedBy="name-helper"
-            error={fe.lastName}
           />
-        </div>
-        <p id="name-helper" className="text-xs text-foreground/55">
-          Use the English alphabet so the team can read the roster. Macrons and accents are fine.
-        </p>
+        </FormField>
       </div>
-      <Field
-        label="Email"
-        id="email"
-        type="email"
-        autoComplete="email"
-        placeholder="you@example.com"
-        defaultValue={state.values?.email}
-        error={fe.email}
-        required
-      />
-      <Field
-        label="Password"
+      <FormField id="email" label="Email" error={fe.email} required>
+        <Input
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          defaultValue={state.values?.email}
+          required
+        />
+      </FormField>
+      <FormField
         id="password"
-        type="password"
-        autoComplete="new-password"
+        label="Password"
         helper="At least 8 characters."
         error={fe.password}
         required
-      />
-      <Field
-        label="Confirm password"
+      >
+        <Input
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+        />
+      </FormField>
+      <FormField
         id="confirm"
-        type="password"
-        autoComplete="new-password"
+        label="Confirm password"
         error={fe.confirm}
         required
-      />
+      >
+        <Input
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          required
+        />
+      </FormField>
       {next && <input type="hidden" name="next" value={next} />}
-      {state.error && (
-        <p role="alert" aria-live="polite" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      <FormMessage tone="error" message={state.error} />
       <Button
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+        className="w-full text-base font-semibold"
       >
         {pending ? "Creating your account…" : "Create account"}
       </Button>
-      <p className="text-xs text-foreground/55">
+      <p className="text-xs text-foreground/65">
         By creating an account you agree to be a kind kaiāwhina at the kai
         table. We use your details only to roster shifts.
       </p>
     </form>
-  );
-}
-
-function Field({
-  label,
-  id,
-  type = "text",
-  autoComplete,
-  placeholder,
-  helper,
-  describedBy,
-  defaultValue,
-  error,
-  required,
-}: {
-  label: string;
-  id: string;
-  type?: string;
-  autoComplete?: string;
-  placeholder?: string;
-  helper?: string;
-  /** Id of a helper rendered outside the field (e.g. shared across a row). */
-  describedBy?: string;
-  defaultValue?: string;
-  error?: string;
-  required?: boolean;
-}) {
-  const helperId = helper ? `${id}-helper` : describedBy;
-  const errorId = error ? `${id}-error` : undefined;
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>
-        {label}
-        {required && <span className="ml-1 text-tomato">*</span>}
-      </Label>
-      <Input
-        id={id}
-        name={id}
-        type={type}
-        autoComplete={autoComplete}
-        placeholder={placeholder}
-        defaultValue={defaultValue}
-        required={required}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={[helperId, errorId].filter(Boolean).join(" ") || undefined}
-        className="h-11"
-      />
-      {helper && !error && (
-        <p id={helperId} className="text-xs text-foreground/55">
-          {helper}
-        </p>
-      )}
-      {error && (
-        <p
-          id={errorId}
-          role="alert"
-          aria-live="polite"
-          className="text-sm text-destructive"
-        >
-          {error}
-        </p>
-      )}
-    </div>
   );
 }

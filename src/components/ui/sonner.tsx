@@ -1,15 +1,14 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
+  // Light only: the site has no dark theme, so following the OS setting
+  // would drop dark toasts onto the cream page.
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
       icons={{
         success: (
@@ -34,6 +33,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          // `richColors` mapped onto brand tokens (text pairs are ≥4.5:1).
+          "--success-bg": "var(--card)",
+          "--success-text": "var(--ff-green-deep)",
+          "--success-border": "color-mix(in oklab, var(--ff-green) 40%, transparent)",
+          "--error-bg": "var(--card)",
+          "--error-text": "var(--destructive)",
+          "--error-border": "color-mix(in oklab, var(--destructive) 40%, transparent)",
         } as React.CSSProperties
       }
       toastOptions={{

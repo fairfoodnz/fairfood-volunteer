@@ -108,3 +108,93 @@ export async function deleteDocumentAction(formData: FormData) {
   revalidatePath("/resources");
 }
 
+
+export type EditDocumentState = { error?: string; ok?: boolean };
+
+/**
+ * Change a document's title, category, description or audience, and
+ * optionally swap the file itself. A replacement goes through the same checks
+ * as an upload, lands at a new object key, and the old object is deleted once
+ * the row points at the new one (no orphans, no version history).
+ */
+export async function updateDocumentAction(
+  _prev: EditDocumentState,
+  formData: FormData,
+): Promise<EditDocumentState> {
+  await requireAdmin();
+
+  const id = formData.get("id");
+  if (typeof id !== "string" || !id) return { error: "Missing document id." };
+  const existing = await db.document.findFirst({
+    where: { id, deletedAt: null },
+    select: { objectKey: true },
+  });
+  if (!existing) return { error: "That document no longer exists." };
+
+  const parsed = UploadSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description") ?? "",
+    category: formData.get("category"),
+    visibility: formData.get("visibility"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+
+  let replacement: {
+    objectKey: string;
+    mimeType: string;
+    sizeBytes: number;
+  } | null = null;
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return {
+        error: "That file is bigger than 25 MB — please compress it or split it up.",
+      };
+    }
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
+      return { error: "We can only take PDFs, Word docs, and images right now." };
+    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!bufferMatchesMime(buffer, file.type)) {
+      return {
+        error: "That file's contents don't match its file type. Re-export it and try again.",
+      };
+    }
+    const objectKey = `documents/${randomUUID()}.${extensionForMime(file.type, file.name)}`;
+    try {
+      await putObject({ key: objectKey, body: buffer, contentType: file.type });
+    } catch (err) {
+      console.error("Document replacement upload failed:", err);
+      return {
+        error: "We couldn't upload the new file. Nothing was changed — try again.",
+      };
+    }
+    replacement = { objectKey, mimeType: file.type, sizeBytes: file.size };
+  }
+
+  try {
+    await db.document.update({
+      where: { id },
+      data: {
+        title: parsed.data.title,
+        description: parsed.data.description || null,
+        category: parsed.data.category,
+        visibility: parsed.data.visibility,
+        ...(replacement ?? {}),
+      },
+    });
+  } catch (err) {
+    if (replacement) await deleteObject(replacement.objectKey).catch(() => {});
+    console.error("Document update failed:", err);
+    return { error: "We couldn't save those changes. Try again." };
+  }
+
+  // Replaced the file — bin the old object (best effort).
+  if (replacement) await deleteObject(existing.objectKey).catch(() => {});
+
+  revalidatePath("/admin/documents");
+  revalidatePath("/resources");
+  return { ok: true };
+}

@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { startImpersonation } from "@/lib/impersonation";
 import { Role } from "@/generated/prisma";
+import { resolveVolunteerQuery, type VolunteerQueryParams } from "./query";
 
 const NotesSchema = z.object({
   userId: z.string().min(1),
@@ -32,22 +33,60 @@ const RoleSchema = z.object({
   role: z.nativeEnum(Role),
 });
 
-export async function setVolunteerRoleAction(formData: FormData) {
+export type RoleChangeResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Grant or remove admin access. Returns a result rather than throwing so the
+ * confirm dialog can show the reason — a thrown message is redacted in
+ * production builds.
+ */
+export async function setVolunteerRoleAction(
+  formData: FormData,
+): Promise<RoleChangeResult> {
   const admin = await requireAdmin();
-  const parsed = RoleSchema.parse({
+  const parsed = RoleSchema.safeParse({
     userId: formData.get("userId"),
     role: formData.get("role"),
   });
+  if (!parsed.success) return { ok: false, error: "Something was missing. Reload and try again." };
   // Don't let an admin lock themselves out.
-  if (parsed.userId === admin.id && parsed.role !== Role.ADMIN) {
-    throw new Error("You can't remove your own admin access.");
+  if (parsed.data.userId === admin.id && parsed.data.role !== Role.ADMIN) {
+    return { ok: false, error: "You can't remove your own admin access." };
   }
-  await db.user.update({
-    where: { id: parsed.userId },
-    data: { role: parsed.role },
+  // updateMany, not update: a volunteer deleted since the page loaded is a
+  // count of 0 we can explain, not a throw that production redacts.
+  const { count } = await db.user.updateMany({
+    where: { id: parsed.data.userId },
+    data: { role: parsed.data.role },
   });
-  revalidatePath(`/admin/volunteers/${parsed.userId}`);
+  if (count === 0) {
+    return { ok: false, error: "That volunteer no longer exists. Reload the list." };
+  }
+  revalidatePath(`/admin/volunteers/${parsed.data.userId}`);
   revalidatePath("/admin/volunteers");
+  return { ok: true };
+}
+
+const AudienceSchema = z.object({
+  q: z.string().max(200).optional(),
+  filter: z.string().max(40).optional(),
+  sort: z.string().max(40).optional(),
+  programme: z.string().max(200).optional(),
+  scope: z.string().max(40).optional(),
+});
+
+/**
+ * Every email in the current Volunteers audience — not just the visible page —
+ * so "Copy emails" matches what "Export CSV" downloads. Uses the same resolver
+ * as the list and the export route.
+ */
+export async function matchingEmailsAction(
+  params: VolunteerQueryParams,
+): Promise<string[]> {
+  await requireAdmin();
+  const { where, orderBy } = resolveVolunteerQuery(AudienceSchema.parse(params));
+  const users = await db.user.findMany({ where, orderBy, select: { email: true } });
+  return users.map((u) => u.email);
 }
 
 const ImpersonateSchema = z.object({ userId: z.string().min(1) });

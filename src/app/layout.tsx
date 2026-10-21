@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist_Mono, Poppins } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
@@ -15,9 +15,22 @@ import "./globals.css";
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
+
+// Mono accents (eyebrows, <dt> labels, micro-facts) — see MASTER.md.
+// globals.css maps `--font-mono` to this variable.
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+export const viewport: Viewport = {
+  // Cream page background, so mobile browser chrome blends into the site.
+  themeColor: "#f8f2eb",
+};
 
 export const metadata: Metadata = {
   // metadataBase lets Next resolve the relative OG/Twitter/canonical URLs
@@ -50,7 +63,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} h-full antialiased`}
+      className={`${poppins.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <script
@@ -60,6 +73,12 @@ export default function RootLayout({
           // added to the graph.
           dangerouslySetInnerHTML={{ __html: jsonLdScript(siteJsonLd()) }}
         />
+        <a
+          href="#main"
+          className="sr-only z-[60] rounded-md bg-leaf-deep px-4 py-3 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        >
+          Skip to content
+        </a>
         <ImpersonationBanner />
         <TooltipProvider>{children}</TooltipProvider>
         <Toaster richColors closeButton position="bottom-center" />

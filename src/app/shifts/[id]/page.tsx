@@ -24,8 +24,11 @@ import { absoluteUrl, jsonLdScript, ORG_ID, ORG_SITE_URL } from "@/lib/seo";
 import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { firstTimePrompt } from "@/lib/first-time";
+import { Button } from "@/components/ui/button";
+import { countOf } from "@/lib/format";
 import { BookForm } from "./book-form";
 import { CancelBookingDialog } from "./cancel-booking";
+import { MobileBookBar } from "./mobile-book-bar";
 import { BookingStatus, Role } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -102,6 +105,18 @@ export default async function ShiftPage({ params }: Props) {
   const isInclusive = shift.program.slug === INCLUSIVE_SLUG;
   const rosterChips = buildRosterChips(shift.bookings, user?.id ?? null);
   const groupBlocks = summarizeBlocks(shift.blocks);
+  const whenLabel = formatShiftRange(shift.startsAt, shift.endsAt);
+  // Only a PUBLIC programme has a filter chip on /shifts; an unlisted one
+  // would silently fall back to "All", so link there by name instead.
+  const moreShiftsHref = isListedPublicly(shift.program.visibility)
+    ? `/shifts?programme=${shift.program.slug}`
+    : "/shifts";
+  const moreShiftsLabel = isListedPublicly(shift.program.visibility)
+    ? `See other ${shift.program.title} shifts →`
+    : "See open shifts →";
+  // The booking form is the only state worth a sticky CTA on phones.
+  const showBookForm =
+    !isInclusive && !inPast && !myBooking && publiclyBookable && !isFull;
 
   // schema.org Event — volunteer shifts are real events with a time and place,
   // so this makes them eligible for richer search results. Past/cancelled
@@ -145,11 +160,11 @@ export default async function ShiftPage({ params }: Props) {
         />
       )}
       <SiteNav />
-      <main className="flex-1 py-12 md:py-16">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x">
           <Link
             href="/shifts"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-foreground/65 hover:text-foreground"
+            className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm text-foreground/70 hover:text-foreground"
           >
             ← All shifts
           </Link>
@@ -161,9 +176,7 @@ export default async function ShiftPage({ params }: Props) {
                 <h1 className="display text-balance text-4xl font-bold leading-tight md:text-5xl">
                   {shift.program.title}
                 </h1>
-                <p className="text-lg text-foreground/75">
-                  {formatShiftRange(shift.startsAt, shift.endsAt)}
-                </p>
+                <p className="text-lg text-foreground/85">{whenLabel}</p>
               </header>
 
               <div className="overflow-hidden rounded-md border border-border bg-cream-deep">
@@ -178,12 +191,28 @@ export default async function ShiftPage({ params }: Props) {
               </div>
 
               <section aria-labelledby="roster-heading" className="space-y-3">
-                <p
-                  id="roster-heading"
-                  className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
-                >
-                  Going · {taken} of {shift.capacity}
-                </p>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <h2
+                    id="roster-heading"
+                    className="font-mono text-xs uppercase tracking-widest text-foreground/70"
+                  >
+                    Who&rsquo;s going
+                  </h2>
+                  {/* The one capacity statement on the page. `taken` counts
+                      pre-arranged group holds as well as bookings. */}
+                  <p
+                    className={
+                      isFull || free <= 2
+                        ? "text-sm font-semibold text-tomato-deep"
+                        : "text-sm font-semibold text-foreground/85"
+                    }
+                  >
+                    {isFull
+                      ? `Full — all ${shift.capacity} spots taken`
+                      : `${countOf(free, "spot")} left of ${shift.capacity}`}
+                    <span className="sr-only"> ({taken} taken)</span>
+                  </p>
+                </div>
                 {rosterChips.length === 0 && groupBlocks.length === 0 ? (
                   <p className="text-sm text-foreground/65">
                     Be the first to put your name down.
@@ -195,7 +224,7 @@ export default async function ShiftPage({ params }: Props) {
                         <span
                           className={
                             c.isYou
-                              ? "inline-flex rounded-full bg-leaf px-3 py-1 text-sm font-semibold text-cream"
+                              ? "inline-flex rounded-full bg-leaf-deep px-3 py-1 text-sm font-semibold text-cream"
                               : "inline-flex rounded-full bg-leaf/15 px-3 py-1 text-sm font-medium text-leaf-deep"
                           }
                         >
@@ -223,11 +252,6 @@ export default async function ShiftPage({ params }: Props) {
               <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
                 <Detail label="Location" value={shift.program.location} />
                 <Detail
-                  label="Capacity"
-                  value={`${free} of ${shift.capacity} spots open`}
-                  emphasis={isFull ? "warn" : free <= 2 ? "warn" : "ok"}
-                />
-                <Detail
                   label="Bring"
                   value="Closed-toe shoes and hair tied back. Hi-vis, aprons, gloves and a cuppa on us."
                 />
@@ -249,7 +273,7 @@ export default async function ShiftPage({ params }: Props) {
 
               {shift.notes && (
                 <div className="rounded-md border-l-2 border-leaf bg-cream-deep px-5 py-4 text-sm">
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                  <p className="font-mono text-xs uppercase tracking-widest text-foreground/70">
                     Note from the team
                   </p>
                   <p className="mt-1 text-foreground/85">{shift.notes}</p>
@@ -257,14 +281,17 @@ export default async function ShiftPage({ params }: Props) {
               )}
             </article>
 
-            <aside className="lg:sticky lg:top-24 lg:self-start">
+            <aside
+              id="book"
+              className="scroll-mt-24 lg:sticky lg:top-[calc(6rem+var(--impersonation-offset,0px))] lg:self-start"
+            >
               <div className="rounded-md border border-border bg-card p-6 shadow-sm md:p-8">
                 {isInclusive ? (
                   <div className="space-y-4">
                     <p className="eyebrow text-leaf-deep">By arrangement</p>
-                    <h3 className="display text-xl font-semibold leading-snug">
+                    <h2 className="display text-xl font-semibold leading-snug">
                       Inclusive volunteering is set up with our team.
-                    </h3>
+                    </h2>
                     <p className="text-sm text-foreground/75">
                       We run this with pre-registered groups so we can tailor
                       the mahi, support and pace. Tell us about your group and
@@ -272,7 +299,7 @@ export default async function ShiftPage({ params }: Props) {
                     </p>
                     <Link
                       href={INCLUSIVE_MAILTO}
-                      className="inline-flex h-10 items-center rounded bg-leaf px-4 text-sm font-semibold text-cream transition-colors hover:bg-leaf-deep"
+                      className="inline-flex min-h-11 items-center rounded bg-leaf-deep px-4 py-2 text-sm font-semibold text-cream transition-colors hover:bg-leaf-ink"
                     >
                       Email volunteering@fairfood.org.nz →
                     </Link>
@@ -283,26 +310,20 @@ export default async function ShiftPage({ params }: Props) {
                     {/* The listing only carries public programmes, so an
                         admin-run one points at the full roster instead. */}
                     <Link
-                      href={
-                        publiclyBookable
-                          ? `/shifts?programme=${shift.program.slug}`
-                          : "/shifts"
-                      }
-                      className="mt-3 inline-flex items-center gap-2 font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                      href={moreShiftsHref}
+                      className="mt-1 flex min-h-11 items-center font-semibold text-leaf-deep underline-offset-4 hover:underline"
                     >
-                      {publiclyBookable
-                        ? `See upcoming ${shift.program.title} shifts →`
-                        : "See open shifts →"}
+                      {moreShiftsLabel}
                     </Link>
                   </Note>
                 ) : myBooking ? (
                   <div className="space-y-4">
                     <p className="eyebrow text-leaf-deep">Your shift</p>
-                    <h3 className="display text-xl font-semibold leading-snug">
+                    <h2 className="display text-xl font-semibold leading-snug">
                       You&rsquo;re booked in. See you then.
-                    </h3>
-                    <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/55">
-                      {formatShiftRange(shift.startsAt, shift.endsAt)}
+                    </h2>
+                    <p className="font-mono text-xs uppercase tracking-widest text-foreground/70">
+                      {whenLabel}
                     </p>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <AddToCalendar
@@ -320,12 +341,9 @@ export default async function ShiftPage({ params }: Props) {
                           }),
                         )}
                       />
-                      <Link
-                        href="/me"
-                        className="inline-flex h-9 items-center rounded border border-border bg-card px-3 text-sm font-semibold text-foreground/80 transition-colors hover:border-leaf hover:text-leaf-deep"
-                      >
-                        All my shifts →
-                      </Link>
+                      <Button asChild variant="ghost">
+                        <Link href="/me">All my shifts →</Link>
+                      </Button>
                       <CancelBookingDialog bookingId={myBooking.id} />
                     </div>
                   </div>
@@ -343,7 +361,14 @@ export default async function ShiftPage({ params }: Props) {
                   </Note>
                 ) : isFull ? (
                   <Note title="This shift is full">
-                    Please sign up for another time slot.
+                    Every spot on this one is taken — there&rsquo;s usually
+                    room on another day.
+                    <Link
+                      href={moreShiftsHref}
+                      className="mt-1 flex min-h-11 items-center font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                    >
+                      {moreShiftsLabel}
+                    </Link>
                   </Note>
                 ) : (
                   <BookForm
@@ -364,35 +389,25 @@ export default async function ShiftPage({ params }: Props) {
             </aside>
           </div>
         </div>
+        {showBookForm && (
+          <MobileBookBar
+            title={shift.program.title}
+            summary={`${whenLabel} · ${countOf(free, "spot")} left`}
+          />
+        )}
       </main>
       <SiteFooter />
     </>
   );
 }
 
-function Detail({
-  label,
-  value,
-  emphasis = "ok",
-}: {
-  label: string;
-  value: React.ReactNode;
-  emphasis?: "ok" | "warn";
-}) {
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <dt className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <dt className="font-mono text-xs uppercase tracking-widest text-foreground/70">
         {label}
       </dt>
-      <dd
-        className={
-          emphasis === "warn"
-            ? "mt-1 font-semibold text-tomato"
-            : "mt-1 text-foreground/85"
-        }
-      >
-        {value}
-      </dd>
+      <dd className="mt-1 text-foreground/85">{value}</dd>
     </div>
   );
 }
@@ -400,8 +415,8 @@ function Detail({
 function Note({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <h3 className="display text-xl font-semibold">{title}</h3>
-      <div className="text-sm text-foreground/75">{children}</div>
+      <h2 className="display text-xl font-semibold">{title}</h2>
+      <div className="text-sm text-foreground/85">{children}</div>
     </div>
   );
 }

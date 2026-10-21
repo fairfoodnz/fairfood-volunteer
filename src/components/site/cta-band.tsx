@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function CtaBand() {
+// Bottom padding only — it normally follows a padded section. Pass a top pad
+// when it follows a full-bleed band (e.g. InclusiveBand on /programs).
+export function CtaBand({ className }: { className?: string } = {}) {
   return (
-    <section className="container-x pb-20 md:pb-28">
+    <section className={cn("container-x pb-16 md:pb-20", className)}>
       <div className="relative overflow-hidden rounded-md bg-charcoal text-cream">
         <BackgroundDecoration />
         <div className="relative grid gap-8 px-8 py-14 md:grid-cols-[1.4fr_1fr] md:items-end md:px-14 md:py-20">
           <div className="space-y-5">
-            <p className="eyebrow text-cream/60">Nau mai, haere mai</p>
+            <p className="eyebrow text-cream/70">Nau mai, haere mai</p>
             <h2 className="display text-balance text-4xl font-semibold leading-tight md:text-[3.6rem] md:leading-[1]">
               Ready to come down to the kai table?
             </h2>
@@ -21,7 +24,7 @@ export function CtaBand() {
             <Button
               asChild
               size="lg"
-              className="h-12 bg-leaf px-7 text-base font-semibold tracking-tight hover:bg-leaf-deep"
+              className="h-12 bg-leaf-deep px-7 text-base font-semibold tracking-tight hover:bg-leaf-ink"
             >
               <Link href="/shifts">See open shifts →</Link>
             </Button>

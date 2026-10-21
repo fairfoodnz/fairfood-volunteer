@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { BookingStatus } from "@/generated/prisma";
 import { initials, isFirstTimer, type PersonName } from "@/lib/users";
@@ -18,6 +17,8 @@ import {
 } from "./query";
 import { FlaggedToolbar } from "./flagged-toolbar";
 import { FlaggedRow, type FlaggedRowData } from "./flagged-row";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 export const metadata = { title: "Needs review · Admin" };
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ const NZ_DAY = new Intl.DateTimeFormat("en-NZ", {
 const GROUP_COPY: Record<FlaggedGroupKey, { title: string; hint: string }> = {
   booked: {
     title: "Shift coming up",
-    hint: "Soonest first - chat with these people before they turn up.",
+    hint: "Soonest first — chat with these people before they turn up.",
   },
   unbooked: {
     title: "Nothing booked yet",
@@ -69,7 +70,7 @@ export default async function FlaggedPage({
   const query = resolveFlaggedQuery(await searchParams);
   const now = new Date();
 
-  // Deliberately no arrestDetails / healthDetails / phone here - the row
+  // Deliberately no arrestDetails / healthDetails / phone here — the row
   // fetches those through revealFlagAction when a coordinator asks.
   const rows = await db.user.findMany({
     where: { OR: [{ arrestHistory: true }, { healthConditions: true }] },
@@ -161,17 +162,17 @@ export default async function FlaggedPage({
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-5xl">
-        <header>
-          <p className="eyebrow">Volunteers</p>
-          <h1 className="display mt-2 text-balance text-3xl font-bold leading-tight md:text-4xl">
-            Needs review
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-foreground/70">
-            These volunteers flagged something on their profile. Have a chat
-            before their first shift, then mark them as reviewed. Don&rsquo;t
-            share these notes outside the coordinator team.
-          </p>
-        </header>
+        <AdminPageHeader
+          eyebrow="Volunteers"
+          title="Needs review"
+          description={
+            <>
+              These volunteers flagged something on their profile. Have a chat
+              before their first shift, then mark them as reviewed. Don&rsquo;t
+              share these notes outside the coordinator team.
+            </>
+          }
+        />
 
         <Summary stats={stats} now={now} />
 
@@ -181,7 +182,7 @@ export default async function FlaggedPage({
 
         <div className="mt-6 space-y-8">
           {groups.length === 0 ? (
-            <EmptyState query={query} stats={stats} />
+            <FlaggedEmpty query={query} stats={stats} />
           ) : (
             groups.map((group) => (
               <section key={group.key} aria-labelledby={`group-${group.key}`}>
@@ -194,15 +195,15 @@ export default async function FlaggedPage({
                       aria-hidden
                       className={cn(
                         "inline-block size-1.5 rounded-full",
-                        group.key === "booked" ? "bg-leaf" : "bg-foreground/25",
+                        group.key === "booked" ? "bg-leaf-deep" : "bg-foreground/25",
                       )}
                     />
                     {GROUP_COPY[group.key].title}
-                    <span className="font-mono text-xs font-normal tabular-nums text-foreground/55">
+                    <span className="font-mono text-xs font-normal tabular-nums text-foreground/65">
                       {group.people.length}
                     </span>
                   </h2>
-                  <p className="text-xs text-foreground/55">
+                  <p className="text-xs text-foreground/65">
                     {GROUP_COPY[group.key].hint}
                   </p>
                 </div>
@@ -230,16 +231,16 @@ function Summary({ stats, now }: { stats: FlaggedStats; now: Date }) {
   return (
     <section
       aria-label="Review progress"
-      className="relative mt-8 overflow-hidden rounded-xl bg-forest text-cream shadow-sm"
+      className="relative overflow-hidden rounded-xl bg-forest text-cream shadow-sm"
     >
-      {/* Seed-packet dot grid - texture, not a gradient. */}
+      {/* Seed-packet dot grid — texture, not a gradient. */}
       <div
         aria-hidden
         className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:14px_14px]"
       />
       <div className="relative grid grid-cols-2 md:grid-cols-[1.1fr_1fr_1.2fr] md:divide-x md:divide-cream/10">
         <div className="col-span-2 border-b border-cream/10 p-5 md:col-span-1 md:border-b-0 md:p-7">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-cream/60">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-cream/70">
             Waiting for a chat
           </p>
           <p className="display mt-3 text-5xl leading-none tabular-nums md:text-7xl">
@@ -255,7 +256,7 @@ function Summary({ stats, now }: { stats: FlaggedStats; now: Date }) {
         </div>
 
         <div className="border-r border-cream/10 p-5 md:border-r-0 md:p-7">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-cream/60">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-cream/70">
             With a shift coming up
           </p>
           <p className="display mt-3 text-3xl leading-none tabular-nums md:text-5xl">
@@ -277,14 +278,14 @@ function Summary({ stats, now }: { stats: FlaggedStats; now: Date }) {
         </div>
 
         <div className="p-5 md:p-7">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-cream/60">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-cream/70">
             Reviewed so far
           </p>
           <p className="mt-3 flex items-baseline gap-2">
             <span className="display text-3xl leading-none tabular-nums md:text-5xl">
               {stats.reviewed}
             </span>
-            <span className="text-sm tabular-nums text-cream/60">
+            <span className="text-sm tabular-nums text-cream/70">
               of {stats.total}
             </span>
           </p>
@@ -301,7 +302,7 @@ function Summary({ stats, now }: { stats: FlaggedStats; now: Date }) {
               style={{ width: `${percent}%` }}
             />
           </div>
-          <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-cream/60">
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-cream/70">
             {percent}% done
           </p>
         </div>
@@ -310,7 +311,7 @@ function Summary({ stats, now }: { stats: FlaggedStats; now: Date }) {
   );
 }
 
-function EmptyState({
+function FlaggedEmpty({
   query,
   stats,
 }: {
@@ -320,52 +321,35 @@ function EmptyState({
   const filtered = query.search !== "" || query.type !== "all";
   const viewHref = query.view === "todo" ? "/admin/flagged" : `/admin/flagged?view=${query.view}`;
 
-  let message: React.ReactNode;
   if (filtered) {
-    message = (
-      <>
-        No one matches those filters.{" "}
-        <Link
-          href={viewHref}
-          className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
-        >
-          Clear filters →
-        </Link>
-      </>
+    return (
+      <EmptyState action={{ href: viewHref, label: "Clear filters →" }}>
+        No one matches those filters.
+      </EmptyState>
     );
-  } else if (query.view === "todo" && stats.total > 0) {
-    message = (
-      <>
-        All caught up - everyone who flagged something has been reviewed.{" "}
-        <Link
-          href="/admin/flagged?view=reviewed"
-          className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
-        >
-          See who&rsquo;s been reviewed →
-        </Link>
-      </>
-    );
-  } else if (query.view === "reviewed" && stats.total > 0) {
-    message = (
-      <>
-        No one has been reviewed yet.{" "}
-        <Link
-          href="/admin/flagged"
-          className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
-        >
-          Start with who&rsquo;s waiting →
-        </Link>
-      </>
-    );
-  } else {
-    message = "Nothing flagged right now.";
   }
-
-  return (
-    <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center text-sm text-foreground/70">
-      {message}
-    </div>
-  );
+  if (query.view === "todo" && stats.total > 0) {
+    return (
+      <EmptyState
+        action={{
+          href: "/admin/flagged?view=reviewed",
+          label: "See who’s been reviewed →",
+        }}
+      >
+        All caught up — everyone who flagged something has been reviewed.
+      </EmptyState>
+    );
+  }
+  if (query.view === "reviewed" && stats.total > 0) {
+    return (
+      <EmptyState
+        action={{ href: "/admin/flagged", label: "Start with who’s waiting →" }}
+      >
+        No one has been reviewed yet.
+      </EmptyState>
+    );
+  }
+  return <EmptyState>Nothing flagged right now.</EmptyState>;
 }
 
 // Abbreviated form for the collapsed row: first name + last initial.

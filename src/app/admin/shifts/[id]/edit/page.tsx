@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { toNzDateTimeLocal } from "@/lib/schedule";
 import { formatShiftRange } from "@/lib/programs";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ShiftForm } from "@/components/admin/shift-form";
 import { updateShift } from "../../../actions";
 
@@ -32,28 +32,23 @@ export default async function EditShiftPage({ params }: Props) {
         ...schedulablePrograms,
       ];
 
-  return (
-    <div className="px-6 py-12 md:px-10 md:py-16">
-      <div className="mx-auto max-w-2xl">
-        <Link
-          href={`/admin/shifts/${shift.id}`}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-foreground/65 hover:text-foreground"
-        >
-          ← Back to roster
-        </Link>
+  const rosterHref = `/admin/shifts/${shift.id}`;
 
-        <p className="eyebrow">Edit shift</p>
-        <h1 className="display mt-2 text-3xl font-bold leading-tight">
-          {shift.program.title}
-        </h1>
-        <p className="mt-1 text-sm text-foreground/65">
-          Currently {formatShiftRange(shift.startsAt, shift.endsAt)}
-        </p>
+  return (
+    <div className="px-6 py-10 md:px-10 md:py-14">
+      <div className="mx-auto max-w-2xl">
+        <AdminPageHeader
+          back={{ href: rosterHref, label: "Back to roster" }}
+          eyebrow="Rosters"
+          title="Edit shift"
+          description={`${shift.program.title} · currently ${formatShiftRange(shift.startsAt, shift.endsAt)}`}
+        />
 
         <ShiftForm
           programs={programs}
           action={updateShift}
           submitLabel="Save changes"
+          cancelHref={rosterHref}
           shiftId={shift.id}
           defaults={{
             programSlug: shift.program.slug,

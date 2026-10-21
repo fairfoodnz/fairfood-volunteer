@@ -25,7 +25,9 @@ type Size = "sm" | "default";
 export function AddToCalendar({
   bookingId,
   links,
-  size = "sm",
+  // Volunteer-facing, often tapped on a phone: default (h-11) meets the 44px
+  // touch-target floor. `sm` stays available for dense desktop layouts.
+  size = "default",
   triggerLabel = "Add to calendar",
 }: {
   bookingId: string;
@@ -53,7 +55,9 @@ export function AddToCalendar({
         */}
         <DropdownMenuGroup>
           <DropdownMenuLabel>Add this shift to</DropdownMenuLabel>
+          {/* min-h-11 on every item: this menu is mostly opened on phones. */}
           <DropdownMenuItem
+            className="min-h-11"
             render={
               // Native <a download> so the browser saves the .ics instead of
               // trying to navigate to it. The route serves `attachment`, so this
@@ -67,6 +71,7 @@ export function AddToCalendar({
           />
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            className="min-h-11"
             render={
               <a href={links.google} target="_blank" rel="noopener noreferrer">
                 Google Calendar
@@ -74,6 +79,7 @@ export function AddToCalendar({
             }
           />
           <DropdownMenuItem
+            className="min-h-11"
             render={
               <a href={links.outlook} target="_blank" rel="noopener noreferrer">
                 Outlook.com
@@ -81,6 +87,7 @@ export function AddToCalendar({
             }
           />
           <DropdownMenuItem
+            className="min-h-11"
             render={
               <a href={links.office365} target="_blank" rel="noopener noreferrer">
                 Office 365
@@ -88,6 +95,7 @@ export function AddToCalendar({
             }
           />
           <DropdownMenuItem
+            className="min-h-11"
             render={
               <a href={links.yahoo} target="_blank" rel="noopener noreferrer">
                 Yahoo Calendar

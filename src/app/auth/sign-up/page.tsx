@@ -23,11 +23,11 @@ export default async function SignUpPage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x grid gap-16 lg:grid-cols-2">
           <div className="max-w-md space-y-6">
             <p className="eyebrow">Nau mai, haere mai</p>
-            <h1 className="display text-balance text-4xl font-semibold leading-tight md:text-5xl">
+            <h1 className="display text-balance text-4xl font-bold leading-tight md:text-5xl">
               Create your volunteer account.
             </h1>
             <p className="text-foreground/75">
@@ -35,7 +35,7 @@ export default async function SignUpPage({ searchParams }: Props) {
               this we&rsquo;ll ask a few questions so we can roster you safely.
             </p>
             <div className="rounded-md border-l-2 border-leaf bg-cream-deep px-5 py-4 text-sm">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                 Privacy
               </p>
               <p className="mt-1 text-foreground/85">

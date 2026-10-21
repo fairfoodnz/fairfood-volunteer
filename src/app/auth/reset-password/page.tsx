@@ -19,11 +19,11 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x grid gap-16 lg:grid-cols-2">
           <div className="max-w-md space-y-6">
             <p className="eyebrow">Almost there</p>
-            <h1 className="display text-balance text-4xl font-semibold leading-tight md:text-5xl">
+            <h1 className="display text-balance text-4xl font-bold leading-tight md:text-5xl">
               Choose a new password.
             </h1>
             <p className="text-foreground/75">
@@ -48,7 +48,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
                   </p>
                   <Link
                     href="/auth/forgot-password"
-                    className="inline-block text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                    className="inline-flex min-h-11 items-center text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
                   >
                     Request a new link →
                   </Link>

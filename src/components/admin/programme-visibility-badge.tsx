@@ -8,7 +8,7 @@ const TONE: Record<ProgramVisibility, string> = {
   PUBLIC: "bg-leaf/15 text-leaf-deep",
   UNLISTED: "bg-ocean/12 text-ocean",
   PRIVATE: "bg-clay/12 text-clay",
-  ARCHIVED: "bg-foreground/10 text-foreground/55",
+  ARCHIVED: "bg-foreground/10 text-foreground/65",
 };
 
 /**

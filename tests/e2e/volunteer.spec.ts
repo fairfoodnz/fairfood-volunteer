@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// A shift can render the "Confirm booking" button yet still be unbookable for
+// A shift can render the "Book this shift" button yet still be unbookable for
 // the seeded volunteer: if they have a *cancelled* booking on it the page only
 // counts CONFIRMED bookings (so the form shows), but bookShiftAction does a
 // create() that trips the @@unique([userId, shiftId]) constraint and returns
@@ -26,7 +26,7 @@ async function bookFirstAvailableShift(page: Page): Promise<string> {
   let tried = 0;
   for (const href of hrefs) {
     await page.goto(href);
-    const confirm = page.getByRole("button", { name: /Confirm booking/i });
+    const confirm = page.getByRole("button", { name: /Book this shift/i });
     if (!(await confirm.isVisible().catch(() => false))) continue;
     tried++;
 
@@ -69,13 +69,13 @@ test.describe("volunteer booking", () => {
     await page.goto(`/shifts/${bookedShiftId}`);
     await expect(page.getByText(/You.re booked in\./i)).toBeVisible();
     await page.getByRole("button", { name: "Cancel shift" }).click();
-    const dialog = page.getByRole("dialog");
+    const dialog = page.getByRole("alertdialog");
     await expect(dialog).toBeVisible();
     await dialog.getByRole("button", { name: "Cancel shift" }).click();
 
     // Back to a bookable state for this shift.
     await expect(
-      page.getByRole("button", { name: /Confirm booking/i }),
+      page.getByRole("button", { name: /Book this shift/i }),
     ).toBeVisible();
   });
 });

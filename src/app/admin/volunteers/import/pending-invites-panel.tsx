@@ -7,6 +7,9 @@ import { Mail, RotateCw, MailQuestion, MailCheck, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { countOf } from "@/lib/format";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { StatusPill } from "@/components/patterns/status-pill";
 import { sendInvitesAction } from "./actions";
 
 /**
@@ -72,11 +75,10 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
     return (
       <section className="mt-12">
         <SectionHeading />
-        <div className="rounded-md border border-dashed border-border bg-card/50 p-10 text-center text-sm text-foreground/65">
-          <Mail className="mx-auto mb-2 size-5 text-foreground/40" />
+        <EmptyState>
           No imported volunteers waiting on a claim. Drop in a file above to
           get started.
-        </div>
+        </EmptyState>
       </section>
     );
   }
@@ -112,7 +114,7 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
     toast.success(
       result.sent === 0
         ? "Nothing to send."
-        : `Sent ${result.sent} invite${result.sent === 1 ? "" : "s"}.`,
+        : `Sent ${countOf(result.sent, "invite")}.`,
     );
     startTransition(() => router.refresh());
   };
@@ -145,18 +147,23 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
             onClick={() => void send([...selected])}
             className="bg-leaf-deep text-cream hover:bg-leaf-deep/90"
           >
-            <Mail className="size-4" />
-            {pending ? "Sending…" : `Send ${selected.size} invite${selected.size === 1 ? "" : "s"}`}
+            <Mail aria-hidden className="size-4" />
+            {pending ? "Sending…" : `Send ${countOf(selected.size, "invite")}`}
           </Button>
         </div>
       </div>
 
       {/* List */}
-      <div className="mt-3 overflow-hidden rounded-md border border-border bg-card">
-        <table className="w-full text-sm">
-          <thead className="bg-cream-deep text-left text-foreground/65">
+      <div className="relative mt-3 overflow-x-auto rounded-md border border-border bg-card">
+        <table className="w-full min-w-[32rem] text-sm">
+          <caption className="sr-only">
+            Imported volunteers who haven&rsquo;t claimed their account yet
+          </caption>
+          <thead className="bg-cream-deep text-left text-foreground/70">
             <tr>
-              <th className="w-10 px-4 py-3" aria-label="Select" />
+              <th className="w-10 px-4 py-3">
+                <span className="sr-only">Select</span>
+              </th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest">
                 Name
               </th>
@@ -169,7 +176,9 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
               <th className="hidden px-4 py-3 font-mono text-[10px] uppercase tracking-widest sm:table-cell">
                 Imported
               </th>
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3">
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -201,7 +210,7 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
                       {row.fullName}
                     </Link>
                     {row.phone ? (
-                      <div className="mt-0.5 text-xs text-foreground/55">
+                      <div className="mt-0.5 text-xs text-foreground/65">
                         {row.phone}
                       </div>
                     ) : null}
@@ -223,10 +232,13 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
                       type="button"
                       onClick={() => void send([row.id])}
                       disabled={pending}
-                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-semibold text-foreground/75 hover:border-leaf-deep/40 hover:text-leaf-deep disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1 rounded-md border border-border bg-background px-3 text-xs font-semibold text-foreground/80 outline-none hover:border-leaf-deep/40 hover:text-leaf-deep focus-visible:ring-3 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={`${row.inviteState === "never" ? "Send" : "Resend"} invite to ${row.fullName}`}
                     >
-                      <RotateCw className={cn("size-3", wasJustSent && "animate-spin")} />
+                      <RotateCw
+                        aria-hidden
+                        className={cn("size-3", wasJustSent && "motion-safe:animate-spin")}
+                      />
                       {row.inviteState === "never" ? "Send" : "Resend"}
                     </button>
                   </td>
@@ -245,7 +257,7 @@ function SectionHeading() {
     <header className="mb-4">
       <p className="eyebrow">Pending invites</p>
       <h2 className="display mt-1 text-2xl font-bold leading-tight">
-        Send the welcome email.
+        Send the welcome email
       </h2>
       <p className="mt-2 max-w-2xl text-sm text-foreground/70">
         These are everyone we&rsquo;ve imported who hasn&rsquo;t signed in yet.
@@ -264,27 +276,24 @@ function InviteStatePill({
 }) {
   if (state === "never") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-foreground/65">
-        <MailQuestion className="size-3" />
+      <StatusPill tone="neutral">
+        <MailQuestion aria-hidden className="size-3" />
         Never sent
-      </span>
+      </StatusPill>
     );
   }
   if (state === "expired") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-tomato">
-        <Clock3 className="size-3" />
+      <StatusPill tone="warning">
+        <Clock3 aria-hidden className="size-3" />
         Expired{sentAt ? ` · sent ${sentAt}` : ""}
-      </span>
+      </StatusPill>
     );
   }
   return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full bg-leaf/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-leaf-deep"
-      title={sentAt ? `Sent ${sentAt}` : undefined}
-    >
-      <MailCheck className="size-3" />
+    <StatusPill tone="positive">
+      <MailCheck aria-hidden className="size-3" />
       Active{sentAt ? ` · ${sentAt}` : ""}
-    </span>
+    </StatusPill>
   );
 }

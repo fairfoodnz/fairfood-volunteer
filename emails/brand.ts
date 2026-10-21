@@ -10,17 +10,25 @@
  *   white on leafDeep  → 5.63:1  ✓ (CTA button)
  *   leafDeep on cream  → 5.06:1  ✓ (links)
  *   charcoal on cream  → 16.87:1 ✓ (body)
+ *   muted on white     → 7.49:1  ✓ (footer, detail labels)
+ *   muted on cream     → 6.74:1  ✓
  *   white on leaf      → 3.42:1  ✗ (do NOT put white text on `leaf`)
+ *   tomato on cream    → 3.04:1  ✗ (decorative only — use tomatoDeep for text)
+ *   tomatoDeep on cream → 5.44:1 ✓, destructive on cream → 5.49:1 ✓
  */
 export const brand = {
-  cream: "#f8f2eb", // page background
-  card: "#ffffff", // content surface
-  charcoal: "#0f130e", // body text
-  muted: "#5b5f57", // footer / secondary text
-  leaf: "#3d9e34", // brand accent (decorative only — fails AA with white text)
-  leafDeep: "#17780f", // CTA background, links
-  border: "#ddd6ce", // hairline rules
-  tomato: "#f05940", // warning accent (unused here, kept for parity)
+  cream: "#f8f2eb", // --ff-cream oklch(0.965 0.012 75) — page background
+  card: "#ffffff", // --card — content surface
+  charcoal: "#0f130e", // --ff-charcoal oklch(0.18 0.012 140) — body text
+  // --muted-foreground oklch(0.45 0.012 75) — footer / secondary text. Sits
+  // above the app's foreground/65 text floor (#636662 on white, 5.82:1).
+  muted: "#59544e",
+  leaf: "#3d9e34", // --ff-green oklch(0.62 0.17 142) — decorative only, fails AA with white text
+  leafDeep: "#17780f", // --ff-green-deep oklch(0.5 0.16 142) — CTA background, links
+  border: "#ddd6ce", // --border oklch(0.88 0.014 75) — hairline rules
+  tomato: "#f05940", // --ff-tomato oklch(0.66 0.19 32) — decorative only (unused here, kept for parity)
+  tomatoDeep: "#be260b", // --ff-tomato-deep oklch(0.52 0.19 32) — warning text (unused here, kept for parity)
+  destructive: "#c2181d", // --destructive oklch(0.52 0.2 27) — error text (unused here, kept for parity)
 } as const;
 
 /** Poppins is the brand typeface; falls back to a system stack where webfonts aren't supported. */
