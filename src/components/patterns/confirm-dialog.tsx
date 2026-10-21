@@ -46,6 +46,7 @@ export function ConfirmDialog({
   action,
   fields,
   onConfirm,
+  confirmDisabled = false,
   open: controlledOpen,
   onOpenChange,
 }: {
@@ -61,6 +62,8 @@ export function ConfirmDialog({
   action?: (formData: FormData) => unknown | Promise<unknown>;
   fields?: Record<string, string>;
   onConfirm?: () => unknown | Promise<unknown>;
+  /** Hold the confirm button disabled (e.g. until "DELETE" is typed). */
+  confirmDisabled?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -116,6 +119,7 @@ export function ConfirmDialog({
                 label={confirmLabel}
                 pendingLabel={pendingLabel}
                 tone={tone}
+                disabled={confirmDisabled}
               />,
             )}
           </form>
@@ -125,7 +129,7 @@ export function ConfirmDialog({
             {footer(
               <Button
                 type="button"
-                disabled={pending}
+                disabled={pending || confirmDisabled}
                 className={cn(CONFIRM_TONE[tone])}
                 onClick={() =>
                   startTransition(async () => {
@@ -149,14 +153,16 @@ function FormConfirmButton({
   label,
   pendingLabel,
   tone,
+  disabled,
 }: {
   label: string;
   pendingLabel?: string;
   tone: Tone;
+  disabled: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className={cn(CONFIRM_TONE[tone])}>
+    <Button type="submit" disabled={pending || disabled} className={cn(CONFIRM_TONE[tone])}>
       {pending ? <Loader2 className="animate-spin" /> : null}
       {pending ? (pendingLabel ?? `${label}…`) : label}
     </Button>

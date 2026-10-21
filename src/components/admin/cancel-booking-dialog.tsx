@@ -21,7 +21,7 @@ export function CancelBookingDialog({
         <Button
           type="button"
           variant="outline"
-          aria-label={`Cancel ${volunteerName}'s booking`}
+          aria-label={`Cancel, ${volunteerName}`}
           className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
         >
           Cancel

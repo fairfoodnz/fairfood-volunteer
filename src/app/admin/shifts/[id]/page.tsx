@@ -288,7 +288,7 @@ export default async function AdminShiftPage({ params, searchParams }: Props) {
                             status={BookingStatus.ATTENDED}
                             label="Mark attended"
                             pendingLabel="Saving…"
-                            ariaLabel={`Mark ${name} attended`}
+                            volunteerName={name}
                             successMessage={`${name} marked attended.`}
                             variant="default"
                             className="bg-leaf-deep hover:bg-leaf-ink"
@@ -298,7 +298,7 @@ export default async function AdminShiftPage({ params, searchParams }: Props) {
                             status={BookingStatus.NO_SHOW}
                             label="No-show"
                             pendingLabel="Saving…"
-                            ariaLabel={`Mark ${name} as a no-show`}
+                            volunteerName={name}
                             successMessage={`${name} marked as a no-show.`}
                           />
                           <CancelBookingDialog
@@ -311,9 +311,9 @@ export default async function AdminShiftPage({ params, searchParams }: Props) {
                         <RosterStatusButton
                           bookingId={b.id}
                           status={BookingStatus.CONFIRMED}
-                          label="Undo"
+                          label="Undo attended"
                           pendingLabel="Undoing…"
-                          ariaLabel={`Undo attended for ${name}`}
+                          volunteerName={name}
                           successMessage={`${name} is back to confirmed.`}
                         />
                       )}
@@ -321,9 +321,9 @@ export default async function AdminShiftPage({ params, searchParams }: Props) {
                         <RosterStatusButton
                           bookingId={b.id}
                           status={BookingStatus.CONFIRMED}
-                          label="Undo"
+                          label="Undo no-show"
                           pendingLabel="Undoing…"
-                          ariaLabel={`Undo no-show for ${name}`}
+                          volunteerName={name}
                           successMessage={`${name} is back to confirmed.`}
                         />
                       )}
@@ -360,7 +360,7 @@ export default async function AdminShiftPage({ params, searchParams }: Props) {
                         status={BookingStatus.CONFIRMED}
                         label="Reinstate"
                         pendingLabel="Reinstating…"
-                        ariaLabel={`Reinstate ${name}`}
+                        volunteerName={name}
                         successMessage={`${name} is back on the roster.`}
                       />
                     )}

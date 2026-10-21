@@ -40,6 +40,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openDialog, setOpenDialog] = useState<DialogKey | null>(null);
+  const [deleteTyped, setDeleteTyped] = useState("");
   // Set once an action succeeds; the selection is cleared after the dialog
   // has closed so its copy doesn't flick to "0 shifts" mid-animation.
   const clearOnClose = useRef(false);
@@ -100,6 +101,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
 
   function onDialogChange(key: DialogKey, open: boolean) {
     setOpenDialog(open ? key : null);
+    if (!open) setDeleteTyped("");
     if (!open && clearOnClose.current) {
       clearOnClose.current = false;
       clearSelection();
@@ -333,7 +335,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
       />
 
       {/* Permanent delete — irreversible, typed confirmation required. The
-          input's pattern blocks the form from submitting until it matches. */}
+          confirm button stays disabled until the input matches. */}
       <ConfirmDialog
         open={openDialog === "delete"}
         onOpenChange={(o) => onDialogChange("delete", o)}
@@ -368,6 +370,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
         }
         confirmLabel={`Delete ${countOf(count, "shift")}`}
         pendingLabel="Deleting…"
+        confirmDisabled={deleteTyped !== "DELETE"}
         cancelLabel={`Keep ${plural(count, "shift")}`}
         action={() =>
           run(bulkDeleteShifts, (n) => `Deleted ${countOf(n, "shift")}.`)
@@ -389,6 +392,8 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
             pattern="DELETE"
             title="Type DELETE in capital letters"
             placeholder="DELETE"
+            value={deleteTyped}
+            onChange={(e) => setDeleteTyped(e.target.value)}
           />
         </div>
       </ConfirmDialog>

@@ -99,10 +99,13 @@ export function PasskeyManager({ passkeys }: { passkeys: PasskeyView[] }) {
               </div>
               <ConfirmDialog
                 trigger={
-                  <Button type="button" variant="destructive">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    aria-label={`Remove passkey “${pk.name}”`}
+                  >
                     <Trash2 aria-hidden />
                     Remove
-                    <span className="sr-only"> passkey “{pk.name}”</span>
                   </Button>
                 }
                 title={`Remove “${pk.name}”?`}

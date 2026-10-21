@@ -20,7 +20,7 @@ export function RosterStatusButton({
   status,
   label,
   pendingLabel,
-  ariaLabel,
+  volunteerName,
   successMessage,
   variant = "outline",
   className,
@@ -29,8 +29,9 @@ export function RosterStatusButton({
   status: BookingStatus;
   label: string;
   pendingLabel: string;
-  /** Spoken label naming the volunteer, e.g. "Mark Jane Doe attended". */
-  ariaLabel: string;
+  /** Appended to the spoken label ("Mark attended, Jane Doe") so a list of
+   *  identical buttons is still distinguishable by screen reader. */
+  volunteerName: string;
   successMessage: string;
   variant?: "outline" | "ghost" | "default";
   className?: string;
@@ -47,7 +48,7 @@ export function RosterStatusButton({
       <SubmitButton
         label={label}
         pendingLabel={pendingLabel}
-        ariaLabel={ariaLabel}
+        ariaLabel={`${label}, ${volunteerName}`}
         variant={variant}
         className={className}
       />

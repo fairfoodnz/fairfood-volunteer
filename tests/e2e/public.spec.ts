@@ -54,7 +54,7 @@ test.describe("public marketing + browse", () => {
     await page.locator('a[href^="/shifts/"]').first().click();
     await expect(page).toHaveURL(/\/shifts\/[^/]+$/);
     await expect(
-      page.getByRole("link", { name: /Create account & book/i }),
+      page.getByRole("link", { name: /Sign up & book/i }),
     ).toBeVisible();
   });
 });

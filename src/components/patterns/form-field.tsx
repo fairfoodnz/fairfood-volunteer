@@ -51,17 +51,22 @@ export function FormField({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Label htmlFor={id}>
-        {label}
+      {/* The asterisk sits beside the <label>, not inside it, so the label
+          text (what voice control and getByLabel match) is exactly `label`;
+          `aria-required` on the control carries the meaning. */}
+      <div className="flex items-center gap-1">
+        <Label htmlFor={id}>{label}</Label>
         {required ? (
-          <span aria-hidden className="text-tomato-deep">
+          <span aria-hidden className="text-sm leading-none text-tomato-deep">
             *
           </span>
         ) : null}
         {optional ? (
-          <span className="font-normal text-foreground/65">(optional)</span>
+          <span className="ml-1 text-sm leading-none text-foreground/65">
+            (optional)
+          </span>
         ) : null}
-      </Label>
+      </div>
       {control}
       {helper ? (
         <p id={helperId} className="text-xs text-foreground/65">
