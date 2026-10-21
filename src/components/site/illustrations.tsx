@@ -28,10 +28,13 @@ type ProgrammeImage = {
 export function ProgramArt({
   program,
   alt = "",
+  sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
   className,
 }: {
   program: ProgrammeImage;
   alt?: string;
+  /** Rendered width hint for next/image — pass a fixed size for thumbnails. */
+  sizes?: string;
   className?: string;
 }) {
   const src = programmeImageSrc(program);
@@ -65,7 +68,7 @@ export function ProgramArt({
       // imageKey-backed images are arbitrary uploads; skip the optimizer so we
       // don't need remotePatterns config for the same-origin stream route.
       unoptimized={Boolean(program.imageKey)}
-      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+      sizes={sizes}
       className={cn("object-cover", className)}
     />
   );

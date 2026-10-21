@@ -32,9 +32,15 @@ export function FormField({
 }) {
   const helperId = helper ? `${id}-helper` : undefined;
   const errorId = `${id}-error`;
+  // Keep any description the control already points at (e.g. a shared
+  // helper elsewhere in the form) and add ours.
+  const ownDescribedBy = children.props["aria-describedby"] as
+    | string
+    | undefined;
   const describedBy =
-    [helperId, error ? errorId : undefined].filter(Boolean).join(" ") ||
-    undefined;
+    [ownDescribedBy, helperId, error ? errorId : undefined]
+      .filter(Boolean)
+      .join(" ") || undefined;
 
   const control = React.cloneElement(children, {
     id,

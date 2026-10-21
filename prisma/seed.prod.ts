@@ -86,7 +86,6 @@ async function seedPrograms() {
       order: p.order,
       theme: p.theme,
       contactEmail: p.contactEmail,
-      contactPhone: p.contactPhone,
       gettingHere: p.gettingHere,
     };
     // Create-if-missing only. The DB is the source of truth for programme

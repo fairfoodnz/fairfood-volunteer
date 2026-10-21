@@ -13,9 +13,13 @@ import { cancelBookingAction } from "../actions";
 export function CancelBookingDialog({
   bookingId,
   triggerLabel = "Cancel shift",
+  triggerContext,
 }: {
   bookingId: string;
   triggerLabel?: string;
+  /** Screen-reader-only context (e.g. "Kai Sorting, Tue 4 Nov") so a list of
+   *  Cancel buttons is distinguishable. */
+  triggerContext?: string;
 }) {
   return (
     <ConfirmDialog
@@ -26,6 +30,9 @@ export function CancelBookingDialog({
           className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
         >
           {triggerLabel}
+          {triggerContext ? (
+            <span className="sr-only">: {triggerContext}</span>
+          ) : null}
         </Button>
       }
       title="Cancel this shift?"

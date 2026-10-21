@@ -40,8 +40,8 @@ Above the card, before any field: the shared `EnglishRequirementNote` (quiet-not
 
 ## A11y
 - `<fieldset>` + `<legend>` for the Yes/No questions (legend is the question itself, visually styled like a label)
-- `role="alert"` + `aria-live="polite"` on the field error span
-- Conditional textarea must use `aria-expanded` on the parent fieldset
+- Field errors render through `FormField` / `YesNoError`: a persistent polite live region linked to the control with `aria-describedby` (never `role="alert"` and `aria-live="polite"` together)
+- The conditional follow-up textarea appears directly after the Yes/No fieldset it depends on (fieldset + legend); `aria-expanded` is not valid on a fieldset, so don't use it
 
 ## What NOT to do
 - No multi-step wizard with 7 steps — it's 7 questions, fits on one screen scroll on mobile

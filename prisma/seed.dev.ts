@@ -701,7 +701,6 @@ async function seedPrograms() {
       order: p.order,
       theme: p.theme,
       contactEmail: p.contactEmail,
-      contactPhone: p.contactPhone,
       gettingHere: p.gettingHere,
     };
     const program = await prisma.program.upsert({

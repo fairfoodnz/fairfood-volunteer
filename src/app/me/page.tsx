@@ -217,7 +217,7 @@ function Thumb({
 }) {
   return (
     <div className={cn("relative shrink-0 overflow-hidden rounded", className)}>
-      <ProgramArt program={program} />
+      <ProgramArt program={program} sizes="96px" />
     </div>
   );
 }
@@ -277,7 +277,11 @@ function BookingActions({
           </span>
         </Link>
       </Button>
-      <CancelBookingDialog bookingId={b.id} triggerLabel="Cancel" />
+      <CancelBookingDialog
+        bookingId={b.id}
+        triggerLabel="Cancel"
+        triggerContext={`${b.shift.program.title}, ${formatShiftRange(b.shift.startsAt, b.shift.endsAt)}`}
+      />
     </div>
   );
 }
