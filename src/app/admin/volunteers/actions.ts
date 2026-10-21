@@ -53,10 +53,15 @@ export async function setVolunteerRoleAction(
   if (parsed.data.userId === admin.id && parsed.data.role !== Role.ADMIN) {
     return { ok: false, error: "You can't remove your own admin access." };
   }
-  await db.user.update({
+  // updateMany, not update: a volunteer deleted since the page loaded is a
+  // count of 0 we can explain, not a throw that production redacts.
+  const { count } = await db.user.updateMany({
     where: { id: parsed.data.userId },
     data: { role: parsed.data.role },
   });
+  if (count === 0) {
+    return { ok: false, error: "That volunteer no longer exists. Reload the list." };
+  }
   revalidatePath(`/admin/volunteers/${parsed.data.userId}`);
   revalidatePath("/admin/volunteers");
   return { ok: true };
