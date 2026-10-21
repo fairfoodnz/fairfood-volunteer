@@ -10,8 +10,9 @@ import {
 } from "@/lib/site-copy";
 import { EnglishRequirementNote } from "@/components/site/english-requirement-note";
 import { SiteCopyForm, type CopySectionView } from "./form";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
-export const metadata = { title: "Admin · Volunteer wording" };
+export const metadata = { title: "Volunteer wording · Admin" };
 export const dynamic = "force-dynamic";
 
 const NZ_DATE = new Intl.DateTimeFormat("en-NZ", {
@@ -57,23 +58,23 @@ export default async function AdminSettingsPage() {
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-4xl">
-        <header className="mb-8">
-          <p className="eyebrow">Admin · Settings</p>
-          <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
-            Volunteer wording
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-foreground/70">
-            Reword what volunteers read on the sign-up questionnaire, their
-            profile and the booking form — no developer needed. Changes are live
-            as soon as you save.
-          </p>
-          {lastEdit && (
-            <p className="mt-2 font-mono text-[11px] uppercase tracking-widest text-foreground/65">
-              Last edited {NZ_DATE.format(lastEdit.updatedAt)}
-              {lastEdit.updatedBy && ` by ${fullName(lastEdit.updatedBy)}`}
-            </p>
-          )}
-        </header>
+        <AdminPageHeader
+          eyebrow="Settings"
+          title="Volunteer wording"
+          description={
+            <>
+              Reword what volunteers read on the sign-up questionnaire, their
+              profile and the booking form — no developer needed. Changes are
+              live as soon as you save.
+              {lastEdit && (
+                <span className="mt-2 block font-mono text-[11px] uppercase tracking-widest text-foreground/70">
+                  Last edited {NZ_DATE.format(lastEdit.updatedAt)}
+                  {lastEdit.updatedBy && ` by ${fullName(lastEdit.updatedBy)}`}
+                </span>
+              )}
+            </>
+          }
+        />
 
         <SiteCopyForm sections={sections} />
 

@@ -113,7 +113,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
       {error && (
         <div
           role="alert"
-          className="rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato-deep"
+          className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
         >
           {error}
         </div>
@@ -380,7 +380,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
             {visibility === "PRIVATE" && (
               <p className="rounded-md border border-border bg-cream-deep px-3 py-3 text-xs text-foreground/70">
                 Nobody can reach this programme from the website. Add people to
-                its shifts yourself with &ldquo;Add volunteer&rdquo; on the
+                its shifts yourself with &ldquo;Assign volunteer&rdquo; on the
                 shift page.
               </p>
             )}

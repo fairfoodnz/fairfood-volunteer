@@ -4,15 +4,17 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { formatShiftRange } from "@/lib/programs";
 import { fullName } from "@/lib/users";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { countOf } from "@/lib/format";
 import { ImpersonateForm } from "@/components/admin/impersonate-form";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { StatTile } from "@/components/admin/stat-tile";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { StatusPill, type PillTone } from "@/components/patterns/status-pill";
 import { BookingStatus, EmailLogStatus, Role } from "@/generated/prisma";
 import { RetryEmailButton } from "@/components/admin/retry-email-button";
-import {
-  updateVolunteerNotesAction,
-  setVolunteerRoleAction,
-} from "../actions";
+import { NotesForm } from "./notes-form";
+import { RoleForm } from "./role-form";
+import { FlagNote } from "./flag-note";
 import {
   EMAIL_STATUS_BADGE,
   EMAIL_TEMPLATE_LABELS,
@@ -34,7 +36,7 @@ const NZ_DATE = new Intl.DateTimeFormat("en-NZ", {
 });
 
 const HEARD_ABOUT_LABELS: Record<string, string> = {
-  FRIEND: "From a friend or whānau",
+  FRIEND: "From a friend or family",
   SOCIAL: "Social media",
   SEARCH: "Search engine",
   WORKPLACE: "Workplace",
@@ -55,7 +57,7 @@ export async function generateMetadata({ params }: Props) {
     select: { firstName: true, lastName: true },
   });
   return {
-    title: user ? `${fullName(user)} · Volunteers` : "Volunteer · Admin",
+    title: user ? `${fullName(user)} · Admin` : "Volunteer · Admin",
   };
 }
 
@@ -93,6 +95,11 @@ export default async function VolunteerDetailPage({ params }: Props) {
   const isSelf = user.id === admin.id;
   const isAdminUser = user.role === Role.ADMIN;
   const flagged = user.arrestHistory || user.healthConditions;
+  // Deep-link straight to this person in the queue, reviewed or not.
+  const flagQueueHref = `/admin/flagged?${new URLSearchParams({
+    view: "all",
+    q: user.email,
+  })}`;
   const now = new Date();
 
   const upcoming = user.bookings.filter(
@@ -124,61 +131,57 @@ export default async function VolunteerDetailPage({ params }: Props) {
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-5xl">
-        <Link
-          href="/admin/volunteers"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-foreground/65 hover:text-foreground"
-        >
-          ← All volunteers
-        </Link>
-
-        <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="eyebrow">Volunteer</p>
-            <h1 className="display mt-2 flex flex-wrap items-center gap-3 text-3xl font-bold leading-tight md:text-4xl">
+        <AdminPageHeader
+          back={{ href: "/admin/volunteers", label: "All volunteers" }}
+          eyebrow="Volunteers"
+          title={
+            <span className="flex flex-wrap items-center gap-3">
               {fullName(user)}
-              {isAdminUser && (
-                <span className="rounded-full bg-leaf/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-widest text-leaf-deep">
-                  Admin
-                </span>
-              )}
-            </h1>
-            <p className="mt-2 text-sm text-foreground/70">
-              {user.email}
-              {user.phone && <> · {user.phone}</>}
-              {user.pronouns && <> · {user.pronouns}</>}
-            </p>
-            <p className="mt-1 text-xs text-foreground/65">
-              Joined {NZ_DATE.format(user.createdAt)}
-              {user.profileCompletedAt
-                ? ` · Profile completed ${NZ_DATE.format(user.profileCompletedAt)}`
-                : " · Profile pending"}
-            </p>
-          </div>
-          {flagged && (
-            <Link
-              href="/admin/flagged"
-              className="inline-flex h-9 items-center gap-2 self-start rounded-md border border-tomato/40 bg-tomato/5 px-3 text-xs font-semibold text-tomato-deep hover:bg-tomato/10"
-            >
-              Review flags →
-            </Link>
-          )}
-        </header>
+              {isAdminUser && <StatusPill tone="positive">Admin</StatusPill>}
+            </span>
+          }
+          description={
+            <>
+              <span className="block">
+                {user.email}
+                {user.phone && <> · {user.phone}</>}
+                {user.pronouns && <> · {user.pronouns}</>}
+              </span>
+              <span className="mt-1 block text-xs">
+                Joined {NZ_DATE.format(user.createdAt)}
+                {user.profileCompletedAt
+                  ? ` · Profile completed ${NZ_DATE.format(user.profileCompletedAt)}`
+                  : " · Profile pending"}
+              </span>
+            </>
+          }
+          actions={
+            flagged ? (
+              <Link
+                href={flagQueueHref}
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-semibold text-foreground/85 hover:border-leaf/50 hover:text-leaf-deep"
+              >
+                Review flags →
+              </Link>
+            ) : null
+          }
+        />
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <Stat label="Confirmed" value={confirmedCount} />
-          <Stat label="Attended" value={attendedCount} />
-          <Stat label="No-shows" value={noShowCount} />
-          <Stat label="Cancelled" value={cancelledCount} />
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+          <StatTile label="Confirmed" value={confirmedCount} />
+          <StatTile label="Attended" value={attendedCount} />
+          <StatTile label="No-shows" value={noShowCount} />
+          <StatTile label="Cancelled" value={cancelledCount} />
         </div>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
             <Section title="Profile">
               {!user.profileCompletedAt ? (
-                <Empty>
+                <EmptyState>
                   Hasn&rsquo;t finished the questionnaire yet. They can&rsquo;t
                   book shifts until they do.
-                </Empty>
+                </EmptyState>
               ) : (
                 <div className="rounded-md border border-border bg-card p-5">
                   <dl className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
@@ -191,7 +194,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                         : user.volunteeredBefore
                           ? "Yes — volunteered with us before signing up"
                           : attendedCount > 0
-                            ? `No — has since done ${attendedCount} shift${attendedCount === 1 ? "" : "s"}`
+                            ? `No — has since done ${countOf(attendedCount, "shift")}`
                             : "No — first-timer"}
                     </Field>
                     <Field label="Heard about us">
@@ -234,30 +237,18 @@ export default async function VolunteerDetailPage({ params }: Props) {
                     </div>
                   )}
 
+                  {/* Collapsed by default: what they disclosed only loads
+                      on an explicit reveal (MASTER.md a11y baseline). */}
                   {flagged && (
-                    <div className="mt-6 rounded-md border border-tomato/30 bg-tomato/5 p-4">
-                      <p className="font-mono text-[10px] uppercase tracking-widest text-tomato-deep">
-                        Flagged on questionnaire
-                      </p>
-                      <ul className="mt-2 space-y-1 text-sm">
-                        {user.arrestHistory && (
-                          <li>· Disclosed arrest history</li>
-                        )}
-                        {user.healthConditions && (
-                          <li>· Disclosed health conditions</li>
-                        )}
-                      </ul>
-                      <p className="mt-3 text-xs text-tomato-deep">
-                        Open{" "}
-                        <Link
-                          href="/admin/flagged"
-                          className="underline underline-offset-2"
-                        >
-                          needs review
-                        </Link>{" "}
-                        for full details and to mark as reviewed.
-                      </p>
-                    </div>
+                    <FlagNote
+                      userId={user.id}
+                      reviewedLabel={
+                        user.flagReviewedAt
+                          ? `Reviewed ${NZ_DATE.format(user.flagReviewedAt)}`
+                          : null
+                      }
+                      queueHref={flagQueueHref}
+                    />
                   )}
                 </div>
               )}
@@ -265,7 +256,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
 
             <Section title={`Bookings (${user.bookings.length})`}>
               {user.bookings.length === 0 ? (
-                <Empty>No bookings yet.</Empty>
+                <EmptyState>No bookings yet.</EmptyState>
               ) : (
                 <div className="space-y-6">
                   {upcoming.length > 0 && (
@@ -289,11 +280,11 @@ export default async function VolunteerDetailPage({ params }: Props) {
               }
             >
               {emails.length === 0 ? (
-                <Empty>
+                <EmptyState>
                   We haven&rsquo;t emailed this volunteer yet. Booking
                   confirmations, password resets and invites will show up here
                   as they go out.
-                </Empty>
+                </EmptyState>
               ) : (
                 <ul className="divide-y divide-border rounded-md border border-border bg-card">
                   {emails.map((e) => {
@@ -318,7 +309,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                             {formatEmailTimestamp(e.createdAt)}
                           </p>
                           {e.error && (
-                            <p className="mt-1 truncate text-xs text-tomato-deep">
+                            <p className="mt-1 truncate text-xs text-destructive">
                               {e.error}
                             </p>
                           )}
@@ -347,35 +338,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
 
           <aside className="space-y-8">
             <Section title="Private notes">
-              <form
-                action={updateVolunteerNotesAction}
-                className="rounded-md border border-border bg-card p-4"
-              >
-                <input type="hidden" name="userId" value={user.id} />
-                <label
-                  htmlFor="notes"
-                  className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
-                >
-                  Coordinator notes
-                </label>
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  rows={6}
-                  defaultValue={user.notes ?? ""}
-                  placeholder="Anything the team should know — visible to admins only."
-                  className="mt-2"
-                  maxLength={2000}
-                />
-                <p className="mt-2 text-xs text-foreground/65">
-                  Only admins can see this. Keep it factual.
-                </p>
-                <div className="mt-3 flex justify-end">
-                  <Button type="submit" size="sm">
-                    Save notes
-                  </Button>
-                </div>
-              </form>
+              <NotesForm userId={user.id} notes={user.notes} />
             </Section>
 
             {!isSelf && !isAdminUser && (
@@ -394,45 +357,11 @@ export default async function VolunteerDetailPage({ params }: Props) {
                   access.
                 </div>
               ) : (
-                <form
-                  action={setVolunteerRoleAction}
-                  className="rounded-md border border-border bg-card p-4"
-                >
-                  <input type="hidden" name="userId" value={user.id} />
-                  <input
-                    type="hidden"
-                    name="role"
-                    value={isAdminUser ? Role.VOLUNTEER : Role.ADMIN}
-                  />
-                  <p className="text-sm">
-                    {isAdminUser ? (
-                      <>
-                        <span className="font-semibold">{fullName(user)}</span>{" "}
-                        is currently an admin. Demoting removes access to{" "}
-                        <code className="rounded bg-foreground/10 px-1 text-xs">
-                          /admin
-                        </code>{" "}
-                        immediately.
-                      </>
-                    ) : (
-                      <>
-                        Make{" "}
-                        <span className="font-semibold">{fullName(user)}</span>{" "}
-                        an admin. They&rsquo;ll be able to manage rosters,
-                        documents, and other volunteers.
-                      </>
-                    )}
-                  </p>
-                  <div className="mt-3 flex justify-end">
-                    <Button
-                      type="submit"
-                      size="sm"
-                      variant={isAdminUser ? "destructive" : "default"}
-                    >
-                      {isAdminUser ? "Remove admin" : "Make admin"}
-                    </Button>
-                  </div>
-                </form>
+                <RoleForm
+                  userId={user.id}
+                  name={fullName(user)}
+                  isAdmin={isAdminUser}
+                />
               )}
             </Section>
           </aside>
@@ -502,24 +431,16 @@ function BookingList({
   );
 }
 
+const BOOKING_STATUS: Record<BookingStatus, { label: string; tone: PillTone }> = {
+  CONFIRMED: { label: "Confirmed", tone: "positive" },
+  ATTENDED: { label: "Attended", tone: "positive" },
+  CANCELLED: { label: "Cancelled", tone: "neutral" },
+  NO_SHOW: { label: "No-show", tone: "warning" },
+};
+
 function StatusBadge({ status }: { status: BookingStatus }) {
-  const map: Record<BookingStatus, { label: string; cls: string }> = {
-    CONFIRMED: { label: "Confirmed", cls: "bg-leaf/15 text-leaf-deep" },
-    ATTENDED: { label: "Attended", cls: "bg-leaf/25 text-leaf-deep" },
-    CANCELLED: {
-      label: "Cancelled",
-      cls: "bg-foreground/10 text-foreground/65",
-    },
-    NO_SHOW: { label: "No-show", cls: "bg-tomato/15 text-tomato-deep" },
-  };
-  const { label, cls } = map[status];
-  return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${cls}`}
-    >
-      {label}
-    </span>
-  );
+  const { label, tone } = BOOKING_STATUS[status];
+  return <StatusPill tone={tone}>{label}</StatusPill>;
 }
 
 function Section({
@@ -534,25 +455,6 @@ function Section({
       <h2 className="display mb-3 text-lg font-semibold">{title}</h2>
       {children}
     </section>
-  );
-}
-
-function Empty({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-md border border-dashed border-border bg-card p-6 text-center text-sm text-foreground/65">
-      {children}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-md border border-border bg-card p-5">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
-        {label}
-      </p>
-      <p className="display mt-2 text-3xl font-bold">{value}</p>
-    </div>
   );
 }
 

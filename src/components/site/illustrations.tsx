@@ -48,7 +48,7 @@ export function ProgramArt({
       >
         <span
           className={cn(
-            "display select-none text-[55cqmin] leading-none",
+            "display select-none text-[length:55cqmin] leading-none",
             palette.art,
           )}
         >

@@ -153,7 +153,7 @@ export function AdminSidebar({
                           <Icon className="size-4" />
                           <span className="flex w-full items-center justify-between gap-2">
                             <span>{link.label}</span>
-                            <span className="rounded-full bg-foreground/10 px-1.5 text-[9px] font-semibold uppercase tracking-widest text-foreground/65 group-data-[collapsible=icon]:hidden">
+                            <span className="rounded-full bg-foreground/10 px-1.5 text-[10px] font-semibold uppercase tracking-widest text-foreground/70 group-data-[collapsible=icon]:hidden">
                               Soon
                             </span>
                           </span>

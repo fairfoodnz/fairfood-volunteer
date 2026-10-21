@@ -123,7 +123,7 @@ export function MobileNav({
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="w-[min(20rem,85vw)] gap-0 bg-background p-0"
+        className="gap-0 bg-background p-0"
       >
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           <SheetTitle className="eyebrow">Menu</SheetTitle>

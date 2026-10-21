@@ -33,7 +33,9 @@ export function RadioCard({
         value={value}
         defaultChecked={defaultChecked}
         required={required}
-        aria-invalid={invalid || undefined}
+        // aria-invalid isn't valid on a radio; the linked error text carries
+        // it, and data-invalid lets a form find the first unanswered group.
+        data-invalid={invalid || undefined}
         aria-describedby={describedBy}
         className="peer sr-only"
       />

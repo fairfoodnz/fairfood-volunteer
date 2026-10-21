@@ -4,6 +4,8 @@ import { programmeTheme } from "@/lib/programme-theme";
 import { programHref } from "@/lib/programs";
 import { ProgrammeVisibilityBadge } from "@/components/admin/programme-visibility-badge";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { EmptyState } from "@/components/patterns/empty-state";
 
 export const metadata = { title: "Programmes · Admin" };
 export const dynamic = "force-dynamic";
@@ -17,32 +19,32 @@ export default async function ProgrammesPage() {
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="eyebrow">Programmes</p>
-            <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
-              Manage volunteer programmes
-            </h1>
-          </div>
-          <Link
-            href="/admin/programmes/new"
-            className="inline-flex h-11 items-center gap-2 rounded bg-leaf-deep px-5 text-sm font-semibold text-cream hover:bg-leaf-ink"
-          >
-            + New programme
-          </Link>
-        </header>
+        <AdminPageHeader
+          eyebrow="Programmes"
+          title="Manage volunteer programmes"
+          actions={
+            <Link
+              href="/admin/programmes/new"
+              className="inline-flex h-11 items-center gap-2 rounded-lg bg-leaf-deep px-5 text-sm font-semibold text-cream hover:bg-leaf-ink"
+            >
+              + New programme
+            </Link>
+          }
+        />
 
         {programmes.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border bg-card p-10 text-center">
-            <h2 className="display text-2xl font-semibold">No programmes yet</h2>
-            <p className="mt-2 text-foreground/70">
-              Add your first programme to start scheduling shifts.
-            </p>
-          </div>
+          <EmptyState
+            action={{ href: "/admin/programmes/new", label: "Create a programme →" }}
+          >
+            No programmes yet. Add your first one to start scheduling shifts.
+          </EmptyState>
         ) : (
-          <div className="overflow-hidden rounded-md border border-border bg-card">
-            <table className="w-full text-sm">
-              <thead className="bg-cream-deep text-left text-foreground/65">
+          <div className="overflow-x-auto rounded-md border border-border bg-card">
+            <table className="w-full min-w-[40rem] text-sm">
+              <caption className="sr-only">
+                Volunteer programmes, with who can see each one
+              </caption>
+              <thead className="bg-cream-deep text-left text-foreground/70">
                 <tr>
                   <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest">
                     Programme
@@ -56,7 +58,9 @@ export default async function ProgrammesPage() {
                   <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest">
                     Shifts
                   </th>
-                  <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-widest" />
+                  <th className="px-4 py-3">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -67,7 +71,7 @@ export default async function ProgrammesPage() {
                       <td className="px-4 py-3">
                         <div className="font-medium">{p.title}</div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-[11px] text-foreground/65">
+                          <span className="font-mono text-[11px] text-foreground/70">
                             {programHref(p.slug)}
                           </span>
                           {/* For an unlisted programme the link is the way in,
@@ -75,8 +79,7 @@ export default async function ProgrammesPage() {
                           {p.visibility === "UNLISTED" && (
                             <CopyLinkButton
                               path={programHref(p.slug)}
-                              label="Copy"
-                              className="h-6 px-2 text-[11px]"
+                              label="Copy link"
                             />
                           )}
                         </div>
@@ -100,9 +103,9 @@ export default async function ProgrammesPage() {
                       <td className="px-4 py-3 text-right">
                         <Link
                           href={`/admin/programmes/${p.id}`}
-                          className="font-semibold text-leaf-deep hover:underline"
+                          className="inline-flex min-h-9 items-center font-semibold text-leaf-deep hover:underline"
                         >
-                          Edit →
+                          Edit<span className="sr-only"> {p.title}</span> →
                         </Link>
                       </td>
                     </tr>

@@ -12,6 +12,7 @@ import {
 import { WEEKDAYS } from "@/lib/schedule";
 import { formatShiftRange } from "@/lib/programs";
 import { cn } from "@/lib/utils";
+import { countOf, formatTime12 } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
@@ -50,13 +51,6 @@ function addDaysISO(iso: string, days: number): string {
   const [y, m, d] = iso.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d + days));
   return dt.toISOString().slice(0, 10);
-}
-
-function formatTime12(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  const period = h < 12 ? "AM" : "PM";
-  const hour = h % 12 === 0 ? 12 : h % 12;
-  return `${hour}:${String(m).padStart(2, "0")} ${period}`;
 }
 
 export function BulkScheduler({
@@ -136,10 +130,15 @@ export function BulkScheduler({
         return;
       }
       if (result.committed) {
-        toast.success(
-          `Created ${result.created} ${result.created === 1 ? "shift" : "shifts"}.`,
-        );
-        router.push("/admin");
+        toast.success(`Created ${countOf(result.created, "shift")}.`);
+        // Land on Manage shifts filtered to what was just scheduled, so the
+        // coordinator can check the result straight away.
+        const q = new URLSearchParams({
+          programme: programId,
+          from: startDate,
+          to: endDate,
+        });
+        router.push(`/admin/shifts?${q.toString()}`);
         router.refresh();
         return;
       }
@@ -175,11 +174,11 @@ export function BulkScheduler({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
-            <Label>Templates</Label>
+            <Label id="templates-label">Templates</Label>
             {programId && (
               <Link
                 href={`/admin/programmes/${programId}#shift-templates`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-leaf-deep hover:underline"
+                className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-leaf-deep hover:underline"
               >
                 <Pencil className="size-3" />
                 Manage templates
@@ -198,7 +197,11 @@ export function BulkScheduler({
               first.
             </p>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div
+              role="group"
+              aria-labelledby="templates-label"
+              className="grid gap-2 sm:grid-cols-2"
+            >
               {templates.map((t) => {
                 const on = selected.has(t.id);
                 return (
@@ -230,7 +233,7 @@ export function BulkScheduler({
                       </span>
                       <span className="block text-xs text-foreground/65">
                         {formatTime12(t.startTime)} – {formatTime12(t.endTime)}{" "}
-                        · {t.capacity} spots
+                        · {countOf(t.capacity, "spot")}
                       </span>
                     </span>
                   </button>
@@ -251,7 +254,6 @@ export function BulkScheduler({
                 invalidate();
                 setStartDate(v);
               }}
-              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -270,8 +272,12 @@ export function BulkScheduler({
         </div>
 
         <div className="space-y-2">
-          <Label>Repeat on</Label>
-          <div className="flex flex-wrap gap-2">
+          <Label id="weekdays-label">Repeat on</Label>
+          <div
+            role="group"
+            aria-labelledby="weekdays-label"
+            className="flex flex-wrap gap-2"
+          >
             {WEEKDAYS.map((d) => {
               const on = weekdays.has(d.value);
               return (
@@ -281,7 +287,7 @@ export function BulkScheduler({
                   onClick={() => toggleWeekday(d.value)}
                   aria-pressed={on}
                   className={cn(
-                    "h-10 min-w-[3.25rem] rounded-md border px-3 text-sm font-medium transition-colors",
+                    "h-11 min-w-[3.25rem] rounded-md border px-3 text-sm font-medium transition-colors",
                     on
                       ? "border-leaf bg-leaf-deep text-cream"
                       : "border-border hover:border-foreground/35",
@@ -395,7 +401,7 @@ export function BulkScheduler({
                 ? "Creating…"
                 : preview.created === 0
                   ? "Nothing new to create"
-                  : `Create ${preview.created} ${preview.created === 1 ? "shift" : "shifts"}`}
+                  : `Create ${countOf(preview.created, "shift")}`}
             </Button>
           </div>
         )}

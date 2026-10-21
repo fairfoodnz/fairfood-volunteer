@@ -8,26 +8,14 @@ import {
   ShiftBulkTable,
   type ShiftRow,
 } from "@/components/admin/shift-bulk-table";
-import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { Button } from "@/components/ui/button";
+import { countOf } from "@/lib/format";
+import { ShiftsToolbar } from "./shifts-toolbar";
+import { RANGES, type RangeKey } from "./ranges";
 
 export const metadata = { title: "Manage shifts · Admin" };
 export const dynamic = "force-dynamic";
-
-const RANGES = [
-  { key: "upcoming", label: "Upcoming" },
-  { key: "past", label: "Past" },
-  { key: "cancelled", label: "Cancelled" },
-  { key: "all", label: "All" },
-] as const;
-
-type RangeKey = (typeof RANGES)[number]["key"];
 
 const PAGE_SIZE = 50;
 
@@ -139,9 +127,6 @@ export default async function ManageShiftsPage({
     cancelled: s.cancelled,
   }));
 
-  const filtersActive =
-    !!programmeId || range !== "upcoming" || !!fromIso || !!toIso;
-
   function hrefWith(next: {
     programme?: string | null;
     range?: RangeKey;
@@ -181,149 +166,37 @@ export default async function ManageShiftsPage({
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="eyebrow">Rosters</p>
-            <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
-              Manage shifts.
-            </h1>
-            <p className="mt-1 text-sm text-foreground/65">
-              Select shifts to cancel them off the schedule or delete them for
-              good.
-            </p>
-          </div>
-          <Link
-            href="/admin/shifts/new"
-            className="inline-flex h-11 items-center gap-2 rounded bg-leaf-deep px-5 text-sm font-semibold text-cream hover:bg-leaf-ink"
-          >
-            + New shift
-          </Link>
-        </header>
+        <AdminPageHeader
+          eyebrow="Rosters"
+          title="Manage shifts"
+          description="Select shifts to cancel, restore or delete them together. Open a roster to mark attendance."
+          actions={
+            <>
+              <Button asChild variant="outline">
+                <Link href="/admin/shifts/bulk">Bulk schedule</Link>
+              </Button>
+              <Button asChild className="bg-leaf-deep hover:bg-leaf-ink">
+                <Link href="/admin/shifts/new">+ New shift</Link>
+              </Button>
+            </>
+          }
+        />
 
-        <section>
-          <form
-            action="/admin/shifts"
-            method="get"
-            className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:gap-4"
-          >
-            {range !== "upcoming" && (
-              <input type="hidden" name="range" value={range} />
-            )}
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="shift-programme"
-                className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
-              >
-                Programme
-              </label>
-              <Select
-                name="programme"
-                defaultValue={programmeId ?? "all"}
-                items={{
-                  all: "All programmes",
-                  ...Object.fromEntries(
-                    programmes.map((p) => [p.id, p.title]),
-                  ),
-                }}
-              >
-                <SelectTrigger
-                  id="shift-programme"
-                  className="h-10 md:w-56"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All programmes</SelectItem>
-                  {programmes.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <section aria-label="Shifts">
+          <ShiftsToolbar
+            programmes={programmes}
+            range={range}
+            programmeId={programmeId}
+            from={fromIso}
+            to={toIso}
+          />
 
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="shift-from"
-                className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
-              >
-                From
-              </label>
-              <DatePicker
-                id="shift-from"
-                name="from"
-                defaultValue={fromIso ?? ""}
-                placeholder="Any date"
-                max={toIso ?? undefined}
-                className="h-10 md:w-44"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="shift-to"
-                className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
-              >
-                To
-              </label>
-              <DatePicker
-                id="shift-to"
-                name="to"
-                defaultValue={toIso ?? ""}
-                placeholder="Any date"
-                min={fromIso ?? undefined}
-                className="h-10 md:w-44"
-              />
-            </div>
-
-            <div className="flex items-center gap-3 md:ml-auto md:pb-0.5">
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center rounded-md bg-foreground/5 px-4 text-sm font-semibold hover:bg-foreground/10"
-              >
-                Apply
-              </button>
-              {filtersActive && (
-                <Link
-                  href="/admin/shifts"
-                  className="text-xs font-medium text-foreground/65 hover:text-foreground"
-                >
-                  Clear all
-                </Link>
-              )}
-            </div>
-          </form>
-
-          <nav
-            aria-label="Filter shifts by date"
-            className="mt-4 flex flex-wrap gap-2"
-          >
-            {RANGES.map((r) => {
-              const active = range === r.key;
-              return (
-                <Link
-                  key={r.key}
-                  href={hrefWith({ range: r.key, page: 1 })}
-                  className={
-                    "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold transition-colors " +
-                    (active
-                      ? "border-leaf bg-leaf-deep text-cream"
-                      : "border-border bg-card text-foreground/75 hover:border-leaf/40 hover:text-leaf-deep")
-                  }
-                >
-                  {r.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-5 mb-3 flex items-center justify-between gap-3 text-xs text-foreground/65">
-            <p aria-live="polite">
+          <div className="mt-5 mb-3 flex items-center justify-between gap-3 text-sm text-foreground/70">
+            <p role="status" aria-live="polite">
               {total === 0
                 ? "No shifts match this view."
                 : total <= PAGE_SIZE
-                  ? `${total} ${total === 1 ? "shift" : "shifts"}`
+                  ? countOf(total, "shift")
                   : `Showing ${start}–${end} of ${total}`}
             </p>
             {pageCount > 1 && (
@@ -334,7 +207,7 @@ export default async function ManageShiftsPage({
           </div>
 
           {/* Padding so the floating action bar never hides the last row. */}
-          <div className="pb-24">
+          <div className="pb-44 sm:pb-24">
             <ShiftBulkTable key={tableKey} shifts={rows} />
 
             {pageCount > 1 && (
@@ -349,7 +222,7 @@ export default async function ManageShiftsPage({
                   <ChevronLeft className="size-4" />
                   Previous
                 </PageLink>
-                <p className="text-xs tabular-nums text-foreground/65">
+                <p className="text-sm tabular-nums text-foreground/70">
                   Page {page} of {pageCount}
                 </p>
                 <PageLink
@@ -378,7 +251,7 @@ function PageLink({
   children: React.ReactNode;
 }) {
   const className =
-    "inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-colors";
+    "inline-flex h-11 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-colors";
   if (!href) {
     return (
       <span

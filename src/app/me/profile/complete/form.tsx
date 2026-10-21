@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useMemo, useRef, useState } from "react";
 import { format, subYears } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -15,7 +15,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { HeardAbout } from "@/generated/prisma";
-import { RadioCard, YesNoField } from "@/components/site/yes-no-field";
+import {
+  RadioCard,
+  YesNoError,
+  YesNoField,
+  YesNoLegend,
+  yesNoIds,
+} from "@/components/site/yes-no-field";
+import { FormField } from "@/components/patterns/form-field";
+import { cn } from "@/lib/utils";
+import { useFocusFirstError } from "../focus-first-error";
 import {
   completeProfileAction,
   type QuestionnaireState,
@@ -85,86 +94,80 @@ export function QuestionnaireForm({
     };
   }, []);
 
+  const formRef = useRef<HTMLFormElement>(null);
+  useFocusFirstError(formRef, state.fieldErrors);
+
   return (
-    <form key={formKey} action={action} className="space-y-8" noValidate>
+    <form
+      ref={formRef}
+      key={formKey}
+      action={action}
+      className="space-y-8"
+      noValidate
+    >
       {name && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <FieldRow>
-              <Label htmlFor="firstName">
-                First name <Req />
-              </Label>
-              <Input
-                id="firstName"
-                name="firstName"
-                autoComplete="given-name"
-                placeholder="e.g. Aroha"
-                defaultValue={d.firstName}
-                aria-invalid={fe.firstName ? true : undefined}
-                aria-describedby="name-helper"
-                className="h-11"
-              />
-              <Err>{fe.firstName}</Err>
-            </FieldRow>
-            <FieldRow>
-              <Label htmlFor="lastName">Last name</Label>
-              <Input
-                id="lastName"
-                name="lastName"
-                autoComplete="family-name"
-                placeholder="e.g. Williams"
-                defaultValue={d.lastName}
-                aria-invalid={fe.lastName ? true : undefined}
-                aria-describedby="name-helper"
-                className="h-11"
-              />
-              <Err>{fe.lastName}</Err>
-            </FieldRow>
-          </div>
-          <Helper id="name-helper">
-            Use the English alphabet so the team can read the roster. Macrons and accents are fine.
-          </Helper>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <FormField
+            id="firstName"
+            label="First name"
+            helper="English alphabet, please. Macrons and accents are fine."
+            error={fe.firstName}
+            required
+          >
+            <Input
+              name="firstName"
+              autoComplete="given-name"
+              placeholder="e.g. Aroha"
+              defaultValue={d.firstName}
+              required
+            />
+          </FormField>
+          <FormField id="lastName" label="Last name" error={fe.lastName}>
+            <Input
+              name="lastName"
+              autoComplete="family-name"
+              placeholder="e.g. Williams"
+              defaultValue={d.lastName}
+            />
+          </FormField>
         </div>
       )}
 
       <FormSection>
-        <FieldRow>
-          <Label htmlFor="phone">
-            Phone <Req />
-          </Label>
+        <FormField
+          id="phone"
+          label="Phone"
+          helper="So the team can reach you on the day if plans change. Shift reminders come by email."
+          error={fe.phone}
+          required
+        >
           <Input
-            id="phone"
             name="phone"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
             placeholder="021…"
             defaultValue={d.phone}
-            aria-invalid={fe.phone ? true : undefined}
-            className="h-11"
+            required
           />
-          <Helper>We&rsquo;ll text you a reminder the day before your shift.</Helper>
-          <Err>{fe.phone}</Err>
-        </FieldRow>
+        </FormField>
 
-        <FieldRow>
-          <Label htmlFor="birthday">
-            Birthday <Req />
-          </Label>
+        <FormField
+          id="birthday"
+          label="Birthday"
+          helper="Just to check you’re 13 or over — that’s all we use it for."
+          error={fe.birthday}
+          required
+        >
           <DatePicker
-            id="birthday"
             name="birthday"
             defaultValue={d.birthday}
             min={birthdayBounds.min}
             max={birthdayBounds.max}
             captionLayout="dropdown"
             placeholder="Select your birthday"
-            aria-invalid={fe.birthday ? true : undefined}
-            className="h-11"
           />
-          <Helper>Just to check you&rsquo;re 13 or over — that&rsquo;s all we use it for.</Helper>
-          <Err>{fe.birthday}</Err>
-        </FieldRow>
+        </FormField>
 
         <YesNoField
           name="volunteeredBefore"
@@ -176,9 +179,14 @@ export function QuestionnaireForm({
           error={fe.volunteeredBefore}
         />
 
-        <FieldRow>
+        {/* Hand-wired rather than FormField: the control FormField would
+            clone is the Select root, which renders no element of its own. */}
+        <div className="space-y-2">
           <Label htmlFor="heardAbout">
-            How did you hear about Fair Food? <Req />
+            How did you hear about Fair Food?
+            <span aria-hidden className="text-tomato-deep">
+              *
+            </span>
           </Label>
           <Select
             name="heardAbout"
@@ -192,8 +200,10 @@ export function QuestionnaireForm({
           >
             <SelectTrigger
               id="heardAbout"
-              className="h-11 w-full"
+              className="w-full"
+              aria-required
               aria-invalid={fe.heardAbout ? true : undefined}
+              aria-describedby={fe.heardAbout ? "heardAbout-error" : undefined}
             >
               <SelectValue placeholder="Pick one…" />
             </SelectTrigger>
@@ -205,40 +215,47 @@ export function QuestionnaireForm({
               ))}
             </SelectContent>
           </Select>
-          <Err>{fe.heardAbout}</Err>
+          <p
+            id="heardAbout-error"
+            role="status"
+            aria-live="polite"
+            className={fe.heardAbout ? "text-sm text-destructive" : "sr-only"}
+          >
+            {fe.heardAbout ?? ""}
+          </p>
 
           {heardAbout === HeardAbout.OTHER && (
-            <div className="mt-3">
-              <Label htmlFor="heardAboutOther" className="text-sm">
-                Tell us more
-              </Label>
+            <FormField
+              id="heardAboutOther"
+              label="Tell us more"
+              error={fe.heardAboutOther}
+              required
+              className="pt-1 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-200"
+            >
               <Input
-                id="heardAboutOther"
                 name="heardAboutOther"
                 defaultValue={d.heardAboutOther}
-                aria-invalid={fe.heardAboutOther ? true : undefined}
-                className="mt-2 h-11"
+                required
               />
-              <Err>{fe.heardAboutOther}</Err>
-            </div>
+            </FormField>
           )}
-        </FieldRow>
+        </div>
 
-        <FieldRow>
-          <Label htmlFor="whyInterested">
-            Why are you interested in volunteering at Fair Food? <Req />
-          </Label>
+        <FormField
+          id="whyInterested"
+          label="Why are you interested in volunteering at Fair Food?"
+          error={fe.whyInterested}
+          required
+        >
           <Textarea
-            id="whyInterested"
             name="whyInterested"
             rows={3}
             defaultValue={d.whyInterested}
             placeholder="A sentence or two is plenty."
-            aria-invalid={fe.whyInterested ? true : undefined}
             className="resize-none"
+            required
           />
-          <Err>{fe.whyInterested}</Err>
-        </FieldRow>
+        </FormField>
       </FormSection>
 
       <FormSection>
@@ -247,7 +264,7 @@ export function QuestionnaireForm({
           legend="Have you ever been arrested or incarcerated?"
           helper="Visible only to the volunteer coordinator. Answering yes doesn't disqualify you — we just like to have a chat first."
           followUpName="arrestDetails"
-          followUpLabel="Anything you'd like us to share with the coordinator? (optional)"
+          followUpLabel="Anything you'd like us to share with the coordinator?"
           defaultValue={yesNo(d.arrestHistory)}
           followUpDefault={d.arrestDetails}
           error={fe.arrestHistory}
@@ -258,7 +275,7 @@ export function QuestionnaireForm({
           legend="Do you have any health conditions we should know about?"
           helper="Used only on the day to keep you safe — allergies, mobility needs, anything we should be aware of."
           followUpName="healthDetails"
-          followUpLabel="Anything you'd like us to know? (optional)"
+          followUpLabel="Anything you'd like us to know?"
           defaultValue={yesNo(d.healthConditions)}
           followUpDefault={d.healthDetails}
           error={fe.healthConditions}
@@ -268,16 +285,18 @@ export function QuestionnaireForm({
 
       {next && <input type="hidden" name="next" value={next} />}
 
-      <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-foreground/65">
-          You can edit any of this later from{" "}
-          <span className="font-medium">My shifts → Edit profile</span>.
-        </p>
+      {/* Sticky on phones so the submit is always in reach on a long form;
+          it settles into place at the end of the card. The negative margins
+          bleed it to the card's edges (the card is p-6 below md). */}
+      <EditLaterNote className="md:hidden" />
+      <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-border bg-card px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:mx-0 md:mb-0 md:flex md:items-center md:justify-between md:gap-3 md:px-0 md:pt-6 md:pb-0">
+        {/* Kept out of the sticky bar on phones so it stays one button tall. */}
+        <EditLaterNote className="hidden md:block" />
         <Button
           type="submit"
           size="lg"
           disabled={pending}
-          className="h-12 bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
+          className="w-full text-base font-semibold md:w-auto"
         >
           {pending ? "Saving…" : "Save and continue →"}
         </Button>
@@ -286,12 +305,17 @@ export function QuestionnaireForm({
   );
 }
 
-function FormSection({ children }: { children: React.ReactNode }) {
-  return <div className="space-y-6">{children}</div>;
+function EditLaterNote({ className }: { className?: string }) {
+  return (
+    <p className={cn("text-xs text-foreground/65", className)}>
+      You can edit any of this later from{" "}
+      <span className="font-medium">My shifts → Edit profile</span>.
+    </p>
+  );
 }
 
-function FieldRow({ children }: { children: React.ReactNode }) {
-  return <fieldset className="space-y-2">{children}</fieldset>;
+function FormSection({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-6">{children}</div>;
 }
 
 function FlagGroup({
@@ -315,60 +339,51 @@ function FlagGroup({
   error?: string;
   followUpError?: string;
 }) {
+  const { helperId, errorId } = yesNoIds(name, true);
+  const radio = {
+    name,
+    required: true,
+    invalid: Boolean(error),
+    describedBy: [helperId, error ? errorId : undefined]
+      .filter(Boolean)
+      .join(" "),
+  };
   return (
     <fieldset className="flag-group space-y-3 [&:has(input[value=yes]:checked)_.flag-follow]:!block">
-      <legend className="text-sm font-medium leading-snug">{legend}</legend>
-      <p className="text-sm text-foreground/65">{helper}</p>
+      <YesNoLegend required>{legend}</YesNoLegend>
+      <p id={helperId} className="text-sm text-foreground/65">
+        {helper}
+      </p>
       <div className="grid gap-2 sm:grid-cols-2">
         <RadioCard
-          name={name}
+          {...radio}
           value="no"
           label="No"
           defaultChecked={defaultValue === "no"}
         />
         <RadioCard
-          name={name}
+          {...radio}
           value="yes"
           label="Yes"
           defaultChecked={defaultValue === "yes"}
         />
       </div>
-      <Err>{error}</Err>
-      <div className="flag-follow hidden pt-1">
-        <Label htmlFor={followUpName} className="text-sm">
-          {followUpLabel}
-        </Label>
-        <Textarea
+      <YesNoError id={errorId} error={error} />
+      <div className="flag-follow hidden pt-1 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-200">
+        <FormField
           id={followUpName}
-          name={followUpName}
-          rows={3}
-          defaultValue={followUpDefault}
-          className="mt-2 resize-none"
-          aria-invalid={followUpError ? true : undefined}
-        />
-        <Err>{followUpError}</Err>
+          label={followUpLabel}
+          error={followUpError}
+          optional
+        >
+          <Textarea
+            name={followUpName}
+            rows={3}
+            defaultValue={followUpDefault}
+            className="resize-none"
+          />
+        </FormField>
       </div>
     </fieldset>
-  );
-}
-
-function Req() {
-  return <span className="ml-1 text-tomato-deep">*</span>;
-}
-
-function Helper({ id, children }: { id?: string; children: React.ReactNode }) {
-  return (
-    <p id={id} className="text-xs text-foreground/65">
-      {children}
-    </p>
-  );
-}
-
-function Err({ children }: { children?: React.ReactNode }) {
-  if (!children) return null;
-  return (
-    <p role="alert" aria-live="polite" className="text-sm text-destructive">
-      {children}
-    </p>
   );
 }

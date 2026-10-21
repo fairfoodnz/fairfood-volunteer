@@ -1,7 +1,7 @@
 import { Pause, Play } from "lucide-react";
 
 const items = [
-  "Mā tātou anō tātou e manaaki",
+  "Good food, shared fairly",
   "Feeding people, not landfill",
   "Since 2011",
   "Avondale, Tāmaki Makaurau",

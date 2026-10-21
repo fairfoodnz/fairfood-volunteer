@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser, safeNextPath } from "@/lib/auth";
 import { SiteNav } from "@/components/site/nav";
+import { PageHeader } from "@/components/patterns/page-header";
 import { SiteFooter } from "@/components/site/footer";
 import { hasEnglishName, isEnglishName } from "@/lib/users";
 import { getSiteCopy } from "@/lib/site-copy";
@@ -33,18 +34,11 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
       <SiteNav />
       <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x mx-auto max-w-2xl">
-          <header className="mb-10 space-y-3">
-            <p className="eyebrow text-leaf-deep">
-              {needsName ? "Kia ora" : `Kia ora, ${user.firstName}`}
-            </p>
-            <h1 className="display text-balance text-3xl font-bold leading-tight md:text-4xl">
-              Let&rsquo;s get you sorted before your first shift.
-            </h1>
-            <p className="text-foreground/75">
-              Three minutes of paperwork. We use these answers to roster you
-              safely and so we know who&rsquo;s coming next time.
-            </p>
-          </header>
+          <PageHeader
+            eyebrow={needsName ? "Kia ora" : `Kia ora, ${user.firstName}`}
+            title="Let’s get you sorted before your first shift."
+            lead="Three minutes of paperwork. We use these answers to roster you safely and so we know who’s coming next time."
+          />
 
           <EnglishRequirementNote
             className="mb-8"

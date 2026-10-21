@@ -6,6 +6,7 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { ProgramArt } from "@/components/site/illustrations";
 import { Button } from "@/components/ui/button";
+import { StatusPill } from "@/components/patterns/status-pill";
 import {
   formatShiftRange,
   INCLUSIVE_SLUG,
@@ -21,6 +22,7 @@ import {
   summarizeBlocks,
   blockKindLabel,
 } from "@/lib/shifts";
+import { countOf } from "@/lib/format";
 import { BookingStatus, Role } from "@/generated/prisma";
 
 export const dynamic = "force-dynamic";
@@ -31,12 +33,16 @@ type Props = { params: Promise<{ slug: string }> };
 // Visibility is enforced after the fetch (not in the WHERE) so admins can open
 // a private programme to preview it; both callers apply the same rule, so a
 // hidden programme never leaks metadata for a page that returns notFound.
-const getProgram = cache((slug: string) =>
-  db.program.findFirst({
+// The list shows the next 12; `_count` carries the true upcoming total for the
+// "See N open shifts" button so it isn't capped by the `take`.
+const getProgram = cache((slug: string) => {
+  const upcoming = { startsAt: { gte: new Date() }, cancelled: false };
+  return db.program.findFirst({
     where: { slug },
     include: {
+      _count: { select: { shifts: { where: upcoming } } },
       shifts: {
-        where: { startsAt: { gte: new Date() }, cancelled: false },
+        where: upcoming,
         orderBy: { startsAt: "asc" },
         take: 12,
         include: {
@@ -47,8 +53,8 @@ const getProgram = cache((slug: string) =>
         },
       },
     },
-  }),
-);
+  });
+});
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
@@ -90,10 +96,11 @@ export default async function ProgramPage({ params }: Props) {
   // than the self-serve booking flow.
   const isInclusive = program.slug === INCLUSIVE_SLUG;
 
-  // Coordinators can leave these blank — fall back to the org defaults so the
-  // page never shows a hole.
+  // Coordinators can leave these blank — email falls back to the org inbox;
+  // phone has no safe default, so the "or call" clause just drops out.
   const contactEmail = program.contactEmail || "volunteering@fairfood.org.nz";
-  const contactPhone = program.contactPhone || "(09) 555-1234";
+  const contactPhone = program.contactPhone?.trim() || null;
+  const upcomingCount = program._count.shifts;
   const gettingHere =
     program.gettingHere ||
     "Free street parking. We’re a five-minute walk from Avondale train station.";
@@ -103,10 +110,10 @@ export default async function ProgramPage({ params }: Props) {
       <SiteNav />
       <main id="main" className="flex-1">
         <section className="border-b border-border/60 bg-cream-deep">
-          <div className="container-x grid gap-10 py-16 md:grid-cols-[1.4fr_1fr] md:items-center md:py-20">
+          <div className="container-x grid gap-10 py-12 md:grid-cols-[1.4fr_1fr] md:items-center md:py-16">
             <div className="space-y-5">
               <p className="eyebrow text-leaf-deep">{program.tagline}</p>
-              <h1 className="display text-balance text-4xl font-bold leading-[1.05] md:text-6xl">
+              <h1 className="display text-balance text-4xl font-bold leading-tight md:text-5xl">
                 {program.title}
               </h1>
               <p className="max-w-xl text-lg text-foreground/80">
@@ -119,15 +126,15 @@ export default async function ProgramPage({ params }: Props) {
                       Enquire about inclusive volunteering →
                     </Link>
                   </Button>
-                ) : program.shifts.length > 0 ? (
+                ) : upcomingCount > 0 ? (
                   <Button asChild size="lg" className="bg-leaf-deep hover:bg-leaf-ink">
                     <Link href={`/shifts?programme=${program.slug}`}>
-                      See {program.shifts.length} open shifts →
+                      See {countOf(upcomingCount, "upcoming shift")} →
                     </Link>
                   </Button>
                 ) : (
                   <Button asChild size="lg" className="bg-leaf-deep hover:bg-leaf-ink">
-                    <Link href="mailto:volunteering@fairfood.org.nz?subject=Volunteering">
+                    <Link href={`mailto:${contactEmail}?subject=Volunteering`}>
                       Email us to plan a day
                     </Link>
                   </Button>
@@ -137,13 +144,13 @@ export default async function ProgramPage({ params }: Props) {
                 </Button>
               </div>
             </div>
-            <div className="relative h-72 overflow-hidden rounded-md bg-leaf/10 md:h-96">
+            <div className="relative h-72 overflow-hidden rounded-md bg-cream md:h-96">
               <ProgramArt program={program} />
             </div>
           </div>
         </section>
 
-        <section className="container-x py-16 md:py-20">
+        <section className="container-x py-12 md:py-16">
           <div className="grid gap-10 md:grid-cols-[1.2fr_1fr]">
             {isInclusive ? (
               <div className="rounded-md border border-border bg-card p-7 md:p-9">
@@ -186,7 +193,7 @@ export default async function ProgramPage({ params }: Props) {
                   </li>
                 )}
                 {program.shifts.map((s) => {
-                  const { free } = shiftAvailability(
+                  const { free, isFull } = shiftAvailability(
                     s.capacity,
                     s._count.bookings,
                     sumBlocks(s.blocks),
@@ -196,7 +203,7 @@ export default async function ProgramPage({ params }: Props) {
                     <li key={s.id}>
                       <Link
                         href={`/shifts/${s.id}`}
-                        className="flex items-center justify-between p-5 hover:bg-cream-deep/40"
+                        className="flex items-center justify-between gap-4 p-5 transition-colors hover:bg-cream-deep/40"
                       >
                         <div className="min-w-0">
                           <p className="font-medium">
@@ -214,7 +221,18 @@ export default async function ProgramPage({ params }: Props) {
                             ))}
                           </p>
                         </div>
-                        <span className="font-semibold text-leaf-deep">Book →</span>
+                        {isFull ? (
+                          <span className="flex shrink-0 items-center gap-3">
+                            <StatusPill tone="neutral">Full</StatusPill>
+                            <span className="font-semibold text-foreground/70">
+                              View →
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="shrink-0 font-semibold text-leaf-deep">
+                            Book →
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );
@@ -238,11 +256,23 @@ export default async function ProgramPage({ params }: Props) {
                 Email{" "}
                 <a
                   href={`mailto:${contactEmail}`}
-                  className="font-semibold text-leaf-deep underline underline-offset-4"
+                  className="font-semibold text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
                 >
                   {contactEmail}
-                </a>{" "}
-                or call {contactPhone}.
+                </a>
+                {contactPhone ? (
+                  <>
+                    {" "}
+                    or call{" "}
+                    <a
+                      href={`tel:${contactPhone.replace(/[^\d+]/g, "")}`}
+                      className="font-semibold text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
+                    >
+                      {contactPhone}
+                    </a>
+                  </>
+                ) : null}
+                .
               </p>
             </aside>
           </div>

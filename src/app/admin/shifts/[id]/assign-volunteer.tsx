@@ -22,6 +22,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusPill } from "@/components/patterns/status-pill";
+import { countOf } from "@/lib/format";
 import {
   Dialog,
   DialogClose,
@@ -170,48 +172,63 @@ function SearchStep({
     return () => clearTimeout(id);
   }, []);
 
+  const searchId = useId();
+  const resultCount =
+    results === null
+      ? ""
+      : results.length === 0
+        ? query.trim()
+          ? "No volunteers match that search."
+          : "No volunteers in the system yet."
+        : query.trim()
+          ? `${countOf(results.length, "volunteer")} found${results.length === 10 ? " (showing the first 10)" : ""}.`
+          : `Showing ${countOf(results.length, "recently active volunteer")}.`;
+
   return (
     <div className="space-y-3">
-      <div className="relative">
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/65"
-          aria-hidden
-        />
-        <Input
-          ref={inputRef}
-          type="search"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search volunteers by name or email"
-          aria-label="Search volunteers"
-          className="h-11 pl-9"
-          autoComplete="off"
-        />
-        {searching && (
-          <Loader2
-            className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-foreground/65"
+      <div className="space-y-2">
+        <Label htmlFor={searchId}>Find a volunteer</Label>
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/65"
             aria-hidden
           />
-        )}
+          <Input
+            ref={inputRef}
+            id={searchId}
+            type="search"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Name or email"
+            className="pl-9"
+            autoComplete="off"
+          />
+          {searching && (
+            <Loader2
+              className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-foreground/65 motion-safe:animate-spin"
+              aria-hidden
+            />
+          )}
+        </div>
       </div>
 
-      <div
-        role="listbox"
-        aria-label="Volunteer results"
-        className="max-h-72 overflow-y-auto rounded-md border border-border bg-card"
-      >
+      {/* Announces how many matched, so screen-reader users know the list
+          below changed without having to go looking. */}
+      <p role="status" aria-live="polite" className="text-xs text-foreground/70">
+        {results === null ? "Looking…" : resultCount}
+      </p>
+
+      <div className="max-h-72 overflow-y-auto rounded-md border border-border bg-card">
         {results === null ? (
-          <p className="px-4 py-6 text-center text-sm text-foreground/65">
+          <p className="px-4 py-6 text-center text-sm text-foreground/70">
             Looking…
           </p>
         ) : results.length === 0 ? (
-          <p className="px-4 py-6 text-center text-sm text-foreground/65">
-            {query.trim()
-              ? "No volunteers match that search."
-              : "No volunteers in the system yet."}
+          <p className="px-4 py-6 text-center text-sm text-foreground/70">
+            {resultCount}
           </p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul aria-label="Matching volunteers" className="divide-y divide-border">
             {results.map((u) => {
               const name = displayName(u);
               const disabled = u.alreadyOnRoster;
@@ -219,11 +236,9 @@ function SearchStep({
                 <li key={u.id}>
                   <button
                     type="button"
-                    role="option"
-                    aria-selected={false}
                     disabled={disabled}
                     onClick={() => onPick(u)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-cream-deep/60 focus-visible:bg-cream-deep/80 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:bg-transparent"
+                    className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-cream-deep/60 focus-visible:bg-cream-deep/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:hover:bg-transparent"
                   >
                     <span
                       aria-hidden
@@ -235,20 +250,16 @@ function SearchStep({
                       <span className="block truncate font-semibold">
                         {name}
                       </span>
-                      <span className="block truncate text-xs text-foreground/65">
+                      <span className="block truncate text-xs text-foreground/70">
                         {u.email}
                         {u.phone ? ` · ${u.phone}` : ""}
                       </span>
                     </span>
                     {u.alreadyOnRoster && (
-                      <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-foreground/65">
-                        On roster
-                      </span>
+                      <StatusPill tone="neutral">On roster</StatusPill>
                     )}
                     {u.reinstatable && !u.alreadyOnRoster && (
-                      <span className="rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-tomato-deep">
-                        Reinstate
-                      </span>
+                      <StatusPill tone="warning">Reinstate</StatusPill>
                     )}
                   </button>
                 </li>
@@ -304,8 +315,8 @@ function ConfirmStep({
       </div>
 
       {user.reinstatable && (
-        <p className="rounded-md border-l-2 border-tomato bg-tomato/10 px-3 py-2 text-xs text-tomato-deep">
-          {name} had a cancelled / no-show booking on this shift. Confirming
+        <p className="rounded-md border-l-2 border-tomato bg-tomato/10 px-3 py-2 text-sm text-tomato-deep">
+          {name} had a cancelled or no-show booking on this shift. Confirming
           will reinstate it.
         </p>
       )}
@@ -325,9 +336,9 @@ function ConfirmStep({
         />
       </div>
 
-      <Label className="cursor-pointer items-start rounded-lg border border-border bg-muted/40 p-3 font-normal">
+      <Label className="min-h-11 cursor-pointer items-start rounded-md border border-border bg-muted/40 p-3 font-normal leading-snug">
         <Checkbox name="notify" defaultChecked className="mt-0.5" />
-        <span className="text-foreground/80">
+        <span className="text-foreground/85">
           Email {name} a confirmation with the calendar invite
         </span>
       </Label>
@@ -361,29 +372,37 @@ function SubmitButton() {
   );
 }
 
-/** A standalone trigger button so the page can place the CTA itself. */
+/**
+ * A standalone trigger button so the page can place the CTA itself. When
+ * assigning isn't possible, the reason is shown as visible helper text under
+ * the (disabled) button rather than hidden in a tooltip.
+ */
 export function AssignVolunteerTrigger({
   shiftId,
-  disabled,
   disabledReason,
 }: {
   shiftId: string;
-  disabled?: boolean;
+  /** Why assigning is unavailable; the button is disabled when set. */
   disabledReason?: string;
 }) {
   const [open, setOpen] = useState(false);
-  if (disabled) {
+  const reasonId = useId();
+  if (disabledReason) {
     return (
-      <Button
-        type="button"
-        variant="outline"
-        disabled
-        title={disabledReason}
-        aria-label={disabledReason ?? "Assign a volunteer"}
-      >
-        <UserPlus className="size-4" />
-        Assign volunteer
-      </Button>
+      <div className="flex max-w-xs flex-col items-start gap-1.5 sm:items-end">
+        <Button
+          type="button"
+          variant="outline"
+          disabled
+          aria-describedby={reasonId}
+        >
+          <UserPlus className="size-4" />
+          Assign volunteer
+        </Button>
+        <p id={reasonId} className="text-xs text-foreground/70 sm:text-right">
+          {disabledReason}
+        </p>
+      </div>
     );
   }
   return (

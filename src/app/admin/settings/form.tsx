@@ -76,7 +76,7 @@ export function SiteCopyForm({ sections }: { sections: CopySectionView[] }) {
                         onClick={() =>
                           setValues((v) => ({ ...v, [field.key]: "" }))
                         }
-                        className="text-xs font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                        className="inline-flex min-h-9 items-center text-xs font-semibold text-leaf-deep underline-offset-4 hover:underline"
                       >
                         Use the default wording
                       </button>

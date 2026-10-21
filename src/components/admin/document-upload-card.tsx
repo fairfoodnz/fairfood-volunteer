@@ -108,7 +108,7 @@ export function DocumentUploadCard() {
       {error && (
         <div
           role="alert"
-          className="rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato-deep"
+          className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
         >
           {error}
         </div>
@@ -125,7 +125,7 @@ export function DocumentUploadCard() {
             }
           }}
           className={cn(
-            "flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed bg-cream-deep p-8 text-center transition-colors",
+            "flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed bg-cream-deep p-8 text-center outline-none transition-colors focus-visible:border-leaf focus-visible:ring-3 focus-visible:ring-ring/40",
             dragOver
               ? "border-leaf bg-leaf/5"
               : "border-border hover:border-leaf/70",
@@ -158,7 +158,7 @@ export function DocumentUploadCard() {
                   setFile(null);
                   if (inputRef.current) inputRef.current.value = "";
                 }}
-                className="rounded-md p-1 text-foreground/60 hover:bg-muted hover:text-foreground"
+                className="inline-flex size-9 shrink-0 items-center justify-center rounded-md text-foreground/70 hover:bg-muted hover:text-foreground"
               >
                 <X className="size-4" />
               </button>
@@ -184,7 +184,7 @@ export function DocumentUploadCard() {
                 disabled={pending}
                 items={CATEGORY_LABELS}
               >
-                <SelectTrigger id="doc-category" className="h-10 w-full">
+                <SelectTrigger id="doc-category" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -203,7 +203,7 @@ export function DocumentUploadCard() {
                 disabled={pending}
                 items={VISIBILITY_LABELS}
               >
-                <SelectTrigger id="doc-visibility" className="h-10 w-full">
+                <SelectTrigger id="doc-visibility" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -280,7 +280,7 @@ function Field({
 }) {
   return (
     <label htmlFor={htmlFor} className="block space-y-1">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/70">
         {label}
       </span>
       {children}

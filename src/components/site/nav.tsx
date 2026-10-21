@@ -23,7 +23,7 @@ export async function SiteNav() {
           banner sets --impersonation-offset to its own height. */}
       <header className="sticky top-[var(--impersonation-offset,0px)] z-40 border-b border-border/60 bg-background/85 backdrop-blur">
         <div className="container-x flex h-16 items-center justify-between gap-4 md:gap-6">
-          <Logo size={42} />
+          <Logo size={44} />
           <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
             {links.map((l) => (
               <Link

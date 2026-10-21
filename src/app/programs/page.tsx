@@ -3,9 +3,12 @@ import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
 import { CtaBand } from "@/components/site/cta-band";
 import { InclusiveBand } from "@/components/site/inclusive-band";
+import { PageHeader } from "@/components/patterns/page-header";
 
+// Count-agnostic on purpose: coordinators add and retire programmes from
+// /admin/programmes, so no copy here should promise "three".
 const description =
-  "Three ways to volunteer with Fair Food in Avondale — sorting kai boxes, cooking in the Conscious Kitchen, and inclusive volunteering. Find the programme that fits you.";
+  "Ways to volunteer with Fair Food in Avondale — sorting kai boxes, cooking in the Conscious Kitchen, inclusive volunteering and more. Find the programme that fits you.";
 
 export const metadata = {
   title: "Programmes · Fair Food Volunteer",
@@ -23,21 +26,15 @@ export default function ProgramsPage() {
     <>
       <SiteNav />
       <main id="main" className="flex-1">
-        <section className="border-b border-border/60 bg-cream-deep">
-          <div className="container-x py-16 md:py-20">
-            <p className="eyebrow">Tūmahi · Programmes</p>
-            <h1 className="display mt-3 text-balance text-4xl font-bold leading-[1.05] md:text-6xl">
-              Three ways to roll up your sleeves with us.
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg text-foreground/75">
-              From sorting kai boxes to cooking nourishing meals, here&rsquo;s
-              everything we&rsquo;re running this season.
-            </p>
-          </div>
-        </section>
-        <ProgramsGrid />
+        <PageHeader
+          band
+          eyebrow="Tūmahi · Programmes"
+          title="Find a place that fits the day you’ve got."
+          lead="From sorting kai boxes to cooking nourishing meals, here’s everything we’re running this season. Choose a programme to see its open shifts."
+        />
+        <ProgramsGrid showHeader={false} className="py-12 md:py-16" />
         <InclusiveBand />
-        <CtaBand />
+        <CtaBand className="pt-12 md:pt-16" />
       </main>
       <SiteFooter />
     </>

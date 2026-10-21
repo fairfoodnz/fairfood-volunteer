@@ -61,14 +61,35 @@ export function VolunteersTable({
   const pageSize = rows.length;
   // "Copy emails" covers the whole audience, like Export CSV — not just the
   // page on screen.
-  const copyAll = () =>
+  const copyAll = () => {
+    // Start the fetch inside the click so the clipboard write can be handed
+    // the pending result: Safari only allows a write during the user gesture,
+    // and a ClipboardItem built from a promise counts as one.
+    const emailsPromise = matchingEmailsAction(audience);
     startCopy(async () => {
+      let emails: string[];
       try {
-        await copyEmails(await matchingEmailsAction(audience));
+        emails = await emailsPromise;
       } catch {
         toast.error("Couldn't fetch those emails. Try again.");
+        return;
+      }
+      if (emails.length === 0) return;
+      try {
+        if (typeof ClipboardItem === "undefined") throw new Error("unsupported");
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": emailsPromise.then(
+              (list) => new Blob([list.join(", ")], { type: "text/plain" }),
+            ),
+          }),
+        ]);
+        toast.success(`Copied ${countOf(emails.length, "email")} to your clipboard.`);
+      } catch {
+        await copyEmails(emails);
       }
     });
+  };
   // Derive the selection from currently-visible rows so a selection made under
   // one filter doesn't show as a ghost count after the filters change.
   const selectedRows = useMemo(

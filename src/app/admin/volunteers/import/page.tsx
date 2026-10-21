@@ -1,11 +1,11 @@
-import Link from "next/link";
-import { ArrowLeft, Mail, Users2, MailCheck } from "lucide-react";
 import { db } from "@/lib/db";
 import { fullName } from "@/lib/users";
 import { ImportUploader } from "./uploader";
 import { PendingInvitesPanel } from "./pending-invites-panel";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { StatTile } from "@/components/admin/stat-tile";
 
-export const metadata = { title: "Import volunteers · Admin" };
+export const metadata = { title: "Import roster · Admin" };
 export const dynamic = "force-dynamic";
 
 const NZ_DATE = new Intl.DateTimeFormat("en-NZ", {
@@ -48,35 +48,27 @@ export default async function ImportVolunteersPage() {
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8">
-          <Link
-            href="/admin/volunteers"
-            className="inline-flex items-center gap-1.5 text-xs text-foreground/65 hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            Back to volunteers
-          </Link>
-          <p className="eyebrow mt-4">Volunteers · Import</p>
-          <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
-            Bring an existing roster across.
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-foreground/70">
-            Drop in a CSV or .xlsx exported from Apple Numbers, Excel, or
-            Google Sheets. We&rsquo;ll match the columns to a Fair Food profile,
-            show you what will happen, then create the accounts and email each
-            volunteer a one-time link to set their password.
-          </p>
-        </header>
+        <AdminPageHeader
+          back={{ href: "/admin/volunteers", label: "All volunteers" }}
+          eyebrow="Volunteers"
+          title="Bring an existing roster across"
+          description={
+            <>
+              Drop in a CSV or .xlsx exported from Apple Numbers, Excel, or
+              Google Sheets. We&rsquo;ll match the columns to a Fair Food
+              profile, show you what will happen, then create the accounts and
+              email each volunteer a one-time link to set their password.
+            </>
+          }
+        />
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Stat
-            icon={Users2}
+          <StatTile
             label="Awaiting claim"
             value={totalPending}
             hint={totalPending === 0 ? "No imports outstanding" : "Imported, not yet claimed"}
           />
-          <Stat
-            icon={MailCheck}
+          <StatTile
             label="Active invites"
             value={activeInvites}
             hint={
@@ -87,8 +79,7 @@ export default async function ImportVolunteersPage() {
                   : "Nothing in flight"
             }
           />
-          <Stat
-            icon={Mail}
+          <StatTile
             label="Never invited"
             value={neverSent}
             hint={neverSent > 0 ? "Imported but no email sent yet" : "All sent"}
@@ -116,31 +107,6 @@ export default async function ImportVolunteersPage() {
           })}
         />
       </div>
-    </div>
-  );
-}
-
-function Stat({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
-  icon?: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: React.ReactNode;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-md border border-border bg-card p-5">
-      <div className="flex items-center gap-2">
-        {Icon && <Icon className="size-3.5 text-foreground/65" />}
-        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
-          {label}
-        </p>
-      </div>
-      <p className="display mt-2 text-3xl font-bold tabular-nums">{value}</p>
-      {hint && <p className="mt-1 text-xs text-foreground/65">{hint}</p>}
     </div>
   );
 }

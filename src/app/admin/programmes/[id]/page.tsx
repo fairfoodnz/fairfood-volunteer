@@ -1,17 +1,28 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ProgrammeForm } from "@/components/admin/programme-form";
 import { ProgrammeTemplates } from "@/components/admin/programme-templates";
 import { DeleteProgrammeButton } from "@/components/admin/delete-programme-button";
 
-export const metadata = { title: "Edit programme · Admin" };
 export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 };
+
+export async function generateMetadata({ params }: Pick<Props, "params">) {
+  // generateMetadata runs independently of the layout's admin gate.
+  await requireAdmin();
+  const { id } = await params;
+  const program = await db.program.findUnique({
+    where: { id },
+    select: { title: true },
+  });
+  return { title: program ? `${program.title} · Admin` : "Programme · Admin" };
+}
 
 export default async function EditProgrammePage({ params, searchParams }: Props) {
   const { id } = await params;
@@ -31,16 +42,11 @@ export default async function EditProgrammePage({ params, searchParams }: Props)
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-5xl">
-        <Link
-          href="/admin/programmes"
-          className="text-sm font-medium text-foreground/60 hover:text-foreground"
-        >
-          ← Programmes
-        </Link>
-        <p className="eyebrow mt-4">Edit programme</p>
-        <h1 className="display mt-2 mb-8 text-3xl font-bold leading-tight">
-          {program.title}
-        </h1>
+        <AdminPageHeader
+          back={{ href: "/admin/programmes", label: "Programmes" }}
+          eyebrow="Programmes"
+          title={program.title}
+        />
 
         {error === "has-shifts" && (
           <div
@@ -72,7 +78,7 @@ export default async function EditProgrammePage({ params, searchParams }: Props)
           <h2 className="text-sm font-semibold uppercase tracking-wider text-destructive">
             Danger zone
           </h2>
-          <p className="mt-1 mb-4 text-sm text-foreground/65">
+          <p className="mt-1 mb-4 text-sm text-foreground/70">
             Permanently remove this programme.
           </p>
           <DeleteProgrammeButton

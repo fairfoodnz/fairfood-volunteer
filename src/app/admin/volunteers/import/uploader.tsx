@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { fullName } from "@/lib/users";
+import { countOf, plural } from "@/lib/format";
+import { StatusPill, type PillTone } from "@/components/patterns/status-pill";
 import { parseFileAction, confirmImportAction, type ParseResult } from "./actions";
 import type { ImportPreviewRow, ImportStatus } from "@/lib/volunteers-import";
 
@@ -98,7 +100,7 @@ export function ImportUploader() {
     if (f) void handleFile(f);
   };
 
-  const onDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const onDrop = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     setDragOver(false);
     const f = e.dataTransfer.files?.[0];
@@ -136,8 +138,8 @@ export function ImportUploader() {
     setPhase("done");
     toast.success(
       result.created > 0
-        ? `Created ${result.created} account${result.created === 1 ? "" : "s"}${
-            sendInvites && result.created > 0 ? " and sent invites" : ""
+        ? `Created ${countOf(result.created, "account")}${
+            sendInvites ? " and sent invites" : ""
           }.`
         : "No new accounts to create.",
     );
@@ -165,6 +167,8 @@ export function ImportUploader() {
         type="file"
         accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         className="sr-only"
+        tabIndex={-1}
+        aria-hidden
         onChange={onInputChange}
       />
 
@@ -181,8 +185,14 @@ export function ImportUploader() {
       ) : null}
 
       {phase === "importing" ? (
-        <div className="mt-6 rounded-md border border-border bg-card p-8 text-center">
-          <CircleDashed className="mx-auto size-6 animate-spin text-leaf-deep" />
+        <div
+          role="status"
+          className="mt-6 rounded-md border border-border bg-card p-8 text-center"
+        >
+          <CircleDashed
+            aria-hidden
+            className="mx-auto size-6 text-leaf-deep motion-safe:animate-spin"
+          />
           <p className="mt-3 text-sm font-medium">Creating accounts…</p>
           <p className="mt-1 text-xs text-foreground/65">
             This usually takes a couple of seconds. Hold on.
@@ -204,53 +214,63 @@ export function ImportUploader() {
 function Dropzone(props: {
   dragOver: boolean;
   parsing: boolean;
-  onDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLElement>) => void;
   onDragLeave: () => void;
-  onDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLElement>) => void;
   onPick: () => void;
 }) {
   return (
     <div>
-      <label
-        htmlFor="" // empty — pick handled via onClick, not native label/input
-        onClick={(e) => {
-          e.preventDefault();
+      {/* A real button (same pattern as the document upload card), so it's
+          in the tab order, activates on Enter/Space and shows a focus ring.
+          The file input itself stays out of the tab order. */}
+      <button
+        type="button"
+        onClick={() => {
           if (!props.parsing) props.onPick();
         }}
+        disabled={props.parsing}
         onDragOver={props.onDragOver}
         onDragLeave={props.onDragLeave}
         onDrop={props.onDrop}
         className={cn(
-          "relative flex min-h-[260px] cursor-pointer flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed bg-card px-6 py-12 text-center transition-colors",
-          "focus-within:border-leaf-deep focus-within:ring-3 focus-within:ring-leaf-deep/20",
+          "relative flex min-h-[260px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed bg-card px-6 py-12 text-center outline-none transition-colors",
+          "focus-visible:border-leaf-deep focus-visible:ring-3 focus-visible:ring-ring/40",
           props.dragOver
             ? "border-leaf-deep bg-leaf-deep/5"
             : "border-border hover:border-leaf-deep/50",
-          props.parsing && "pointer-events-none opacity-70",
+          props.parsing && "cursor-wait opacity-70",
         )}
         aria-busy={props.parsing}
+        aria-describedby="import-dropzone-hint"
       >
-        <div className="grid size-14 place-items-center rounded-full bg-leaf-deep/10">
+        <span className="grid size-14 place-items-center rounded-full bg-leaf-deep/10">
           {props.parsing ? (
-            <CircleDashed className="size-6 animate-spin text-leaf-deep" />
+            <CircleDashed
+              aria-hidden
+              className="size-6 text-leaf-deep motion-safe:animate-spin"
+            />
           ) : (
-            <UploadCloud className="size-6 text-leaf-deep" />
+            <UploadCloud aria-hidden className="size-6 text-leaf-deep" />
           )}
-        </div>
-        <div className="space-y-1">
-          <p className="text-base font-semibold">
+        </span>
+        <span className="space-y-1">
+          <span className="block text-base font-semibold">
             {props.parsing ? "Reading the file…" : "Drop your roster here"}
-          </p>
-          <p className="text-sm text-foreground/65">
+          </span>
+          <span
+            id="import-dropzone-hint"
+            className="block text-sm text-foreground/70"
+          >
             Or{" "}
             <span className="font-semibold text-leaf-deep underline underline-offset-2">
               click to browse
             </span>
             {" — "}
             CSV or .xlsx up to 5 MB
-          </p>
-        </div>
-      </label>
+          </span>
+        </span>
+      </button>
 
       <details className="mt-4 rounded-md border border-border bg-cream-deep/40 px-4 py-3 text-sm">
         <summary className="cursor-pointer font-medium text-foreground/85">
@@ -333,15 +353,13 @@ function Preview(props: {
           <div>
             <p className="text-sm font-semibold">{filename}</p>
             <p className="text-xs text-foreground/65">
-              {totalRows.toLocaleString()} row{totalRows === 1 ? "" : "s"} ·{" "}
-              {roster.matched.length} field
-              {roster.matched.length === 1 ? "" : "s"} matched
+              {totalRows.toLocaleString()} {plural(totalRows, "row")} ·{" "}
+              {countOf(roster.matched.length, "field")} matched
               {roster.unrecognised.length > 0 ? (
                 <>
                   {" · "}
-                  <span title={roster.unrecognised.join(", ")}>
-                    {roster.unrecognised.length} ignored
-                  </span>
+                  {roster.unrecognised.length} ignored (
+                  {roster.unrecognised.join(", ")})
                 </>
               ) : null}
             </p>
@@ -350,9 +368,9 @@ function Preview(props: {
         <button
           type="button"
           onClick={props.onCancel}
-          className="inline-flex items-center gap-1 text-xs font-medium text-foreground/65 hover:text-foreground"
+          className="inline-flex h-9 items-center gap-1 self-start rounded-md px-2 text-xs font-semibold text-foreground/70 hover:bg-muted hover:text-foreground sm:self-auto"
         >
-          <X className="size-3.5" />
+          <X aria-hidden className="size-3.5" />
           Choose a different file
         </button>
       </div>
@@ -387,7 +405,7 @@ function Preview(props: {
 
       {/* Filter chips */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav aria-label="Filter rows" className="flex flex-wrap gap-2">
+        <div role="group" aria-label="Filter rows" className="flex flex-wrap gap-2">
           {FILTERS.map((f) => {
             const active = filter === f.key;
             const c = f.key === "all" ? totalRows : counts[f.key];
@@ -397,7 +415,7 @@ function Preview(props: {
                 type="button"
                 onClick={() => props.setFilter(f.key)}
                 className={cn(
-                  "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
+                  "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/40",
                   active
                     ? "border-leaf bg-leaf-deep text-cream"
                     : "border-border bg-card text-foreground/75 hover:border-leaf/40 hover:text-leaf-deep",
@@ -416,8 +434,8 @@ function Preview(props: {
               </button>
             );
           })}
-        </nav>
-        <p className="text-xs text-foreground/65">
+        </div>
+        <p className="text-xs text-foreground/70">
           Showing {visibleRows.length.toLocaleString()} of{" "}
           {totalRows.toLocaleString()}
         </p>
@@ -432,7 +450,10 @@ function Preview(props: {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-cream-deep text-left text-foreground/65">
+              <caption className="sr-only">
+                Rows from {filename} and what the import will do with each
+              </caption>
+              <thead className="bg-cream-deep text-left text-foreground/70">
                 <tr>
                   <th className="w-12 px-4 py-3 font-mono text-[10px] uppercase tracking-widest">
                     Row
@@ -502,8 +523,8 @@ function Preview(props: {
             >
               {willCreate === 0
                 ? "Nothing to create"
-                : `Create ${willCreate.toLocaleString()} account${willCreate === 1 ? "" : "s"}`}
-              {willCreate > 0 && <ArrowRight className="size-4" />}
+                : `Create ${willCreate.toLocaleString()} ${plural(willCreate, "account")}`}
+              {willCreate > 0 && <ArrowRight aria-hidden className="size-4" />}
             </Button>
           </div>
         </div>
@@ -519,7 +540,18 @@ function PreviewRow({ row }: { row: ImportPreviewRow }) {
         {row.rowNumber}
       </td>
       <td className="px-4 py-3">
-        <StatusPill status={row.status} reason={row.reason} />
+        <ImportStatusPill status={row.status} />
+        {/* Why a row is skipped or errored, inline — not a hover tooltip. */}
+        {row.reason && row.status !== "new" ? (
+          <p
+            className={cn(
+              "mt-1 max-w-[16rem] text-xs",
+              row.status === "error" ? "text-destructive" : "text-foreground/70",
+            )}
+          >
+            {row.reason}
+          </p>
+        ) : null}
       </td>
       <td className="px-4 py-3">
         <span className="font-medium">
@@ -543,28 +575,23 @@ function PreviewRow({ row }: { row: ImportPreviewRow }) {
   );
 }
 
-function StatusPill({ status, reason }: { status: ImportStatus; reason?: string }) {
-  const palette: Record<
-    ImportStatus,
-    { className: string; icon: React.ComponentType<{ className?: string }> }
-  > = {
-    new: { className: "bg-leaf/15 text-leaf-deep", icon: CheckCircle2 },
-    existing: { className: "bg-foreground/10 text-foreground/65", icon: CircleSlash },
-    skip: { className: "bg-foreground/10 text-foreground/65", icon: CircleSlash },
-    error: { className: "bg-tomato/15 text-tomato-deep", icon: AlertTriangle },
-  };
-  const { className, icon: Icon } = palette[status];
+const STATUS_PILL: Record<
+  ImportStatus,
+  { tone: PillTone; icon: React.ComponentType<{ className?: string }> }
+> = {
+  new: { tone: "positive", icon: CheckCircle2 },
+  existing: { tone: "neutral", icon: CircleSlash },
+  skip: { tone: "neutral", icon: CircleSlash },
+  error: { tone: "danger", icon: AlertTriangle },
+};
+
+function ImportStatusPill({ status }: { status: ImportStatus }) {
+  const { tone, icon: Icon } = STATUS_PILL[status];
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest",
-        className,
-      )}
-      title={reason}
-    >
-      <Icon className="size-3" />
+    <StatusPill tone={tone}>
+      <Icon aria-hidden className="size-3" />
       {STATUS_LABEL[status]}
-    </span>
+    </StatusPill>
   );
 }
 
@@ -622,8 +649,8 @@ function DoneBanner({
         <div className="flex-1">
           <p className="text-base font-semibold">Import complete</p>
           <p className="mt-1 text-sm text-foreground/75">
-            Created <strong>{summary.created}</strong> account
-            {summary.created === 1 ? "" : "s"}
+            Created <strong>{summary.created}</strong>{" "}
+            {plural(summary.created, "account")}
             {summary.invitesSent ? (
               <> and emailed claim invites.</>
             ) : (
@@ -633,14 +660,14 @@ function DoneBanner({
               <>
                 {" "}
                 Skipped <strong>{summary.skipped}</strong> already-on-file or
-                duplicate row{summary.skipped === 1 ? "" : "s"}.
+                duplicate {plural(summary.skipped, "row")}.
               </>
             ) : null}
             {summary.errors > 0 ? (
               <>
                 {" "}
-                Left <strong>{summary.errors}</strong> error row
-                {summary.errors === 1 ? "" : "s"} untouched.
+                Left <strong>{summary.errors}</strong> error{" "}
+                {plural(summary.errors, "row")} untouched.
               </>
             ) : null}
           </p>
