@@ -8,7 +8,7 @@ test.describe("public marketing + browse", () => {
     await page.getByRole("link", { name: "Programmes", exact: true }).click();
     await expect(
       page.getByRole("heading", {
-        name: /Three ways to roll up your sleeves with us/i,
+        name: /Find a place that fits the day you.ve got/i,
       }),
     ).toBeVisible();
   });
@@ -17,7 +17,7 @@ test.describe("public marketing + browse", () => {
     await page.goto("/programs");
     await expect(
       page.getByRole("heading", {
-        name: /Three ways to roll up your sleeves with us/i,
+        name: /Find a place that fits the day you.ve got/i,
       }),
     ).toBeVisible();
   });

@@ -283,7 +283,7 @@ export default async function ShiftPage({ params }: Props) {
 
             <aside
               id="book"
-              className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start"
+              className="scroll-mt-24 lg:sticky lg:top-[calc(6rem+var(--impersonation-offset,0px))] lg:self-start"
             >
               <div className="rounded-md border border-border bg-card p-6 shadow-sm md:p-8">
                 {isInclusive ? (
