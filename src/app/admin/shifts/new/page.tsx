@@ -20,8 +20,8 @@ export default async function NewShiftPage() {
         <AdminPageHeader
           back={{ href: "/admin/shifts", label: "Manage shifts" }}
           eyebrow="Rosters"
-          title="New shift"
-          description="Add a single shift to the roster. To roll out many at once, use Bulk schedule."
+          title="Add a shift to the roster"
+          description="One shift at a time. To roll out many at once, use Bulk schedule."
         />
 
         <ShiftForm

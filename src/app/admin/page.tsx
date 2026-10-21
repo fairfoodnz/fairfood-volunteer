@@ -78,7 +78,7 @@ export default async function AdminPage() {
       <div className="mx-auto max-w-6xl">
         <AdminPageHeader
           eyebrow="Dashboard"
-          title="Today’s rosters and coming weeks"
+          title="Today’s rosters & coming weeks"
           actions={
             <Button asChild className="bg-leaf-deep hover:bg-leaf-ink">
               <Link href="/admin/shifts/new">+ New shift</Link>
