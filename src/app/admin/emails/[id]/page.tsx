@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { fullName } from "@/lib/users";
 import { EmailLogStatus } from "@/generated/prisma";
 import { RetryEmailButton } from "@/components/admin/retry-email-button";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import {
   EMAIL_STATUS_BADGE,
   EMAIL_TEMPLATE_LABELS,
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: Props) {
     where: { id },
     select: { subject: true },
   });
-  return { title: row ? `${row.subject} · Emails` : "Email · Admin" };
+  return { title: row ? `${row.subject} · Admin` : "Email · Admin" };
 }
 
 export default async function EmailDetailPage({ params }: Props) {
@@ -54,63 +55,55 @@ export default async function EmailDetailPage({ params }: Props) {
   const backHref = row.user
     ? `/admin/volunteers/${row.user.id}`
     : "/admin/volunteers";
-  const backLabel = row.user
-    ? `← Back to ${fullName(row.user)}`
-    : "← All volunteers";
+  const backLabel = row.user ? fullName(row.user) : "Volunteers";
 
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-5xl">
-        <Link
-          href={backHref}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-foreground/65 hover:text-foreground"
-        >
-          {backLabel}
-        </Link>
-
-        <header className="mb-8">
-          <p className="eyebrow">Email · {EMAIL_TEMPLATE_LABELS[row.template]}</p>
-          <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
-            {row.subject}
-          </h1>
-          <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground/70">
-            <span>
-              To{" "}
-              {row.user ? (
-                <Link
-                  href={`/admin/volunteers/${row.user.id}`}
-                  className="font-semibold text-leaf-deep hover:underline"
-                >
-                  {row.toEmail}
-                </Link>
-              ) : (
-                <span className="font-semibold">{row.toEmail}</span>
-              )}
+        <AdminPageHeader
+          back={{ href: backHref, label: backLabel }}
+          eyebrow={`Volunteers · ${EMAIL_TEMPLATE_LABELS[row.template]} email`}
+          title={row.subject}
+          description={
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span>
+                To{" "}
+                {row.user ? (
+                  <Link
+                    href={`/admin/volunteers/${row.user.id}`}
+                    className="font-semibold text-leaf-deep hover:underline"
+                  >
+                    {row.toEmail}
+                  </Link>
+                ) : (
+                  <span className="font-semibold">{row.toEmail}</span>
+                )}
+              </span>
+              <span>· {formatEmailTimestamp(row.createdAt)}</span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${badge.cls}`}
+              >
+                {badge.label}
+              </span>
             </span>
-            <span>· {formatEmailTimestamp(row.createdAt)}</span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest ${badge.cls}`}
-            >
-              {badge.label}
-            </span>
+          }
+        />
+        {row.providerId && (
+          <p className="-mt-4 mb-8 break-all font-mono text-xs text-foreground/65">
+            Resend id · {row.providerId}
           </p>
-          {row.providerId && (
-            <p className="mt-2 font-mono text-xs text-foreground/65">
-              Resend id · {row.providerId}
-            </p>
-          )}
-        </header>
+        )}
 
         {row.error && (
-          <div className="mb-8 rounded-md border border-tomato/30 bg-tomato/5 p-4">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-tomato-deep">
+          <div className="mb-8 rounded-md border border-destructive/30 bg-destructive/5 p-4">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-destructive">
               Delivery error
             </p>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-tomato-deep">
+            <p className="mt-2 whitespace-pre-wrap break-words text-sm text-destructive">
               {row.error}
             </p>
             {row.status === EmailLogStatus.FAILED && (
-              <div className="mt-4 border-t border-tomato/20 pt-4">
+              <div className="mt-4 border-t border-destructive/20 pt-4">
                 <RetryEmailButton emailLogId={row.id} tone="block" />
               </div>
             )}
@@ -130,7 +123,7 @@ export default async function EmailDetailPage({ params }: Props) {
             <iframe
               src={`/admin/emails/${row.id}/preview`}
               title={`Preview: ${row.subject}`}
-              className="block h-[900px] w-full"
+              className="block h-[min(80vh,900px)] min-h-[28rem] w-full"
               sandbox=""
               referrerPolicy="no-referrer"
             />

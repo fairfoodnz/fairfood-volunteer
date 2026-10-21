@@ -302,9 +302,11 @@ export async function bulkSchedule(
     // Volunteer-facing pages that list shifts (/programs/[slug], /shifts,
     // /shifts/[id]) are all `export const dynamic = "force-dynamic"`, so they
     // render per request — no cached output to bust, new shifts show
-    // immediately. These two calls mirror the existing createShift/cancelShift
-    // convention for the admin dashboard and shift list.
+    // immediately. These calls mirror the createShift/cancelShift convention
+    // for the admin dashboard and shift lists — the scheduler lands on
+    // /admin/shifts filtered to the new range, so that must be fresh too.
     revalidatePath("/admin");
+    revalidatePath("/admin/shifts");
     revalidatePath("/shifts");
   }
 

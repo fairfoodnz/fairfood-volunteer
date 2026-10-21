@@ -62,10 +62,25 @@ export function VolunteersTable({
   // "Copy emails" covers the whole audience, like Export CSV — not just the
   // page on screen.
   const copyAll = () => {
-    // Start the fetch inside the click so the clipboard write can be handed
-    // the pending result: Safari only allows a write during the user gesture,
-    // and a ClipboardItem built from a promise counts as one.
     const emailsPromise = matchingEmailsAction(audience);
+    // Safari only allows a clipboard write during the click itself, so hand
+    // it a ClipboardItem built from the pending fetch rather than writing
+    // after the await. Elsewhere this also works; writeText is the fallback.
+    let write: Promise<void> | null = null;
+    if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      try {
+        write = navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": emailsPromise.then(
+              (list) => new Blob([list.join(", ")], { type: "text/plain" }),
+            ),
+          }),
+        ]);
+        write.catch(() => {});
+      } catch {
+        write = null;
+      }
+    }
     startCopy(async () => {
       let emails: string[];
       try {
@@ -74,17 +89,12 @@ export function VolunteersTable({
         toast.error("Couldn't fetch those emails. Try again.");
         return;
       }
-      if (emails.length === 0) return;
       try {
-        if (typeof ClipboardItem === "undefined") throw new Error("unsupported");
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/plain": emailsPromise.then(
-              (list) => new Blob([list.join(", ")], { type: "text/plain" }),
-            ),
-          }),
-        ]);
-        toast.success(`Copied ${countOf(emails.length, "email")} to your clipboard.`);
+        if (!write) throw new Error("No ClipboardItem support");
+        await write;
+        toast.success(
+          `Copied ${countOf(emails.length, "email")} to your clipboard.`,
+        );
       } catch {
         await copyEmails(emails);
       }

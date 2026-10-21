@@ -337,7 +337,7 @@ export function BulkScheduler({
             )}
 
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
+              <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/65">
                 Per template
               </p>
               <ul className="mt-2 space-y-1 text-sm">
@@ -362,7 +362,7 @@ export function BulkScheduler({
             </div>
 
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
+              <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/65">
                 First shifts
               </p>
               <ul className="mt-2 space-y-1 text-sm">
@@ -429,7 +429,7 @@ function Metric({
       >
         {value}
       </p>
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
+      <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/65">
         {label}
       </p>
     </div>

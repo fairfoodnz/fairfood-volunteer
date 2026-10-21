@@ -83,7 +83,7 @@ export function SlotBlocks({
                 {b.note && (
                   <p className="mt-1 text-sm text-foreground/75">{b.note}</p>
                 )}
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
+                <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-foreground/65">
                   added {dateFmt.format(b.createdAt)} · shown to volunteers as
                   {` “${blockKindLabel(b.kind)} joining”`}
                 </p>
