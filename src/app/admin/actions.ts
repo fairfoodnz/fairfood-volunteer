@@ -342,39 +342,44 @@ export async function cancelShift(
   if (typeof id !== "string" || !id) return { error: "Missing shift." };
   const notify = formData.get("notify") != null;
 
-  // Flip the flag first (idempotently) so no new public booking can land
-  // between reading the roster and cancelling it — bookShiftAction refuses
-  // cancelled shifts.
-  await db.shift.updateMany({
-    where: { id, cancelled: false },
-    data: { cancelled: true },
-  });
-  const shift = await db.shift.findUnique({
-    where: { id },
-    include: {
-      program: { select: { title: true, location: true, slug: true } },
-      bookings: {
-        where: { status: BookingStatus.CONFIRMED },
-        include: {
-          user: { select: { id: true, email: true, firstName: true } },
+  // One transaction: the flag flip, the roster read and the booking
+  // cancellation commit together, so a failure part-way can't leave a
+  // cancelled shift with volunteers still CONFIRMED on it. The flag is
+  // flipped first (idempotently) so no public booking can land between the
+  // read and the update — bookShiftAction refuses cancelled shifts.
+  const shift = await db.$transaction(async (tx) => {
+    await tx.shift.updateMany({
+      where: { id, cancelled: false },
+      data: { cancelled: true },
+    });
+    const found = await tx.shift.findUnique({
+      where: { id },
+      include: {
+        program: { select: { title: true, location: true, slug: true } },
+        bookings: {
+          where: { status: BookingStatus.CONFIRMED },
+          include: {
+            user: { select: { id: true, email: true, firstName: true } },
+          },
         },
       },
-    },
+    });
+    if (found && found.bookings.length > 0) {
+      await tx.booking.updateMany({
+        where: {
+          id: { in: found.bookings.map((b) => b.id) },
+          status: BookingStatus.CONFIRMED,
+        },
+        data: { status: BookingStatus.CANCELLED },
+      });
+    }
+    return found;
   });
   if (!shift) return { error: "That shift no longer exists." };
-
   const bookings = shift.bookings;
-  if (bookings.length > 0) {
-    await db.booking.updateMany({
-      where: {
-        id: { in: bookings.map((b) => b.id) },
-        status: BookingStatus.CONFIRMED,
-      },
-      data: { status: BookingStatus.CANCELLED },
-    });
-  }
 
-  // Best-effort and sequential (Resend rate-limits bursts): the cancellation
+  // Emails go out only after the transaction has committed. Best-effort
+  // and sequential (Resend rate-limits bursts): the cancellation
   // is committed, so a failed send is logged, not surfaced as a failure.
   let emailed = 0;
   if (notify && bookings.length > 0) {
@@ -473,21 +478,25 @@ export async function bulkCancelShifts(
   if (!parsed.success) return { error: "Select at least one shift." };
 
   const slugs = await affectedProgramSlugs(parsed.data.shiftIds);
-  const live = await db.shift.findMany({
-    where: { id: { in: parsed.data.shiftIds }, cancelled: false },
-    select: { id: true },
-  });
-  const liveIds = live.map((s) => s.id);
-  const [{ count }] = await db.$transaction([
-    db.shift.updateMany({
-      where: { id: { in: liveIds }, cancelled: false },
+  // Read and flip inside one transaction, and cancel bookings only on the
+  // shifts this call actually flipped, so a concurrent cancel can't make the
+  // reported count and the cancelled bookings disagree.
+  const { liveIds, count } = await db.$transaction(async (tx) => {
+    const live = await tx.shift.findMany({
+      where: { id: { in: parsed.data.shiftIds }, cancelled: false },
+      select: { id: true },
+    });
+    const ids = live.map((s) => s.id);
+    const flipped = await tx.shift.updateMany({
+      where: { id: { in: ids }, cancelled: false },
       data: { cancelled: true },
-    }),
-    db.booking.updateMany({
-      where: { shiftId: { in: liveIds }, status: BookingStatus.CONFIRMED },
+    });
+    await tx.booking.updateMany({
+      where: { shiftId: { in: ids }, status: BookingStatus.CONFIRMED },
       data: { status: BookingStatus.CANCELLED },
-    }),
-  ]);
+    });
+    return { liveIds: ids, count: flipped.count };
+  });
 
   revalidateShiftLists(slugs);
   for (const id of liveIds) revalidatePath(`/admin/shifts/${id}`);

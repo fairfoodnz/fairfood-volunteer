@@ -141,8 +141,11 @@ export async function updateDocumentAction(
     return { error: parsed.error.issues[0]?.message ?? "Check the form." };
   }
 
-  let replacement: { objectKey: string; mimeType: string; sizeBytes: number } | null =
-    null;
+  let replacement: {
+    objectKey: string;
+    mimeType: string;
+    sizeBytes: number;
+  } | null = null;
   const file = formData.get("file");
   if (file instanceof File && file.size > 0) {
     if (file.size > MAX_UPLOAD_BYTES) {
@@ -160,7 +163,14 @@ export async function updateDocumentAction(
       };
     }
     const objectKey = `documents/${randomUUID()}.${extensionForMime(file.type, file.name)}`;
-    await putObject({ key: objectKey, body: buffer, contentType: file.type });
+    try {
+      await putObject({ key: objectKey, body: buffer, contentType: file.type });
+    } catch (err) {
+      console.error("Document replacement upload failed:", err);
+      return {
+        error: "We couldn't upload the new file. Nothing was changed — try again.",
+      };
+    }
     replacement = { objectKey, mimeType: file.type, sizeBytes: file.size };
   }
 
@@ -177,7 +187,8 @@ export async function updateDocumentAction(
     });
   } catch (err) {
     if (replacement) await deleteObject(replacement.objectKey).catch(() => {});
-    throw err;
+    console.error("Document update failed:", err);
+    return { error: "We couldn't save those changes. Try again." };
   }
 
   // Replaced the file — bin the old object (best effort).
