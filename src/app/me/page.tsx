@@ -44,7 +44,7 @@ export default async function MePage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-12 md:py-16">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x">
           {!user.emailVerifiedAt && <VerifyEmailBanner email={user.email} />}
           {booked && (
@@ -64,7 +64,7 @@ export default async function MePage({ searchParams }: Props) {
               </h1>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button asChild className="bg-leaf hover:bg-leaf-deep">
+              <Button asChild className="bg-leaf-deep hover:bg-leaf-ink">
                 <Link href="/shifts">Book another shift</Link>
               </Button>
               <Button asChild variant="outline">
@@ -173,8 +173,8 @@ function BookingPill({ status }: { status: BookingStatus }) {
   const cfg: Record<BookingStatus, { label: string; cls: string }> = {
     CONFIRMED: { label: "Confirmed", cls: "bg-leaf/15 text-leaf-deep" },
     CANCELLED: { label: "Cancelled", cls: "bg-foreground/10 text-foreground/65" },
-    ATTENDED: { label: "Attended", cls: "bg-leaf text-cream" },
-    NO_SHOW: { label: "No-show", cls: "bg-tomato/15 text-tomato" },
+    ATTENDED: { label: "Attended", cls: "bg-leaf-deep text-cream" },
+    NO_SHOW: { label: "No-show", cls: "bg-tomato/15 text-tomato-deep" },
   };
   const c = cfg[status];
   return <Badge className={`${c.cls} hover:${c.cls}`}>{c.label}</Badge>;

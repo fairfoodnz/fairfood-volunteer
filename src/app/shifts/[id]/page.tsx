@@ -145,7 +145,7 @@ export default async function ShiftPage({ params }: Props) {
         />
       )}
       <SiteNav />
-      <main className="flex-1 py-12 md:py-16">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x">
           <Link
             href="/shifts"
@@ -180,7 +180,7 @@ export default async function ShiftPage({ params }: Props) {
               <section aria-labelledby="roster-heading" className="space-y-3">
                 <p
                   id="roster-heading"
-                  className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
+                  className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
                 >
                   Going · {taken} of {shift.capacity}
                 </p>
@@ -195,7 +195,7 @@ export default async function ShiftPage({ params }: Props) {
                         <span
                           className={
                             c.isYou
-                              ? "inline-flex rounded-full bg-leaf px-3 py-1 text-sm font-semibold text-cream"
+                              ? "inline-flex rounded-full bg-leaf-deep px-3 py-1 text-sm font-semibold text-cream"
                               : "inline-flex rounded-full bg-leaf/15 px-3 py-1 text-sm font-medium text-leaf-deep"
                           }
                         >
@@ -249,7 +249,7 @@ export default async function ShiftPage({ params }: Props) {
 
               {shift.notes && (
                 <div className="rounded-md border-l-2 border-leaf bg-cream-deep px-5 py-4 text-sm">
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                     Note from the team
                   </p>
                   <p className="mt-1 text-foreground/85">{shift.notes}</p>
@@ -272,7 +272,7 @@ export default async function ShiftPage({ params }: Props) {
                     </p>
                     <Link
                       href={INCLUSIVE_MAILTO}
-                      className="inline-flex h-10 items-center rounded bg-leaf px-4 text-sm font-semibold text-cream transition-colors hover:bg-leaf-deep"
+                      className="inline-flex h-10 items-center rounded bg-leaf-deep px-4 text-sm font-semibold text-cream transition-colors hover:bg-leaf-ink"
                     >
                       Email volunteering@fairfood.org.nz →
                     </Link>
@@ -301,7 +301,7 @@ export default async function ShiftPage({ params }: Props) {
                     <h3 className="display text-xl font-semibold leading-snug">
                       You&rsquo;re booked in. See you then.
                     </h3>
-                    <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/55">
+                    <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/65">
                       {formatShiftRange(shift.startsAt, shift.endsAt)}
                     </p>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -381,13 +381,13 @@ function Detail({
 }) {
   return (
     <div>
-      <dt className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <dt className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </dt>
       <dd
         className={
           emphasis === "warn"
-            ? "mt-1 font-semibold text-tomato"
+            ? "mt-1 font-semibold text-tomato-deep"
             : "mt-1 text-foreground/85"
         }
       >

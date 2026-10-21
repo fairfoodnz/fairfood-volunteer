@@ -269,7 +269,7 @@ export function QuestionnaireForm({
       {next && <input type="hidden" name="next" value={next} />}
 
       <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-foreground/55">
+        <p className="text-xs text-foreground/65">
           You can edit any of this later from{" "}
           <span className="font-medium">My shifts → Edit profile</span>.
         </p>
@@ -277,7 +277,7 @@ export function QuestionnaireForm({
           type="submit"
           size="lg"
           disabled={pending}
-          className="h-12 bg-leaf text-base font-semibold hover:bg-leaf-deep"
+          className="h-12 bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
         >
           {pending ? "Saving…" : "Save and continue →"}
         </Button>
@@ -353,12 +353,12 @@ function FlagGroup({
 }
 
 function Req() {
-  return <span className="ml-1 text-tomato">*</span>;
+  return <span className="ml-1 text-tomato-deep">*</span>;
 }
 
 function Helper({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
-    <p id={id} className="text-xs text-foreground/55">
+    <p id={id} className="text-xs text-foreground/65">
       {children}
     </p>
   );

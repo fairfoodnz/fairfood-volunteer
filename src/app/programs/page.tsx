@@ -22,7 +22,7 @@ export default function ProgramsPage() {
   return (
     <>
       <SiteNav />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <section className="border-b border-border/60 bg-cream-deep">
           <div className="container-x py-16 md:py-20">
             <p className="eyebrow">Tūmahi · Programmes</p>

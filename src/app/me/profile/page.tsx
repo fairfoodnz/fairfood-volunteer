@@ -25,7 +25,7 @@ export default async function ProfilePage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-12 md:py-16">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x max-w-3xl">
           <p className="eyebrow">Kaiāwhina profile</p>
           <h1 className="display mt-2 text-balance text-3xl font-bold leading-tight md:text-4xl">
@@ -38,7 +38,7 @@ export default async function ProfilePage({ searchParams }: Props) {
 
           {needsEnglishName && (
             <div className="mt-8 flex gap-3 rounded-md border border-tomato/30 bg-tomato/5 px-5 py-4">
-              <Languages className="mt-0.5 size-5 shrink-0 text-tomato" aria-hidden />
+              <Languages className="mt-0.5 size-5 shrink-0 text-tomato-deep" aria-hidden />
               <div className="space-y-1">
                 <p className="font-semibold text-foreground">
                   Please write your name using the English alphabet

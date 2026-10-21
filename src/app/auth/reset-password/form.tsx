@@ -47,7 +47,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+        className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
       >
         {pending ? "Saving…" : "Set new password"}
       </Button>
@@ -76,7 +76,7 @@ function Field({
     <div className="space-y-2">
       <Label htmlFor={id}>
         {label}
-        {required && <span className="ml-1 text-tomato">*</span>}
+        {required && <span className="ml-1 text-tomato-deep">*</span>}
       </Label>
       <Input
         id={id}
@@ -91,7 +91,7 @@ function Field({
         className="h-11"
       />
       {helper && !error && (
-        <p id={helperId} className="text-xs text-foreground/55">
+        <p id={helperId} className="text-xs text-foreground/65">
           {helper}
         </p>
       )}

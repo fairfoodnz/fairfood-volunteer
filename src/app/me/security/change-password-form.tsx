@@ -87,7 +87,7 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
         <Button
           type="submit"
           disabled={pending}
-          className="h-11 bg-leaf font-semibold text-cream hover:bg-leaf-deep"
+          className="h-11 bg-leaf-deep font-semibold text-cream hover:bg-leaf-ink"
         >
           {pending
             ? "Saving…"
@@ -112,7 +112,7 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
       {/* Shown for both "change" and first-time "set": the action revokes
           every other session in either case (a fresh credential should kick
           any lingering Google/passkey-only logins on other devices). */}
-      <p className="text-xs text-foreground/55">
+      <p className="text-xs text-foreground/65">
         Saving will sign you out on every other device.
       </p>
     </form>
@@ -143,7 +143,7 @@ function Field({
     <div className="space-y-2">
       <Label htmlFor={id}>
         {label}
-        {required && <span className="ml-1 text-tomato">*</span>}
+        {required && <span className="ml-1 text-tomato-deep">*</span>}
       </Label>
       <Input
         id={id}
@@ -158,7 +158,7 @@ function Field({
         className="h-11"
       />
       {helper && !error && (
-        <p id={helperId} className="text-xs text-foreground/55">
+        <p id={helperId} className="text-xs text-foreground/65">
           {helper}
         </p>
       )}

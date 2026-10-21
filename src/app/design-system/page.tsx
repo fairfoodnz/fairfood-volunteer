@@ -54,7 +54,7 @@ function Section({
   return (
     <section id={id} className="scroll-mt-24 border-t border-border pt-12 md:pt-16">
       <div className="flex items-baseline gap-4">
-        <span className="font-mono text-xs text-foreground/40">{index}</span>
+        <span className="font-mono text-xs text-foreground/65">{index}</span>
         <p className="eyebrow text-leaf-deep">{eyebrow}</p>
       </div>
       <h2 className="display mt-3 text-2xl font-bold leading-tight text-balance md:text-3xl">
@@ -80,7 +80,7 @@ function Demo({
   return (
     <figure className="overflow-hidden rounded-md border border-border bg-card">
       <div className={`p-6 md:p-8 ${className}`}>{children}</div>
-      <figcaption className="border-t border-border bg-cream-deep px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <figcaption className="border-t border-border bg-cream-deep px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </figcaption>
     </figure>
@@ -118,8 +118,8 @@ function Swatch({
       <p className="mt-3 font-mono text-xs font-semibold text-foreground">
         {name}
       </p>
-      <p className="mt-1 font-mono text-[10px] text-foreground/55">{cls}</p>
-      <p className="mt-0.5 font-mono text-[10px] text-foreground/45">{oklch}</p>
+      <p className="mt-1 font-mono text-[10px] text-foreground/65">{cls}</p>
+      <p className="mt-0.5 font-mono text-[10px] text-foreground/65">{oklch}</p>
     </div>
   );
 }
@@ -140,13 +140,13 @@ function Toc() {
       aria-label="On this page"
       className="lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-auto"
     >
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/45">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         On this page
       </p>
       <ol className="mt-3 space-y-1.5 text-sm">
         {items.map(([id, label], i) => (
           <li key={id} className="flex gap-3">
-            <span className="font-mono text-xs text-foreground/35">
+            <span className="font-mono text-xs text-foreground/65">
               {String(i + 1).padStart(2, "0")}
             </span>
             <a
@@ -174,7 +174,7 @@ export default function DesignSystemPage() {
         <div className="container-x flex h-16 items-center justify-between gap-6">
           <div className="flex items-baseline gap-3">
             <span className="brand text-lg text-foreground">Fair Food</span>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/45">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
               design system
             </span>
           </div>
@@ -193,7 +193,7 @@ export default function DesignSystemPage() {
           <Toc />
         </aside>
 
-        <main className="min-w-0 max-w-3xl space-y-4">
+        <main id="main" className="min-w-0 max-w-3xl space-y-4">
           {/* Intro */}
           <div>
             <p className="eyebrow text-leaf-deep">
@@ -210,7 +210,7 @@ export default function DesignSystemPage() {
               not introduce new primary colours, fonts, or radii.
             </p>
             <div className="mt-4 rounded-md border-l-2 border-leaf bg-cream-deep px-5 py-4 text-sm">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                 Note from the team
               </p>
               <p className="mt-1 text-foreground/85">
@@ -256,7 +256,7 @@ export default function DesignSystemPage() {
           >
             <div className="space-y-8">
               <div>
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                   Surfaces
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -267,7 +267,7 @@ export default function DesignSystemPage() {
                 </div>
               </div>
               <div>
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                   Brand
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -278,11 +278,11 @@ export default function DesignSystemPage() {
                 </div>
               </div>
               <div>
-                <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                   Accents
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Swatch name="tomato" cls="text-tomato" oklch="0.66 0.19 32" swatchClass="bg-tomato" />
+                  <Swatch name="tomato" cls="text-tomato-deep" oklch="0.66 0.19 32" swatchClass="bg-tomato-deep" />
                   <Swatch name="destructive" cls="text-destructive" oklch="0.58 0.22 27" swatchClass="bg-destructive" />
                   <Swatch name="clay" cls="bg-clay" oklch="0.42 0.09 45" swatchClass="bg-clay" />
                   <Swatch name="ocean" cls="bg-ocean" oklch="0.4 0.055 215" swatchClass="bg-ocean" />
@@ -294,10 +294,10 @@ export default function DesignSystemPage() {
                   <p className="text-foreground">text-foreground — primary body</p>
                   <p className="text-foreground/85">text-foreground/85 — body emphasis</p>
                   <p className="text-foreground/70">text-foreground/70 — secondary</p>
-                  <p className="font-mono text-sm text-foreground/55">
-                    text-foreground/55 — mono labels
+                  <p className="font-mono text-sm text-foreground/65">
+                    text-foreground/65 — mono labels
                   </p>
-                  <p className="text-foreground/50">text-foreground/50 — very muted</p>
+                  <p className="text-foreground/65">text-foreground/65 — very muted</p>
                 </div>
               </Demo>
             </div>
@@ -327,7 +327,7 @@ export default function DesignSystemPage() {
                     base — default body copy at a comfortable measure
                   </p>
                   <p className="eyebrow">eyebrow · mono · uppercase · 0.18em</p>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                     dt label · mono · 10px
                   </p>
                 </div>
@@ -335,7 +335,7 @@ export default function DesignSystemPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-md border border-border bg-card p-5">
                   <p className="display text-2xl">Aa</p>
-                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                     .display
                   </p>
                   <p className="mt-1 text-sm text-foreground/70">
@@ -344,7 +344,7 @@ export default function DesignSystemPage() {
                 </div>
                 <div className="rounded-md border border-border bg-card p-5">
                   <p className="brand text-2xl">Aa</p>
-                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                     .brand
                   </p>
                   <p className="mt-1 text-sm text-foreground/70">
@@ -353,7 +353,7 @@ export default function DesignSystemPage() {
                 </div>
                 <div className="rounded-md border border-border bg-card p-5">
                   <p className="font-mono text-2xl">Aa</p>
-                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                     font-mono
                   </p>
                   <p className="mt-1 text-sm text-foreground/70">
@@ -386,7 +386,7 @@ export default function DesignSystemPage() {
                       <div
                         className={`size-16 border border-leaf/40 bg-leaf/15 ${cls}`}
                       />
-                      <p className="mt-2 font-mono text-[10px] text-foreground/55">
+                      <p className="mt-2 font-mono text-[10px] text-foreground/65">
                         {label}
                       </p>
                     </div>
@@ -423,7 +423,7 @@ export default function DesignSystemPage() {
           >
             <Demo label="hover me — 200ms ease-out colour + lift">
               <div className="flex flex-wrap gap-4">
-                <button className="rounded-md border border-border bg-cream-deep px-5 py-3 text-sm font-medium text-foreground transition-colors duration-200 ease-out hover:bg-leaf hover:text-cream">
+                <button className="rounded-md border border-border bg-cream-deep px-5 py-3 text-sm font-medium text-foreground transition-colors duration-200 ease-out hover:bg-leaf-deep hover:text-cream">
                   Colour fade
                 </button>
                 <button className="rounded-md border border-border bg-card px-5 py-3 text-sm font-medium text-foreground shadow-sm transition-transform duration-200 ease-out motion-safe:hover:-translate-y-0.5">
@@ -460,13 +460,13 @@ export default function DesignSystemPage() {
                     <div className="flex flex-wrap items-center gap-3">
                       <Button
                         size="lg"
-                        className="h-12 bg-leaf px-6 text-base font-semibold hover:bg-leaf-deep"
+                        className="h-12 bg-leaf-deep px-6 text-base font-semibold hover:bg-leaf-ink"
                       >
                         Book this shift
                       </Button>
                       <Button
                         variant="outline"
-                        className="h-11 border-tomato/40 text-tomato hover:bg-tomato/10 hover:text-tomato"
+                        className="h-11 border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
                       >
                         Cancel booking
                       </Button>
@@ -494,13 +494,13 @@ export default function DesignSystemPage() {
                       <span className="rounded-full bg-leaf/15 px-2.5 py-1 text-leaf-deep">
                         Confirmed
                       </span>
-                      <span className="rounded-full bg-tomato/15 px-2.5 py-1 text-tomato">
+                      <span className="rounded-full bg-tomato/15 px-2.5 py-1 text-tomato-deep">
                         Low capacity
                       </span>
                       <span className="rounded-full bg-foreground/10 px-2.5 py-1 text-foreground/65">
                         Neutral
                       </span>
-                      <span className="rounded-full bg-leaf px-2.5 py-1 text-cream">
+                      <span className="rounded-full bg-leaf-deep px-2.5 py-1 text-cream">
                         Solid emphasis
                       </span>
                     </div>
@@ -525,7 +525,7 @@ export default function DesignSystemPage() {
                     </p>
                   </div>
                   <div className="rounded-md border-l-2 border-leaf bg-cream-deep px-5 py-4">
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                       Note from the team
                     </p>
                     <p className="mt-1 text-sm text-foreground/85">
@@ -544,7 +544,7 @@ export default function DesignSystemPage() {
                       Browse open shifts →
                     </Link>
                   </p>
-                  <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-foreground/45">
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                     empty state
                   </p>
                 </div>
@@ -564,7 +564,7 @@ export default function DesignSystemPage() {
                       ["Spaces left", "4 of 12"],
                     ].map(([dt, dd]) => (
                       <div key={dt}>
-                        <dt className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                        <dt className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                           {dt}
                         </dt>
                         <dd className="mt-1 text-foreground/85">{dd}</dd>
@@ -581,7 +581,7 @@ export default function DesignSystemPage() {
                   <div className="max-w-sm space-y-5">
                     <div className="space-y-2">
                       <Label htmlFor="ds-email">
-                        Email <span className="text-tomato">*</span>
+                        Email <span className="text-tomato-deep">*</span>
                       </Label>
                       <Input
                         id="ds-email"
@@ -604,7 +604,7 @@ export default function DesignSystemPage() {
                         id="ds-note"
                         placeholder="Dietary needs, access requirements, anything else…"
                       />
-                      <p className="text-xs text-foreground/55">
+                      <p className="text-xs text-foreground/65">
                         Optional — helps coordinators plan the shift.
                       </p>
                     </div>
@@ -620,7 +620,7 @@ export default function DesignSystemPage() {
                 <Demo label="the auth-form error pattern">
                   <div
                     role="alert"
-                    className="flex items-start gap-3 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-tomato"
+                    className="flex items-start gap-3 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-tomato-deep"
                   >
                     <X className="mt-0.5 size-5 shrink-0" aria-hidden />
                     <p className="text-sm font-medium">
@@ -720,13 +720,13 @@ export default function DesignSystemPage() {
                   <li>&ldquo;Kia ora — you&apos;re booked for Saturday.&rdquo;</li>
                   <li>&ldquo;Ka pai! That&apos;s your 10th shift.&rdquo;</li>
                   <li>&ldquo;Browse open shifts →&rdquo;</li>
-                  <li className="font-mono text-xs text-foreground/55">
+                  <li className="font-mono text-xs text-foreground/65">
                     est. 2011 · place Tāmaki Makaurau
                   </li>
                 </ul>
               </div>
               <div className="rounded-md border border-border bg-card p-5">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-tomato">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-tomato-deep">
                   Don&apos;t
                 </p>
                 <ul className="mt-3 space-y-2 text-sm text-foreground/80">
@@ -773,7 +773,7 @@ export default function DesignSystemPage() {
                 </ul>
               </div>
               <div className="rounded-md border border-tomato/30 bg-tomato/5 p-5">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-tomato">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-tomato-deep">
                   Never
                 </p>
                 <ul className="mt-3 space-y-2.5 text-sm text-foreground/80">
@@ -786,7 +786,7 @@ export default function DesignSystemPage() {
                   ].map((t) => (
                     <li key={t} className="flex gap-2.5">
                       <X
-                        className="mt-0.5 size-4 shrink-0 text-tomato"
+                        className="mt-0.5 size-4 shrink-0 text-tomato-deep"
                         aria-hidden
                       />
                       <span>{t}</span>
@@ -796,7 +796,7 @@ export default function DesignSystemPage() {
               </div>
             </div>
 
-            <p className="mt-10 border-t border-border pt-6 text-sm text-foreground/55">
+            <p className="mt-10 border-t border-border pt-6 text-sm text-foreground/65">
               Source of truth:{" "}
               <Mono>design-system/MASTER.md</Mono> ·{" "}
               <Mono>src/app/globals.css</Mono>. Keep this page in lockstep when

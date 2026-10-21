@@ -9,7 +9,7 @@ const VARIANTS: Record<Variant, { bg: string; fg: string }> = {
   // Cream circle, forest wordmark — for dark backgrounds.
   light: { bg: "bg-cream", fg: "text-forest" },
   // Kelly green circle, cream wordmark — for special accents.
-  leaf: { bg: "bg-leaf", fg: "text-cream" },
+  leaf: { bg: "bg-leaf-deep", fg: "text-cream" },
 };
 
 export function LogoMark({

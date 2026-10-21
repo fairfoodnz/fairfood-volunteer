@@ -50,7 +50,7 @@ export async function SiteNav() {
                 <Button asChild variant="ghost" size="sm">
                   <Link href="/auth/sign-in">Sign in</Link>
                 </Button>
-                <Button asChild size="sm" className="bg-leaf hover:bg-leaf-deep">
+                <Button asChild size="sm" className="bg-leaf-deep hover:bg-leaf-ink">
                   <Link href="/shifts">
                     <span className="sm:hidden">Volunteer</span>
                     <span className="hidden sm:inline">Sign up to volunteer</span>

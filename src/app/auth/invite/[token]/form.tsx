@@ -31,7 +31,7 @@ export function ClaimInviteForm({
       <input type="hidden" name="token" value={token} />
 
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
           Step 1 of 2
         </p>
         <h2 className="display mt-1.5 text-xl font-bold leading-tight">
@@ -74,12 +74,12 @@ export function ClaimInviteForm({
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+        className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
       >
         {pending ? "Setting up…" : `Claim my account${firstName ? `, ${firstName}` : ""} →`}
       </Button>
 
-      <p className="text-xs text-foreground/55">
+      <p className="text-xs text-foreground/65">
         After this you&rsquo;ll fill out a short questionnaire so coordinators
         know how to best welcome you on your first shift.
       </p>
@@ -108,7 +108,7 @@ function Field({
     <div className="space-y-2">
       <Label htmlFor={id}>
         {label}
-        {required && <span className="ml-1 text-tomato">*</span>}
+        {required && <span className="ml-1 text-tomato-deep">*</span>}
       </Label>
       <Input
         id={id}
@@ -123,7 +123,7 @@ function Field({
         className="h-11"
       />
       {helper && !error && (
-        <p id={helperId} className="text-xs text-foreground/55">
+        <p id={helperId} className="text-xs text-foreground/65">
           {helper}
         </p>
       )}

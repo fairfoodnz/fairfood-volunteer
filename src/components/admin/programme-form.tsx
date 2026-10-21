@@ -113,7 +113,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
       {error && (
         <div
           role="alert"
-          className="rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato"
+          className="rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato-deep"
         >
           {error}
         </div>
@@ -134,10 +134,10 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
               placeholder="Pack Kai Boxes"
               className="h-11"
             />
-            <p className="font-mono text-[11px] text-foreground/55">
+            <p className="font-mono text-[11px] text-foreground/65">
               URL: <span className="text-foreground/80">/programs/{slugPreview}</span>
               {isEdit && title !== program?.title && (
-                <span className="ml-1 text-tomato">
+                <span className="ml-1 text-tomato-deep">
                   — changing the title changes the public link
                 </span>
               )}
@@ -155,7 +155,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
               placeholder="Sort, pack, share"
               className="h-11"
             />
-            <p className="text-xs text-foreground/55">
+            <p className="text-xs text-foreground/65">
               Short eyebrow shown on every programme card.
             </p>
           </div>
@@ -170,7 +170,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
               placeholder="Mon – Fri"
               className="h-11"
             />
-            <p className="text-xs text-foreground/55">
+            <p className="text-xs text-foreground/65">
               Optional day-range shown under the title on cards. Leave blank to
               hide it.
             </p>
@@ -199,7 +199,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
               placeholder="624 Rosebank Road, Avondale, Tāmaki Makaurau"
               className="h-11"
             />
-            <p className="text-xs text-foreground/55">
+            <p className="text-xs text-foreground/65">
               Leave blank to use the Avondale home base.
             </p>
           </div>
@@ -289,7 +289,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
                   className="object-cover"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-center text-xs text-foreground/55">
+                <div className="flex h-full items-center justify-center text-center text-xs text-foreground/65">
                   No image yet
                 </div>
               )}
@@ -301,9 +301,9 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
               type="file"
               accept={IMAGE_ACCEPT}
               onChange={(e) => pickImage(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-foreground/70 file:mr-3 file:rounded-md file:border-0 file:bg-leaf file:px-3 file:py-2 file:text-sm file:font-semibold file:text-cream hover:file:bg-leaf-deep"
+              className="block w-full text-sm text-foreground/70 file:mr-3 file:rounded-md file:border-0 file:bg-leaf-deep file:px-3 file:py-2 file:text-sm file:font-semibold file:text-cream hover:file:bg-leaf-deep"
             />
-            <p className="text-xs text-foreground/55">
+            <p className="text-xs text-foreground/65">
               JPEG · PNG · WebP · GIF, up to 5 MB.
               {isEdit && " Leave empty to keep the current image."}
             </p>
@@ -320,7 +320,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
               defaultValue={program?.order ?? 0}
               className="h-11"
             />
-            <p className="text-xs text-foreground/55">
+            <p className="text-xs text-foreground/65">
               Lower numbers show first.
             </p>
           </div>
@@ -400,7 +400,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
         <Button
           type="submit"
           disabled={pending}
-          className="bg-leaf hover:bg-leaf-deep"
+          className="bg-leaf-deep hover:bg-leaf-ink"
         >
           {pending
             ? "Saving…"

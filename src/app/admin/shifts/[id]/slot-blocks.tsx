@@ -83,7 +83,7 @@ export function SlotBlocks({
                 {b.note && (
                   <p className="mt-1 text-sm text-foreground/75">{b.note}</p>
                 )}
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                   added {dateFmt.format(b.createdAt)} · shown to volunteers as
                   {` “${blockKindLabel(b.kind)} joining”`}
                 </p>
@@ -94,7 +94,7 @@ export function SlotBlocks({
                   type="submit"
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-tomato hover:bg-tomato/10 hover:text-tomato"
+                  className="text-xs text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
                 >
                   Remove
                 </Button>
@@ -147,7 +147,7 @@ export function SlotBlocks({
           <div className="space-y-1.5">
             <Label htmlFor="note">
               Internal note{" "}
-              <span className="text-foreground/50">(optional, admin-only)</span>
+              <span className="text-foreground/65">(optional, admin-only)</span>
             </Label>
             <Input
               id="note"
@@ -171,7 +171,7 @@ export function SlotBlocks({
         )}
 
         <div className="mt-4 flex items-center justify-between gap-3">
-          <p className="text-xs text-foreground/55">
+          <p className="text-xs text-foreground/65">
             {total > 0
               ? `${total} slot${total === 1 ? "" : "s"} blocked so far.`
               : "Volunteers see the group type, not the internal note."}
@@ -179,7 +179,7 @@ export function SlotBlocks({
           <Button
             type="submit"
             disabled={pending}
-            className="bg-leaf hover:bg-leaf-deep"
+            className="bg-leaf-deep hover:bg-leaf-ink"
           >
             {pending ? "Blocking…" : "Block slots"}
           </Button>

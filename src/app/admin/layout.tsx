@@ -42,10 +42,10 @@ export default async function AdminLayout({
         }}
         unreviewedCount={unreviewedCount}
       />
-      <SidebarInset className="bg-background">
+      <SidebarInset id="main" className="bg-background">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur md:hidden">
           <SidebarTrigger />
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/65">
             Admin
           </span>
         </header>

@@ -101,7 +101,7 @@ export default async function ProgramPage({ params }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <section className="border-b border-border/60 bg-cream-deep">
           <div className="container-x grid gap-10 py-16 md:grid-cols-[1.4fr_1fr] md:items-center md:py-20">
             <div className="space-y-5">
@@ -114,19 +114,19 @@ export default async function ProgramPage({ params }: Props) {
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
                 {isInclusive ? (
-                  <Button asChild size="lg" className="bg-leaf hover:bg-leaf-deep">
+                  <Button asChild size="lg" className="bg-leaf-deep hover:bg-leaf-ink">
                     <Link href={INCLUSIVE_MAILTO}>
                       Enquire about inclusive volunteering →
                     </Link>
                   </Button>
                 ) : program.shifts.length > 0 ? (
-                  <Button asChild size="lg" className="bg-leaf hover:bg-leaf-deep">
+                  <Button asChild size="lg" className="bg-leaf-deep hover:bg-leaf-ink">
                     <Link href={`/shifts?programme=${program.slug}`}>
                       See {program.shifts.length} open shifts →
                     </Link>
                   </Button>
                 ) : (
-                  <Button asChild size="lg" className="bg-leaf hover:bg-leaf-deep">
+                  <Button asChild size="lg" className="bg-leaf-deep hover:bg-leaf-ink">
                     <Link href="mailto:volunteering@fairfood.org.nz?subject=Volunteering">
                       Email us to plan a day
                     </Link>
@@ -160,7 +160,7 @@ export default async function ProgramPage({ params }: Props) {
                 <Button
                   asChild
                   size="lg"
-                  className="mt-6 bg-leaf hover:bg-leaf-deep"
+                  className="mt-6 bg-leaf-deep hover:bg-leaf-ink"
                 >
                   <Link href={INCLUSIVE_MAILTO}>
                     Email volunteering@fairfood.org.nz →
@@ -223,7 +223,7 @@ export default async function ProgramPage({ params }: Props) {
             </div>
             )}
             <aside className="space-y-3 rounded-md bg-cream-deep p-6 text-sm md:p-8">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                 Where you&rsquo;ll be
               </p>
               <p className="font-semibold">{program.location}</p>
@@ -231,7 +231,7 @@ export default async function ProgramPage({ params }: Props) {
                 {gettingHere}
               </p>
               <hr className="my-4 border-foreground/10" />
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                 Pātai?
               </p>
               <p>

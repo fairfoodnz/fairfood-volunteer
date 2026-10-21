@@ -53,7 +53,7 @@ export default async function AdminPage() {
             </div>
             <Link
               href="/admin/shifts/new"
-              className="inline-flex h-11 items-center gap-2 rounded bg-leaf px-5 text-sm font-semibold text-cream hover:bg-leaf-deep"
+              className="inline-flex h-11 items-center gap-2 rounded bg-leaf-deep px-5 text-sm font-semibold text-cream hover:bg-leaf-ink"
             >
               + New shift
             </Link>
@@ -111,7 +111,7 @@ export default async function AdminPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="font-semibold">{taken}</span>
-                          <span className="text-foreground/55">
+                          <span className="text-foreground/65">
                             {" "}/ {s.capacity}
                           </span>
                           {blocked > 0 && (
@@ -120,7 +120,7 @@ export default async function AdminPage() {
                             </span>
                           )}
                           {free <= 2 && free > 0 && (
-                            <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-tomato">
+                            <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-tomato-deep">
                               Almost full
                             </span>
                           )}
@@ -153,7 +153,7 @@ export default async function AdminPage() {
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-md border border-border bg-card p-5">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </p>
       <p className="display mt-2 text-3xl font-bold">{value}</p>

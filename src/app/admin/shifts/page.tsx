@@ -194,7 +194,7 @@ export default async function ManageShiftsPage({
           </div>
           <Link
             href="/admin/shifts/new"
-            className="inline-flex h-11 items-center gap-2 rounded bg-leaf px-5 text-sm font-semibold text-cream hover:bg-leaf-deep"
+            className="inline-flex h-11 items-center gap-2 rounded bg-leaf-deep px-5 text-sm font-semibold text-cream hover:bg-leaf-ink"
           >
             + New shift
           </Link>
@@ -212,7 +212,7 @@ export default async function ManageShiftsPage({
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="shift-programme"
-                className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
+                className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
               >
                 Programme
               </label>
@@ -246,7 +246,7 @@ export default async function ManageShiftsPage({
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="shift-from"
-                className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
+                className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
               >
                 From
               </label>
@@ -263,7 +263,7 @@ export default async function ManageShiftsPage({
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="shift-to"
-                className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
+                className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
               >
                 To
               </label>
@@ -287,7 +287,7 @@ export default async function ManageShiftsPage({
               {filtersActive && (
                 <Link
                   href="/admin/shifts"
-                  className="text-xs font-medium text-foreground/55 hover:text-foreground"
+                  className="text-xs font-medium text-foreground/65 hover:text-foreground"
                 >
                   Clear all
                 </Link>
@@ -308,7 +308,7 @@ export default async function ManageShiftsPage({
                   className={
                     "inline-flex h-8 items-center rounded-full border px-3 text-xs font-semibold transition-colors " +
                     (active
-                      ? "border-leaf bg-leaf text-cream"
+                      ? "border-leaf bg-leaf-deep text-cream"
                       : "border-border bg-card text-foreground/75 hover:border-leaf/40 hover:text-leaf-deep")
                   }
                 >
@@ -318,7 +318,7 @@ export default async function ManageShiftsPage({
             })}
           </nav>
 
-          <div className="mt-5 mb-3 flex items-center justify-between gap-3 text-xs text-foreground/55">
+          <div className="mt-5 mb-3 flex items-center justify-between gap-3 text-xs text-foreground/65">
             <p aria-live="polite">
               {total === 0
                 ? "No shifts match this view."
@@ -349,7 +349,7 @@ export default async function ManageShiftsPage({
                   <ChevronLeft className="size-4" />
                   Previous
                 </PageLink>
-                <p className="text-xs tabular-nums text-foreground/55">
+                <p className="text-xs tabular-nums text-foreground/65">
                   Page {page} of {pageCount}
                 </p>
                 <PageLink
@@ -383,7 +383,7 @@ function PageLink({
     return (
       <span
         aria-disabled
-        className={`${className} cursor-not-allowed text-foreground/35`}
+        className={`${className} cursor-not-allowed text-foreground/65`}
       >
         {children}
       </span>

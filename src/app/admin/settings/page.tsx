@@ -68,7 +68,7 @@ export default async function AdminSettingsPage() {
             as soon as you save.
           </p>
           {lastEdit && (
-            <p className="mt-2 font-mono text-[11px] uppercase tracking-widest text-foreground/55">
+            <p className="mt-2 font-mono text-[11px] uppercase tracking-widest text-foreground/65">
               Last edited {NZ_DATE.format(lastEdit.updatedAt)}
               {lastEdit.updatedBy && ` by ${fullName(lastEdit.updatedBy)}`}
             </p>

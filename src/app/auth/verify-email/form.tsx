@@ -31,7 +31,7 @@ export function VerifyEmailForm({ token }: { token: string }) {
           type="submit"
           size="lg"
           disabled={pending}
-          className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+          className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
         >
           {pending ? "Verifying…" : "Verify my email"}
         </Button>

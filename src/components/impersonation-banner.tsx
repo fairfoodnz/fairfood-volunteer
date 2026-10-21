@@ -18,7 +18,7 @@ export async function ImpersonationBanner() {
     <div
       role="status"
       aria-live="polite"
-      className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-tomato/40 bg-tomato px-4 py-2 text-sm text-white shadow-sm"
+      className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-tomato/40 bg-tomato-deep px-4 py-2 text-sm text-white shadow-sm"
     >
       <p className="min-w-0">
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] opacity-80">

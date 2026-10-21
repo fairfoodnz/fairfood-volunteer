@@ -120,7 +120,7 @@ export default async function AdminShiftPage({ params }: Props) {
                 {blocked > 0 && ` · ${blocked} blocked`} · {free} of{" "}
                 {shift.capacity} open
                 {shift.cancelled && (
-                  <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-tomato">
+                  <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-tomato-deep">
                     Cancelled
                   </span>
                 )}
@@ -183,7 +183,7 @@ export default async function AdminShiftPage({ params }: Props) {
               <Empty>
                 <p>No bookings yet.</p>
                 {!assignDisabled && (
-                  <p className="mt-1 text-xs text-foreground/55">
+                  <p className="mt-1 text-xs text-foreground/65">
                     Use{" "}
                     <span className="font-semibold text-leaf-deep">
                       Assign volunteer
@@ -248,7 +248,7 @@ export default async function AdminShiftPage({ params }: Props) {
                   <li key={b.id} className="flex items-center justify-between p-4 text-sm">
                     <span>
                       {fullName(b.user)}{" "}
-                      <span className="text-foreground/55">
+                      <span className="text-foreground/65">
                         · {b.status.toLowerCase()}
                       </span>
                     </span>

@@ -102,7 +102,7 @@ export function ShiftForm({
           required
           className="h-11"
         />
-        <p className="text-xs text-foreground/55">
+        <p className="text-xs text-foreground/65">
           How many volunteers this shift needs.
         </p>
       </div>
@@ -119,7 +119,7 @@ export function ShiftForm({
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" className="bg-leaf hover:bg-leaf-deep">
+        <Button type="submit" className="bg-leaf-deep hover:bg-leaf-ink">
           {submitLabel}
         </Button>
       </div>

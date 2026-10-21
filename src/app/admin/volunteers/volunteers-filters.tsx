@@ -100,7 +100,7 @@ export function VolunteersFilters({
         {/* Search + sort */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative w-full sm:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/50" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/65" />
             <input
               ref={searchRef}
               type="search"
@@ -115,7 +115,7 @@ export function VolunteersFilters({
               }}
               placeholder="Search by name or email"
               aria-label="Search volunteers"
-              className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-foreground/45 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-foreground/65 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
@@ -136,7 +136,7 @@ export function VolunteersFilters({
               <button
                 type="button"
                 onClick={clearAll}
-                className="inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-foreground/55 hover:text-foreground"
+                className="inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-2.5 text-xs font-semibold text-foreground/65 hover:text-foreground"
               >
                 <X className="size-3.5" />
                 Clear all
@@ -191,7 +191,7 @@ export function VolunteersFilters({
                   <span
                     className={cn(
                       "ml-1.5 tabular-nums",
-                      filter === seg.key ? "text-cream/80" : "text-foreground/45",
+                      filter === seg.key ? "text-cream/80" : "text-foreground/65",
                     )}
                   >
                     {counts[seg.countKey]}
@@ -215,7 +215,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </span>
       {children}
@@ -233,7 +233,7 @@ function FieldLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
+      className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
     >
       {children}
     </label>
@@ -265,7 +265,7 @@ function SegmentButton({
       className={cn(
         "inline-flex h-8 items-center rounded-md px-3 text-xs font-semibold transition-colors",
         active
-          ? "bg-leaf text-cream shadow-sm"
+          ? "bg-leaf-deep text-cream shadow-sm"
           : "text-foreground/70 hover:bg-cream-deep/60 hover:text-foreground",
       )}
     >

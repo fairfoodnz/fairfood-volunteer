@@ -54,7 +54,7 @@ export function RetryEmailButton({
           {pending ? "Retrying…" : state.ok ? "Retried" : "Retry"}
         </Button>
         {state.error && (
-          <span className="rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold text-tomato">
+          <span className="rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold text-tomato-deep">
             {state.error}
           </span>
         )}

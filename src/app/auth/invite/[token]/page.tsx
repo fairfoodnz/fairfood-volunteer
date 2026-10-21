@@ -29,7 +29,7 @@ export default async function ClaimInvitePage({ params }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-16 md:py-24">
         <div className="container-x grid gap-16 lg:grid-cols-2">
           <div className="max-w-md space-y-6">
             <p className="eyebrow">Welcome</p>
@@ -60,12 +60,12 @@ export default async function ClaimInvitePage({ params }: Props) {
             </p>
             {invite ? (
               <div className="rounded-md border border-border bg-cream-deep/40 p-4 text-sm">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                   Signing in as
                 </p>
                 <p className="mt-1.5 font-semibold">{fullName(invite.user)}</p>
                 <p className="text-foreground/75">{invite.user.email}</p>
-                <p className="mt-2 text-xs text-foreground/55">
+                <p className="mt-2 text-xs text-foreground/65">
                   Not you?{" "}
                   <Link
                     href="/auth/sign-in"

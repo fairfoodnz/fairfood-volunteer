@@ -73,7 +73,7 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
       <section className="mt-12">
         <SectionHeading />
         <div className="rounded-md border border-dashed border-border bg-card/50 p-10 text-center text-sm text-foreground/65">
-          <Mail className="mx-auto mb-2 size-5 text-foreground/40" />
+          <Mail className="mx-auto mb-2 size-5 text-foreground/65" />
           No imported volunteers waiting on a claim. Drop in a file above to
           get started.
         </div>
@@ -201,7 +201,7 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
                       {row.fullName}
                     </Link>
                     {row.phone ? (
-                      <div className="mt-0.5 text-xs text-foreground/55">
+                      <div className="mt-0.5 text-xs text-foreground/65">
                         {row.phone}
                       </div>
                     ) : null}
@@ -272,7 +272,7 @@ function InviteStatePill({
   }
   if (state === "expired") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-tomato">
+      <span className="inline-flex items-center gap-1 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-tomato-deep">
         <Clock3 className="size-3" />
         Expired{sentAt ? ` · sent ${sentAt}` : ""}
       </span>

@@ -32,11 +32,11 @@ export function ImpersonateForm({
         for up to an hour so you can see exactly what they see — useful when
         debugging a booking or a profile issue they&rsquo;ve reported.
       </p>
-      <p className="mt-2 text-xs text-foreground/55">
+      <p className="mt-2 text-xs text-foreground/65">
         Any action you take counts as theirs. Every impersonation is logged.
       </p>
       {state.error && (
-        <p className="mt-3 rounded-md border border-tomato/40 bg-tomato/5 px-3 py-2 text-xs text-tomato">
+        <p className="mt-3 rounded-md border border-tomato/40 bg-tomato/5 px-3 py-2 text-xs text-tomato-deep">
           {state.error}
         </p>
       )}

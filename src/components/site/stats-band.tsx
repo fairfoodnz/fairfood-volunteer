@@ -7,7 +7,7 @@ const stats = [
 
 export function StatsBand() {
   return (
-    <section className="bg-leaf text-primary-foreground">
+    <section className="bg-leaf-deep text-primary-foreground">
       <div className="container-x grid grid-cols-2 gap-y-10 py-14 md:grid-cols-4 md:gap-y-0">
         {stats.map((s) => (
           <div

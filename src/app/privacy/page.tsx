@@ -17,7 +17,7 @@ export default function PrivacyPage() {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-16 md:py-24">
         <div className="container-x max-w-3xl">
           <header className="mb-12">
             <p className="eyebrow">Tō tūmataitinga · Your privacy</p>
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
               only use your details to roster shifts and care for you on the
               day — never shared for marketing, never sold.
             </p>
-            <p className="mt-3 text-sm text-foreground/55">
+            <p className="mt-3 text-sm text-foreground/65">
               Last updated {LAST_UPDATED}
             </p>
           </header>

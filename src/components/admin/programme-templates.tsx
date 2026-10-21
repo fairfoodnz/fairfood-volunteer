@@ -197,7 +197,7 @@ function TemplateEditor({
       {state.error && (
         <div
           role="alert"
-          className="rounded-md border border-tomato/40 bg-tomato/10 px-3 py-2 text-sm text-tomato"
+          className="rounded-md border border-tomato/40 bg-tomato/10 px-3 py-2 text-sm text-tomato-deep"
         >
           {state.error}
         </div>
@@ -295,7 +295,7 @@ function TemplateEditor({
             type="submit"
             size="sm"
             disabled={pending}
-            className="bg-leaf hover:bg-leaf-deep"
+            className="bg-leaf-deep hover:bg-leaf-ink"
           >
             {pending
               ? "Saving…"
@@ -329,7 +329,7 @@ function DeleteTemplateButton({ id, label }: { id: string; label: string }) {
           type="submit"
           variant="ghost"
           size="sm"
-          className="text-xs text-tomato hover:bg-tomato/10 hover:text-tomato"
+          className="text-xs text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
         >
           Yes, delete
         </Button>
@@ -351,7 +351,7 @@ function DeleteTemplateButton({ id, label }: { id: string; label: string }) {
       type="button"
       variant="ghost"
       size="sm"
-      className="gap-1.5 text-xs text-tomato hover:bg-tomato/10 hover:text-tomato"
+      className="gap-1.5 text-xs text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
       onClick={() => setConfirming(true)}
     >
       <Trash2 className="size-3.5" />

@@ -56,7 +56,7 @@ export function ForgotPasswordForm() {
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+        className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
       >
         {pending ? "Sending…" : "Send reset link"}
       </Button>

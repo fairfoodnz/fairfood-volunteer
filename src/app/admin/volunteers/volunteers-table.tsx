@@ -110,7 +110,7 @@ export function VolunteersTable({
               ))}
             </span>
           ) : (
-            <span className="text-sm text-foreground/55">across all programmes</span>
+            <span className="text-sm text-foreground/65">across all programmes</span>
           )}
         </div>
 
@@ -129,7 +129,7 @@ export function VolunteersTable({
             aria-disabled={total === 0}
             className={cn(
               buttonVariants({ size: "lg" }),
-              "bg-leaf text-cream hover:bg-leaf-deep",
+              "bg-leaf-deep text-cream hover:bg-leaf-ink",
               total === 0 && "pointer-events-none opacity-50",
             )}
           >
@@ -144,14 +144,14 @@ export function VolunteersTable({
           <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
             <span
               aria-hidden
-              className="flex size-11 items-center justify-center rounded-full bg-foreground/5 text-foreground/45"
+              className="flex size-11 items-center justify-center rounded-full bg-foreground/5 text-foreground/65"
             >
               <Users className="size-5" />
             </span>
             <p className="text-sm font-semibold text-foreground/80">
               No volunteers match these filters
             </p>
-            <p className="max-w-sm text-sm text-foreground/55">
+            <p className="max-w-sm text-sm text-foreground/65">
               Try widening the booking status, switching programme, or clearing
               the search.
             </p>
@@ -212,7 +212,7 @@ export function VolunteersTable({
                             )}
                           </span>
                           {/* Contact collapses into the name cell on mobile */}
-                          <span className="text-xs text-foreground/55 md:hidden">
+                          <span className="text-xs text-foreground/65 md:hidden">
                             {u.email}
                           </span>
                         </div>
@@ -220,7 +220,7 @@ export function VolunteersTable({
                       <td className="hidden px-4 py-3 align-top text-foreground/75 md:table-cell">
                         <div className="truncate">{u.email}</div>
                         {u.phone && (
-                          <div className="text-xs text-foreground/55">
+                          <div className="text-xs text-foreground/65">
                             {u.phone}
                           </div>
                         )}
@@ -230,7 +230,7 @@ export function VolunteersTable({
                       </td>
                       <td className="px-4 py-3 align-top tabular-nums">
                         <span className="font-semibold">{u.confirmedCount}</span>
-                        <span className="ml-1 text-xs text-foreground/55">
+                        <span className="ml-1 text-xs text-foreground/65">
                           confirmed
                         </span>
                       </td>
@@ -257,7 +257,7 @@ export function VolunteersTable({
       </div>
 
       {capped && total > 0 && (
-        <p className="mt-3 text-xs text-foreground/55">
+        <p className="mt-3 text-xs text-foreground/65">
           Showing the first {total}. Narrow the filters to see everyone — the CSV
           export still includes the full matching list.
         </p>
@@ -277,7 +277,7 @@ export function VolunteersTable({
             <button
               type="button"
               onClick={() => setSelected(new Set())}
-              className="inline-flex items-center gap-1 text-xs text-foreground/55 hover:text-foreground"
+              className="inline-flex items-center gap-1 text-xs text-foreground/65 hover:text-foreground"
             >
               <X className="size-3.5" />
               Clear
@@ -303,7 +303,7 @@ export function VolunteersTable({
                   type="submit"
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "bg-leaf text-cream hover:bg-leaf-deep",
+                    "bg-leaf-deep text-cream hover:bg-leaf-ink",
                   )}
                 >
                   <Download className="size-4" />
@@ -343,7 +343,7 @@ function ProgrammeTags({
   programmes: { slug: string; title: string }[];
 }) {
   if (programmes.length === 0)
-    return <span className="text-xs text-foreground/40">—</span>;
+    return <span className="text-xs text-foreground/65">—</span>;
   const shown = programmes.slice(0, 2);
   const extra = programmes.length - shown.length;
   return (
@@ -357,7 +357,7 @@ function ProgrammeTags({
         </span>
       ))}
       {extra > 0 && (
-        <span className="text-[11px] font-medium text-foreground/45">
+        <span className="text-[11px] font-medium text-foreground/65">
           +{extra}
         </span>
       )}
@@ -374,7 +374,7 @@ function Pill({
 }) {
   const palette = {
     leaf: "bg-leaf/15 text-leaf-deep",
-    tomato: "bg-tomato/15 text-tomato",
+    tomato: "bg-tomato/15 text-tomato-deep",
     muted: "bg-foreground/10 text-foreground/65",
   }[tone];
   return (

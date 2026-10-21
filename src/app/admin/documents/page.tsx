@@ -70,7 +70,7 @@ export default async function AdminDocumentsPage() {
               <h2 className="display text-lg font-semibold">
                 Current documents
               </h2>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                 {documents.length} files ·{" "}
                 {(totalSize / (1024 * 1024)).toFixed(1)} MB
               </p>
@@ -85,7 +85,7 @@ export default async function AdminDocumentsPage() {
               <div className="space-y-6">
                 {CATEGORY_ORDER.filter((c) => grouped.has(c)).map((c) => (
                   <div key={c}>
-                    <h3 className="mb-2 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                    <h3 className="mb-2 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                       {CATEGORY_LABELS[c]}
                     </h3>
                     <div className="space-y-2">

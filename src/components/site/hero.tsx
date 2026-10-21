@@ -33,7 +33,7 @@ export function Hero() {
             <Button
               asChild
               size="lg"
-              className="h-12 bg-leaf px-7 text-base font-semibold tracking-tight hover:bg-leaf-deep"
+              className="h-12 bg-leaf-deep px-7 text-base font-semibold tracking-tight hover:bg-leaf-ink"
             >
               <Link href="/shifts">Browse open shifts →</Link>
             </Button>
@@ -51,15 +51,15 @@ export function Hero() {
 
           <dl className="flex flex-wrap items-center gap-x-8 gap-y-2 pt-2 text-sm text-foreground/70">
             <div className="flex items-baseline gap-2">
-              <dt className="font-mono text-xs text-foreground/50">est.</dt>
+              <dt className="font-mono text-xs text-foreground/65">est.</dt>
               <dd className="font-medium text-foreground">2011</dd>
             </div>
             <div className="flex items-baseline gap-2">
-              <dt className="font-mono text-xs text-foreground/50">place</dt>
+              <dt className="font-mono text-xs text-foreground/65">place</dt>
               <dd className="font-medium text-foreground">Tāmaki Makaurau</dd>
             </div>
             <div className="flex items-baseline gap-2">
-              <dt className="font-mono text-xs text-foreground/50">mahi</dt>
+              <dt className="font-mono text-xs text-foreground/65">mahi</dt>
               <dd className="font-medium text-foreground">
                 2,400 kg of kai / day
               </dd>

@@ -151,7 +151,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <section className="border-b border-border/60 bg-cream-deep">
           <div className="container-x py-12 md:py-16">
             <p className="eyebrow">Roster</p>
@@ -173,7 +173,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
                     href={href}
                     className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                       active
-                        ? "border-leaf bg-leaf text-cream"
+                        ? "border-leaf bg-leaf-deep text-cream"
                         : "border-foreground/15 bg-background text-foreground/75 hover:border-foreground/35"
                     }`}
                   >

@@ -45,7 +45,7 @@ export default async function EditProgrammePage({ params, searchParams }: Props)
         {error === "has-shifts" && (
           <div
             role="alert"
-            className="mb-6 rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato"
+            className="mb-6 rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato-deep"
           >
             That programme has shifts and can’t be deleted. Set it to{" "}
             <span className="font-medium">Archived</span> instead.

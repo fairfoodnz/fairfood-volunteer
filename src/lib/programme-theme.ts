@@ -39,7 +39,7 @@ export const PROGRAMME_THEMES: Record<ProgrammeThemeKey, ProgrammeTheme> = {
   charcoal: {
     label: "Charcoal",
     card: "bg-charcoal text-cream",
-    art: "text-tomato",
+    art: "text-tomato-deep",
     tag: "bg-tomato/20 text-cream",
     scrim: "var(--ff-charcoal)",
     swatch: "var(--ff-charcoal)",

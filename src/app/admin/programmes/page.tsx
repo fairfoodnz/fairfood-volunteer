@@ -26,7 +26,7 @@ export default async function ProgrammesPage() {
           </div>
           <Link
             href="/admin/programmes/new"
-            className="inline-flex h-11 items-center gap-2 rounded bg-leaf px-5 text-sm font-semibold text-cream hover:bg-leaf-deep"
+            className="inline-flex h-11 items-center gap-2 rounded bg-leaf-deep px-5 text-sm font-semibold text-cream hover:bg-leaf-ink"
           >
             + New programme
           </Link>
@@ -67,7 +67,7 @@ export default async function ProgrammesPage() {
                       <td className="px-4 py-3">
                         <div className="font-medium">{p.title}</div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-[11px] text-foreground/55">
+                          <span className="font-mono text-[11px] text-foreground/65">
                             {programHref(p.slug)}
                           </span>
                           {/* For an unlisted programme the link is the way in,

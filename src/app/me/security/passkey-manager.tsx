@@ -148,7 +148,7 @@ export function PasskeyManager({ passkeys }: { passkeys: PasskeyView[] }) {
             type="button"
             onClick={addPasskey}
             disabled={adding}
-            className="h-11 bg-leaf hover:bg-leaf-deep"
+            className="h-11 bg-leaf-deep hover:bg-leaf-ink"
           >
             {adding ? "Waiting for device…" : "Add passkey"}
           </Button>

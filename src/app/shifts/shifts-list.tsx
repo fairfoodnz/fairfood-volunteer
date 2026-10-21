@@ -152,7 +152,7 @@ export function ShiftsList({
           <div key={day}>
             <div className="mb-5 flex items-baseline justify-between">
               <h2 className="display text-2xl font-semibold md:text-3xl">{day}</h2>
-              <span className="font-mono text-xs uppercase tracking-widest text-foreground/55">
+              <span className="font-mono text-xs uppercase tracking-widest text-foreground/65">
                 {shifts.length} shift{shifts.length === 1 ? "" : "s"}
               </span>
             </div>
@@ -183,7 +183,7 @@ export function ShiftsList({
       {state.error && selectedCount === 0 && (
         <p
           role="alert"
-          className="mt-6 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-sm text-tomato"
+          className="mt-6 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-sm text-tomato-deep"
         >
           {state.error}
         </p>
@@ -252,7 +252,7 @@ function ShiftCardItem({
               <Check className="h-3 w-3" strokeWidth={3} /> You&rsquo;re going
             </span>
           ) : shift.isAlmostFull ? (
-            <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-tomato px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-cream">
+            <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-tomato-deep px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-cream">
               Almost full
             </span>
           ) : null}
@@ -297,7 +297,7 @@ function ShiftCardItem({
           )}
 
           {failureReason && (
-            <p className="text-xs font-medium text-tomato">{failureReason}</p>
+            <p className="text-xs font-medium text-tomato-deep">{failureReason}</p>
           )}
 
           {/* Footer: a strong tabular-numeral spot count on the left gives the
@@ -307,20 +307,20 @@ function ShiftCardItem({
               <span
                 className={`font-mono text-[26px] font-bold leading-none tabular-nums ${
                   shift.isAlmostFull
-                    ? "text-tomato"
+                    ? "text-tomato-deep"
                     : shift.isFull
-                      ? "text-foreground/40"
+                      ? "text-foreground/65"
                       : "text-foreground"
                 }`}
               >
                 {shift.isFull ? 0 : shift.free}
               </span>
-              <span className="text-[11px] font-medium uppercase tracking-wider text-foreground/55">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-foreground/65">
                 spot{!shift.isFull && shift.free === 1 ? "" : "s"} left
               </span>
             </div>
             {shift.isFull ? (
-              <span className="text-sm font-medium text-foreground/45">View →</span>
+              <span className="text-sm font-medium text-foreground/65">View →</span>
             ) : alreadyBooked ? (
               <span className="text-sm font-semibold text-leaf-deep">Details →</span>
             ) : (
@@ -347,8 +347,8 @@ function ShiftCardItem({
           onClick={onToggle}
           className={`absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border-2 shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
             selected
-              ? "scale-105 border-cream bg-leaf text-cream"
-              : "border-cream bg-cream/95 text-foreground/70 hover:scale-105 hover:bg-leaf hover:text-cream"
+              ? "scale-105 border-cream bg-leaf-deep text-cream"
+              : "border-cream bg-cream/95 text-foreground/70 hover:scale-105 hover:bg-leaf-deep hover:text-cream"
           }`}
         >
           <Check
@@ -405,7 +405,7 @@ function SelectionBar({
               {count} shift{count === 1 ? "" : "s"} selected
             </p>
             {error ? (
-              <p role="alert" className="text-xs text-tomato">
+              <p role="alert" className="text-xs text-tomato-deep">
                 {error}
               </p>
             ) : (
@@ -430,14 +430,14 @@ function SelectionBar({
               <Button
                 type="submit"
                 disabled={pending}
-                className="h-11 bg-leaf px-5 text-base font-semibold hover:bg-leaf-deep"
+                className="h-11 bg-leaf-deep px-5 text-base font-semibold hover:bg-leaf-ink"
               >
                 {pending ? "Booking…" : `Book ${count > 1 ? "all" : "shift"} →`}
               </Button>
             ) : (
               <Button
                 asChild
-                className="h-11 bg-leaf px-5 text-base font-semibold hover:bg-leaf-deep"
+                className="h-11 bg-leaf-deep px-5 text-base font-semibold hover:bg-leaf-ink"
               >
                 <Link href={signInHref}>
                   Sign up &amp; book {count > 1 ? "all" : ""}→

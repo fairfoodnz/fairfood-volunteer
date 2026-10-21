@@ -31,7 +31,7 @@ export default async function CompleteProfilePage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-12 md:py-16">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x mx-auto max-w-2xl">
           <header className="mb-10 space-y-3">
             <p className="eyebrow text-leaf-deep">

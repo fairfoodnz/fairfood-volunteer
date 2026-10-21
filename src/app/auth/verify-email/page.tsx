@@ -19,7 +19,7 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-16 md:py-24">
         <div className="container-x grid gap-16 lg:grid-cols-2">
           <div className="max-w-md space-y-6">
             <p className="eyebrow">Almost there</p>

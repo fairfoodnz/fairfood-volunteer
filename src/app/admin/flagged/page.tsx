@@ -194,15 +194,15 @@ export default async function FlaggedPage({
                       aria-hidden
                       className={cn(
                         "inline-block size-1.5 rounded-full",
-                        group.key === "booked" ? "bg-leaf" : "bg-foreground/25",
+                        group.key === "booked" ? "bg-leaf-deep" : "bg-foreground/25",
                       )}
                     />
                     {GROUP_COPY[group.key].title}
-                    <span className="font-mono text-xs font-normal tabular-nums text-foreground/55">
+                    <span className="font-mono text-xs font-normal tabular-nums text-foreground/65">
                       {group.people.length}
                     </span>
                   </h2>
-                  <p className="text-xs text-foreground/55">
+                  <p className="text-xs text-foreground/65">
                     {GROUP_COPY[group.key].hint}
                   </p>
                 </div>

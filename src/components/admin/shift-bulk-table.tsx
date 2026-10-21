@@ -181,7 +181,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
                     <td className="px-4 py-3 font-medium">
                       {s.when}
                       {s.cancelled && (
-                        <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-tomato">
+                        <span className="ml-2 rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-tomato-deep">
                           Cancelled
                         </span>
                       )}
@@ -200,7 +200,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
                       <span className="font-semibold">
                         {s.confirmed + s.blockedSlots}
                       </span>
-                      <span className="text-foreground/55"> / {s.capacity}</span>
+                      <span className="text-foreground/65"> / {s.capacity}</span>
                       {s.blockedSlots > 0 && (
                         <span className="ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/65">
                           incl. {s.blockedSlots} held
@@ -237,7 +237,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
             <button
               type="button"
               onClick={clearSelection}
-              className="inline-flex items-center gap-1 text-xs text-foreground/55 hover:text-foreground"
+              className="inline-flex items-center gap-1 text-xs text-foreground/65 hover:text-foreground"
             >
               <X className="size-3.5" />
               Clear
@@ -275,7 +275,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
           <DialogHeader>
             <span
               aria-hidden
-              className="flex size-10 items-center justify-center rounded-full bg-tomato/12 text-tomato"
+              className="flex size-10 items-center justify-center rounded-full bg-tomato/12 text-tomato-deep"
             >
               <CalendarX2 className="size-5" />
             </span>
@@ -313,7 +313,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
               {cancelCount === 0 ? "Close" : `Keep ${plural(cancelCount, "shift")}`}
             </DialogClose>
             <Button
-              className="bg-tomato text-cream hover:bg-tomato/90"
+              className="bg-tomato-deep text-cream hover:bg-tomato-deep/90"
               disabled={pending || cancelCount === 0}
               onClick={() =>
                 run(bulkCancelShifts, "Cancelled", () => setCancelOpen(false))

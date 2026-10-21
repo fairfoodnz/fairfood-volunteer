@@ -108,7 +108,7 @@ export function DocumentUploadCard() {
       {error && (
         <div
           role="alert"
-          className="rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato"
+          className="rounded-md border border-tomato/40 bg-tomato/10 px-4 py-3 text-sm text-tomato-deep"
         >
           {error}
         </div>
@@ -135,7 +135,7 @@ export function DocumentUploadCard() {
           <span className="text-sm font-medium text-foreground">
             Drop a file here or click to choose
           </span>
-          <span className="font-mono text-xs text-foreground/55">
+          <span className="font-mono text-xs text-foreground/65">
             PDF · DOCX · JPG · PNG up to 25 MB
           </span>
         </button>
@@ -146,7 +146,7 @@ export function DocumentUploadCard() {
               <p className="truncate text-sm font-semibold text-foreground">
                 {file.name}
               </p>
-              <p className="mt-0.5 font-mono text-xs text-foreground/55">
+              <p className="mt-0.5 font-mono text-xs text-foreground/65">
                 {formatBytes(file.size)} · {file.type || "unknown type"}
               </p>
             </div>
@@ -236,7 +236,7 @@ export function DocumentUploadCard() {
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream-deep">
                 <div className="h-full w-1/3 animate-pulse rounded-full bg-leaf" />
               </div>
-              <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[11px] uppercase tracking-widest text-foreground/65">
                 Uploading…
               </p>
             </div>
@@ -258,7 +258,7 @@ export function DocumentUploadCard() {
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex h-10 items-center rounded-md bg-leaf px-5 text-sm font-semibold text-cream hover:bg-leaf-deep disabled:opacity-60"
+              className="inline-flex h-10 items-center rounded-md bg-leaf-deep px-5 text-sm font-semibold text-cream hover:bg-leaf-ink disabled:opacity-60"
             >
               {pending ? "Uploading…" : "Upload"}
             </button>
@@ -280,7 +280,7 @@ function Field({
 }) {
   return (
     <label htmlFor={htmlFor} className="block space-y-1">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </span>
       {children}

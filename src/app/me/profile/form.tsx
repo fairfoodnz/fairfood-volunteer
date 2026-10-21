@@ -130,7 +130,7 @@ export function ProfileForm({
           type="submit"
           size="lg"
           disabled={pending}
-          className="bg-leaf hover:bg-leaf-deep"
+          className="bg-leaf-deep hover:bg-leaf-ink"
         >
           {pending ? "Saving…" : next ? "Save and continue →" : "Save profile"}
         </Button>
@@ -182,7 +182,7 @@ function Field({
     <div className="space-y-2">
       <Label htmlFor={name}>
         {label}
-        {required && <span className="ml-1 text-tomato">*</span>}
+        {required && <span className="ml-1 text-tomato-deep">*</span>}
       </Label>
       <Input
         id={name}
@@ -202,7 +202,7 @@ function Field({
       />
       <Err id={errorId}>{error}</Err>
       {helper && (
-        <p id={helperId} className="text-xs text-foreground/55">
+        <p id={helperId} className="text-xs text-foreground/65">
           {helper}
         </p>
       )}

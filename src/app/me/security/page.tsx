@@ -60,7 +60,7 @@ export default async function SecurityPage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-12 md:py-16">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x max-w-3xl">
           <header className="mb-8">
             <p className="eyebrow">Kia ora, {user.firstName}</p>
@@ -181,7 +181,7 @@ function Banner({
       role={isError ? "alert" : "status"}
       className={`mb-6 flex items-start gap-3 rounded-md border px-5 py-4 ${
         isError
-          ? "border-tomato/30 bg-tomato/10 text-tomato"
+          ? "border-tomato/30 bg-tomato/10 text-tomato-deep"
           : "border-leaf/30 bg-leaf/10 text-leaf-deep"
       }`}
     >

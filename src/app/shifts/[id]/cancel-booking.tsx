@@ -28,7 +28,7 @@ export function CancelBookingDialog({
             type="button"
             variant="outline"
             size="sm"
-            className="border-tomato/40 text-tomato hover:bg-tomato/10 hover:text-tomato"
+            className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
           >
             {triggerLabel}
           </Button>
@@ -49,7 +49,7 @@ export function CancelBookingDialog({
             <input type="hidden" name="bookingId" value={bookingId} />
             <Button
               type="submit"
-              className="bg-tomato text-cream hover:bg-tomato/90"
+              className="bg-tomato-deep text-cream hover:bg-tomato-deep/90"
             >
               Cancel shift
             </Button>

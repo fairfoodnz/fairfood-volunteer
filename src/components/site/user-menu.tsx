@@ -28,7 +28,7 @@ export function UserMenu({
         aria-label="Account menu"
         className="inline-flex items-center gap-2 rounded-full border border-transparent bg-transparent px-2 py-1 text-sm font-medium text-foreground/80 outline-none transition-colors hover:bg-muted/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
       >
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-leaf text-cream text-xs font-semibold">
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-leaf-deep text-cream text-xs font-semibold">
           {initials(user)}
         </span>
         <span className="hidden md:inline">{user.firstName}</span>

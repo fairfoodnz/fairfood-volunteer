@@ -147,7 +147,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
               {user.phone && <> · {user.phone}</>}
               {user.pronouns && <> · {user.pronouns}</>}
             </p>
-            <p className="mt-1 text-xs text-foreground/55">
+            <p className="mt-1 text-xs text-foreground/65">
               Joined {NZ_DATE.format(user.createdAt)}
               {user.profileCompletedAt
                 ? ` · Profile completed ${NZ_DATE.format(user.profileCompletedAt)}`
@@ -157,7 +157,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
           {flagged && (
             <Link
               href="/admin/flagged"
-              className="inline-flex h-9 items-center gap-2 self-start rounded-md border border-tomato/40 bg-tomato/5 px-3 text-xs font-semibold text-tomato hover:bg-tomato/10"
+              className="inline-flex h-9 items-center gap-2 self-start rounded-md border border-tomato/40 bg-tomato/5 px-3 text-xs font-semibold text-tomato-deep hover:bg-tomato/10"
             >
               Review flags →
             </Link>
@@ -199,7 +199,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                         ? HEARD_ABOUT_LABELS[user.heardAbout] ?? user.heardAbout
                         : "—"}
                       {user.heardAboutOther && (
-                        <span className="block text-xs text-foreground/55">
+                        <span className="block text-xs text-foreground/65">
                           {user.heardAboutOther}
                         </span>
                       )}
@@ -225,7 +225,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
 
                   {user.whyInterested && (
                     <div className="mt-6 border-t border-border pt-5">
-                      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                         Why they want to volunteer
                       </p>
                       <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/85">
@@ -236,7 +236,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
 
                   {flagged && (
                     <div className="mt-6 rounded-md border border-tomato/30 bg-tomato/5 p-4">
-                      <p className="font-mono text-[10px] uppercase tracking-widest text-tomato">
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-tomato-deep">
                         Flagged on questionnaire
                       </p>
                       <ul className="mt-2 space-y-1 text-sm">
@@ -247,7 +247,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                           <li>· Disclosed health conditions</li>
                         )}
                       </ul>
-                      <p className="mt-3 text-xs text-tomato">
+                      <p className="mt-3 text-xs text-tomato-deep">
                         Open{" "}
                         <Link
                           href="/admin/flagged"
@@ -308,7 +308,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                           href={`/admin/emails/${e.id}`}
                           className="-m-2 min-w-0 flex-1 rounded-md p-2 hover:bg-foreground/5"
                         >
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                          <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                             {EMAIL_TEMPLATE_LABELS[e.template]}
                           </p>
                           <p className="mt-1 truncate text-sm font-semibold">
@@ -318,7 +318,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                             {formatEmailTimestamp(e.createdAt)}
                           </p>
                           {e.error && (
-                            <p className="mt-1 truncate text-xs text-tomato">
+                            <p className="mt-1 truncate text-xs text-tomato-deep">
                               {e.error}
                             </p>
                           )}
@@ -354,7 +354,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                 <input type="hidden" name="userId" value={user.id} />
                 <label
                   htmlFor="notes"
-                  className="font-mono text-[10px] uppercase tracking-widest text-foreground/55"
+                  className="font-mono text-[10px] uppercase tracking-widest text-foreground/65"
                 >
                   Coordinator notes
                 </label>
@@ -367,7 +367,7 @@ export default async function VolunteerDetailPage({ params }: Props) {
                   className="mt-2"
                   maxLength={2000}
                 />
-                <p className="mt-2 text-xs text-foreground/55">
+                <p className="mt-2 text-xs text-foreground/65">
                   Only admins can see this. Keep it factual.
                 </p>
                 <div className="mt-3 flex justify-end">
@@ -473,7 +473,7 @@ function BookingList({
 }) {
   return (
     <div>
-      <h3 className="mb-2 font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <h3 className="mb-2 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {heading}
       </h3>
       <ul className="divide-y divide-border rounded-md border border-border bg-card">
@@ -510,7 +510,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
       label: "Cancelled",
       cls: "bg-foreground/10 text-foreground/65",
     },
-    NO_SHOW: { label: "No-show", cls: "bg-tomato/15 text-tomato" },
+    NO_SHOW: { label: "No-show", cls: "bg-tomato/15 text-tomato-deep" },
   };
   const { label, cls } = map[status];
   return (
@@ -548,7 +548,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-md border border-border bg-card p-5">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </p>
       <p className="display mt-2 text-3xl font-bold">{value}</p>
@@ -565,7 +565,7 @@ function Field({
 }) {
   return (
     <div>
-      <dt className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <dt className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </dt>
       <dd className="mt-1 text-sm">{children}</dd>

@@ -218,7 +218,7 @@ export function BulkScheduler({
                       className={cn(
                         "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border",
                         on
-                          ? "border-leaf bg-leaf text-cream"
+                          ? "border-leaf bg-leaf-deep text-cream"
                           : "border-foreground/30",
                       )}
                     >
@@ -283,7 +283,7 @@ export function BulkScheduler({
                   className={cn(
                     "h-10 min-w-[3.25rem] rounded-md border px-3 text-sm font-medium transition-colors",
                     on
-                      ? "border-leaf bg-leaf text-cream"
+                      ? "border-leaf bg-leaf-deep text-cream"
                       : "border-border hover:border-foreground/35",
                   )}
                 >
@@ -299,7 +299,7 @@ export function BulkScheduler({
             type="button"
             disabled={!canRun || pending}
             onClick={() => run(true)}
-            className="gap-1.5 bg-leaf hover:bg-leaf-deep"
+            className="gap-1.5 bg-leaf-deep hover:bg-leaf-ink"
           >
             <CalendarRange className="size-4" />
             {pending && !preview ? "Checking…" : "Preview schedule"}
@@ -331,7 +331,7 @@ export function BulkScheduler({
             )}
 
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                 Per template
               </p>
               <ul className="mt-2 space-y-1 text-sm">
@@ -344,7 +344,7 @@ export function BulkScheduler({
                     <span className="shrink-0 tabular-nums text-foreground/70">
                       +{pt.created}
                       {pt.skipped > 0 && (
-                        <span className="text-foreground/45">
+                        <span className="text-foreground/65">
                           {" "}
                           / {pt.skipped} skipped
                         </span>
@@ -356,7 +356,7 @@ export function BulkScheduler({
             </div>
 
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                 First shifts
               </p>
               <ul className="mt-2 space-y-1 text-sm">
@@ -365,7 +365,7 @@ export function BulkScheduler({
                     key={i}
                     className={cn(
                       "flex items-center justify-between gap-2",
-                      s.duplicate && "text-foreground/45 line-through",
+                      s.duplicate && "text-foreground/65 line-through",
                     )}
                   >
                     <span>
@@ -377,7 +377,7 @@ export function BulkScheduler({
                   </li>
                 ))}
                 {preview.total > preview.sample.length && (
-                  <li className="text-xs text-foreground/55">
+                  <li className="text-xs text-foreground/65">
                     …and {preview.total - preview.sample.length} more
                   </li>
                 )}
@@ -388,7 +388,7 @@ export function BulkScheduler({
               type="button"
               disabled={pending || preview.created === 0}
               onClick={() => run(false)}
-              className="w-full gap-1.5 bg-leaf hover:bg-leaf-deep"
+              className="w-full gap-1.5 bg-leaf-deep hover:bg-leaf-ink"
             >
               <Check className="size-4" />
               {pending
@@ -423,7 +423,7 @@ function Metric({
       >
         {value}
       </p>
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </p>
     </div>

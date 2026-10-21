@@ -101,7 +101,7 @@ export default async function ResourcesPage() {
   return (
     <>
       <SiteNav />
-      <main className="container-x flex-1 py-16 md:py-20">
+      <main id="main" className="container-x flex-1 py-16 md:py-20">
         <header className="max-w-2xl">
         <p className="eyebrow">Volunteer kete</p>
         <h1 className="display mt-3 text-4xl font-bold leading-tight md:text-5xl">
@@ -157,7 +157,7 @@ function ResourceCardArticle({ card }: { card: ResourceCard }) {
       />
       <div className="min-w-0 flex-1">
         <h3 className="text-base font-semibold leading-snug">{card.title}</h3>
-        <p className="mt-1 font-mono text-xs text-foreground/55">
+        <p className="mt-1 font-mono text-xs text-foreground/65">
           {shortType(card.mimeType)} · {formatBytes(card.sizeBytes)} · Updated{" "}
           {NZ_DATE.format(card.updatedAt)}
         </p>
@@ -171,7 +171,7 @@ function ResourceCardArticle({ card }: { card: ResourceCard }) {
           target="_blank"
           rel="noopener"
           aria-label={ariaLabel}
-          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-leaf-deep transition-colors hover:text-leaf"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-leaf-deep transition-colors hover:text-leaf-ink"
         >
           Download {shortType(card.mimeType)}
           <span aria-hidden>→</span>

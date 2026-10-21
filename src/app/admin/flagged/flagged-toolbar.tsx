@@ -88,7 +88,7 @@ export function FlaggedToolbar({ counts }: { counts: Record<ViewKey, number> }) 
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
                   active
-                    ? "bg-leaf text-cream"
+                    ? "bg-leaf-deep text-cream"
                     : "bg-foreground/10 text-foreground/65",
                 )}
               >
@@ -127,7 +127,7 @@ export function FlaggedToolbar({ counts }: { counts: Record<ViewKey, number> }) 
         </div>
 
         <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/50" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/65" />
           <input
             ref={searchRef}
             type="search"
@@ -142,14 +142,14 @@ export function FlaggedToolbar({ counts }: { counts: Record<ViewKey, number> }) 
             }}
             placeholder="Search by name or email"
             aria-label="Search flagged volunteers"
-            className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-9 text-sm outline-none transition-colors placeholder:text-foreground/45 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 [&::-webkit-search-cancel-button]:hidden"
+            className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-9 text-sm outline-none transition-colors placeholder:text-foreground/65 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 [&::-webkit-search-cancel-button]:hidden"
           />
           {urlQ && (
             <button
               type="button"
               onClick={clearSearch}
               aria-label="Clear search"
-              className="absolute right-1 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-foreground/55 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
+              className="absolute right-1 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-foreground/65 outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
             >
               <X className="size-4" />
             </button>

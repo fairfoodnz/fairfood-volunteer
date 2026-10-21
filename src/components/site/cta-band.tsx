@@ -21,7 +21,7 @@ export function CtaBand() {
             <Button
               asChild
               size="lg"
-              className="h-12 bg-leaf px-7 text-base font-semibold tracking-tight hover:bg-leaf-deep"
+              className="h-12 bg-leaf-deep px-7 text-base font-semibold tracking-tight hover:bg-leaf-ink"
             >
               <Link href="/shifts">See open shifts →</Link>
             </Button>

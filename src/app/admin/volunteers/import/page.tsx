@@ -51,7 +51,7 @@ export default async function ImportVolunteersPage() {
         <header className="mb-8">
           <Link
             href="/admin/volunteers"
-            className="inline-flex items-center gap-1.5 text-xs text-foreground/55 hover:text-foreground"
+            className="inline-flex items-center gap-1.5 text-xs text-foreground/65 hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />
             Back to volunteers
@@ -134,13 +134,13 @@ function Stat({
   return (
     <div className="rounded-md border border-border bg-card p-5">
       <div className="flex items-center gap-2">
-        {Icon && <Icon className="size-3.5 text-foreground/55" />}
-        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+        {Icon && <Icon className="size-3.5 text-foreground/65" />}
+        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
           {label}
         </p>
       </div>
       <p className="display mt-2 text-3xl font-bold tabular-nums">{value}</p>
-      {hint && <p className="mt-1 text-xs text-foreground/55">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-foreground/65">{hint}</p>}
     </div>
   );
 }

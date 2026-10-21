@@ -21,7 +21,7 @@ function ConfirmButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="bg-tomato text-cream hover:bg-tomato/90"
+      className="bg-tomato-deep text-cream hover:bg-tomato-deep/90"
     >
       {pending ? "Cancelling…" : "Cancel shift"}
     </Button>
@@ -47,7 +47,7 @@ export function CancelShiftDialog({
         render={
           <Button
             variant="outline"
-            className="border-tomato/40 text-tomato hover:bg-tomato/10 hover:text-tomato"
+            className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
           />
         }
       >
@@ -57,7 +57,7 @@ export function CancelShiftDialog({
         <DialogHeader>
           <span
             aria-hidden
-            className="flex size-10 items-center justify-center rounded-full bg-tomato/12 text-tomato"
+            className="flex size-10 items-center justify-center rounded-full bg-tomato/12 text-tomato-deep"
           >
             <AlertTriangle className="size-5" />
           </span>

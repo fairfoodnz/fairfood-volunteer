@@ -184,7 +184,7 @@ export function ImportUploader() {
         <div className="mt-6 rounded-md border border-border bg-card p-8 text-center">
           <CircleDashed className="mx-auto size-6 animate-spin text-leaf-deep" />
           <p className="mt-3 text-sm font-medium">Creating accounts…</p>
-          <p className="mt-1 text-xs text-foreground/55">
+          <p className="mt-1 text-xs text-foreground/65">
             This usually takes a couple of seconds. Hold on.
           </p>
         </div>
@@ -293,7 +293,7 @@ function Dropzone(props: {
               — recorded as &ldquo;previously logged&rdquo;
             </li>
           </ul>
-          <p className="pt-1 text-xs text-foreground/55">
+          <p className="pt-1 text-xs text-foreground/65">
             Extra columns are ignored — you can drop in your file unchanged.
           </p>
         </div>
@@ -332,7 +332,7 @@ function Preview(props: {
           <FileSpreadsheet className="size-5 text-leaf-deep" />
           <div>
             <p className="text-sm font-semibold">{filename}</p>
-            <p className="text-xs text-foreground/55">
+            <p className="text-xs text-foreground/65">
               {totalRows.toLocaleString()} row{totalRows === 1 ? "" : "s"} ·{" "}
               {roster.matched.length} field
               {roster.matched.length === 1 ? "" : "s"} matched
@@ -399,7 +399,7 @@ function Preview(props: {
                 className={cn(
                   "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
                   active
-                    ? "border-leaf bg-leaf text-cream"
+                    ? "border-leaf bg-leaf-deep text-cream"
                     : "border-border bg-card text-foreground/75 hover:border-leaf/40 hover:text-leaf-deep",
                 )}
                 aria-pressed={active}
@@ -417,7 +417,7 @@ function Preview(props: {
             );
           })}
         </nav>
-        <p className="text-xs text-foreground/55">
+        <p className="text-xs text-foreground/65">
           Showing {visibleRows.length.toLocaleString()} of{" "}
           {totalRows.toLocaleString()}
         </p>
@@ -461,7 +461,7 @@ function Preview(props: {
               </tbody>
             </table>
             {visibleRows.length > 200 ? (
-              <div className="border-t border-border bg-cream-deep/40 px-4 py-2 text-center text-xs text-foreground/55">
+              <div className="border-t border-border bg-cream-deep/40 px-4 py-2 text-center text-xs text-foreground/65">
                 Showing the first 200 rows in this filter. All{" "}
                 {visibleRows.length.toLocaleString()} will be processed on
                 import.
@@ -484,7 +484,7 @@ function Preview(props: {
             />
             <span>
               <span className="font-semibold">Send claim invites now</span>
-              <span id="send-invites-hint" className="ml-2 text-foreground/55">
+              <span id="send-invites-hint" className="ml-2 text-foreground/65">
                 One-time link, expires in 7 days
               </span>
             </span>
@@ -515,7 +515,7 @@ function Preview(props: {
 function PreviewRow({ row }: { row: ImportPreviewRow }) {
   return (
     <tr className="border-t border-border align-top">
-      <td className="px-4 py-3 font-mono text-xs text-foreground/55 tabular-nums">
+      <td className="px-4 py-3 font-mono text-xs text-foreground/65 tabular-nums">
         {row.rowNumber}
       </td>
       <td className="px-4 py-3">
@@ -551,7 +551,7 @@ function StatusPill({ status, reason }: { status: ImportStatus; reason?: string 
     new: { className: "bg-leaf/15 text-leaf-deep", icon: CheckCircle2 },
     existing: { className: "bg-foreground/10 text-foreground/65", icon: CircleSlash },
     skip: { className: "bg-foreground/10 text-foreground/65", icon: CircleSlash },
-    error: { className: "bg-tomato/15 text-tomato", icon: AlertTriangle },
+    error: { className: "bg-tomato/15 text-tomato-deep", icon: AlertTriangle },
   };
   const { className, icon: Icon } = palette[status];
   return (
@@ -586,10 +586,10 @@ function CountTile({
         ? "border-tomato/40 bg-tomato/[0.06]"
         : "border-border bg-card";
   const valueTone =
-    tone === "tomato" && value > 0 ? "text-tomato" : "text-foreground";
+    tone === "tomato" && value > 0 ? "text-tomato-deep" : "text-foreground";
   return (
     <div className={cn("rounded-md border p-4", accent)}>
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         {label}
       </p>
       <p
@@ -597,7 +597,7 @@ function CountTile({
       >
         {value.toLocaleString()}
       </p>
-      <p className="mt-1 text-xs text-foreground/55">{hint}</p>
+      <p className="mt-1 text-xs text-foreground/65">{hint}</p>
     </div>
   );
 }

@@ -174,7 +174,7 @@ function SearchStep({
     <div className="space-y-3">
       <div className="relative">
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/50"
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/65"
           aria-hidden
         />
         <Input
@@ -189,7 +189,7 @@ function SearchStep({
         />
         {searching && (
           <Loader2
-            className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-foreground/55"
+            className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-foreground/65"
             aria-hidden
           />
         )}
@@ -201,7 +201,7 @@ function SearchStep({
         className="max-h-72 overflow-y-auto rounded-md border border-border bg-card"
       >
         {results === null ? (
-          <p className="px-4 py-6 text-center text-sm text-foreground/55">
+          <p className="px-4 py-6 text-center text-sm text-foreground/65">
             Looking…
           </p>
         ) : results.length === 0 ? (
@@ -246,7 +246,7 @@ function SearchStep({
                       </span>
                     )}
                     {u.reinstatable && !u.alreadyOnRoster && (
-                      <span className="rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-tomato">
+                      <span className="rounded-full bg-tomato/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-tomato-deep">
                         Reinstate
                       </span>
                     )}
@@ -304,7 +304,7 @@ function ConfirmStep({
       </div>
 
       {user.reinstatable && (
-        <p className="rounded-md border-l-2 border-tomato bg-tomato/10 px-3 py-2 text-xs text-tomato">
+        <p className="rounded-md border-l-2 border-tomato bg-tomato/10 px-3 py-2 text-xs text-tomato-deep">
           {name} had a cancelled / no-show booking on this shift. Confirming
           will reinstate it.
         </p>
@@ -313,7 +313,7 @@ function ConfirmStep({
       <div className="space-y-1.5">
         <Label htmlFor={notesId}>
           Private note{" "}
-          <span className="font-normal text-foreground/50">(optional)</span>
+          <span className="font-normal text-foreground/65">(optional)</span>
         </Label>
         <Textarea
           id={notesId}
@@ -354,7 +354,7 @@ function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="bg-leaf hover:bg-leaf-deep"
+      className="bg-leaf-deep hover:bg-leaf-ink"
     >
       {pending ? "Adding…" : "Add to roster"}
     </Button>
@@ -391,7 +391,7 @@ export function AssignVolunteerTrigger({
       <Button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-leaf hover:bg-leaf-deep"
+        className="bg-leaf-deep hover:bg-leaf-ink"
       >
         <UserPlus className="size-4" />
         Assign volunteer

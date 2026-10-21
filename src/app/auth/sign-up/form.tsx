@@ -40,7 +40,7 @@ export function SignUpForm({ next }: { next?: string }) {
             error={fe.lastName}
           />
         </div>
-        <p id="name-helper" className="text-xs text-foreground/55">
+        <p id="name-helper" className="text-xs text-foreground/65">
           Use the English alphabet so the team can read the roster. Macrons and accents are fine.
         </p>
       </div>
@@ -81,11 +81,11 @@ export function SignUpForm({ next }: { next?: string }) {
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+        className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
       >
         {pending ? "Creating your account…" : "Create account"}
       </Button>
-      <p className="text-xs text-foreground/55">
+      <p className="text-xs text-foreground/65">
         By creating an account you agree to be a kind kaiāwhina at the kai
         table. We use your details only to roster shifts.
       </p>
@@ -123,7 +123,7 @@ function Field({
     <div className="space-y-2">
       <Label htmlFor={id}>
         {label}
-        {required && <span className="ml-1 text-tomato">*</span>}
+        {required && <span className="ml-1 text-tomato-deep">*</span>}
       </Label>
       <Input
         id={id}
@@ -138,7 +138,7 @@ function Field({
         className="h-11"
       />
       {helper && !error && (
-        <p id={helperId} className="text-xs text-foreground/55">
+        <p id={helperId} className="text-xs text-foreground/65">
           {helper}
         </p>
       )}

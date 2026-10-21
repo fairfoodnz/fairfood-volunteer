@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* No dark theme ships (the site is cream-only). The variant stays defined so
+   any stray `dark:` utility keys off a `.dark` class that is never set,
+   rather than falling back to prefers-color-scheme. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -9,6 +12,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-poppins);
   --font-display: var(--font-poppins);
   --font-brand: var(--font-poppins);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -40,9 +44,11 @@
   --color-cream-deep: var(--ff-cream-deep);
   --color-leaf: var(--ff-green);
   --color-leaf-deep: var(--ff-green-deep);
+  --color-leaf-ink: var(--ff-green-ink);
   --color-forest: var(--ff-forest);
   --color-charcoal: var(--ff-charcoal);
   --color-tomato: var(--ff-tomato);
+  --color-tomato-deep: var(--ff-tomato-deep);
   --color-clay: var(--ff-clay);
   --color-ocean: var(--ff-ocean);
 
@@ -53,14 +59,22 @@
 }
 
 :root {
-  /* Fair Food palette */
+  /* Fair Food palette.
+     `leaf` and `tomato` are DECORATIVE: dots, rules, icons, tints and large
+     display type. Neither reaches 4.5:1 as body-size text or behind white
+     text, so text and filled controls use the -deep steps:
+       leaf-deep on cream 5.1:1 · white on leaf-deep 5.6:1
+       tomato-deep on cream 5.5:1 · white on tomato-deep 6.1:1
+     `leaf-ink` is the hover/pressed step below leaf-deep. */
   --ff-cream: oklch(0.965 0.012 75);
   --ff-cream-deep: oklch(0.93 0.02 75);
   --ff-green: oklch(0.62 0.17 142);
   --ff-green-deep: oklch(0.5 0.16 142);
+  --ff-green-ink: oklch(0.43 0.14 142);
   --ff-forest: oklch(0.22 0.04 140);
   --ff-charcoal: oklch(0.18 0.012 140);
   --ff-tomato: oklch(0.66 0.19 32);
+  --ff-tomato-deep: oklch(0.52 0.19 32);
   /* Extra programme card themes — deep enough to carry cream text. */
   --ff-clay: oklch(0.42 0.09 45);
   --ff-ocean: oklch(0.4 0.055 215);
@@ -71,50 +85,32 @@
   --card-foreground: var(--ff-charcoal);
   --popover: oklch(1 0 0);
   --popover-foreground: var(--ff-charcoal);
-  --primary: var(--ff-green);
+  --primary: var(--ff-green-deep);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.93 0.02 75);
   --secondary-foreground: var(--ff-charcoal);
   --muted: oklch(0.93 0.018 75);
-  --muted-foreground: oklch(0.45 0.01 270);
-  --accent: var(--ff-green);
+  --muted-foreground: oklch(0.45 0.012 75);
+  --accent: var(--ff-green-deep);
   --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.58 0.22 27);
+  --destructive: oklch(0.52 0.2 27);
   --border: oklch(0.88 0.014 75);
-  --input: oklch(0.88 0.014 75);
-  --ring: var(--ff-green);
+  /* Form-field borders must reach 3:1 against cream and white (WCAG 1.4.11);
+     the hairline `--border` (1.3:1) is for cards and dividers only. */
+  --input: oklch(0.62 0.02 75);
+  --ring: var(--ff-green-deep);
   --radius: 0.25rem;
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: var(--ff-charcoal);
-  --sidebar-primary: var(--ff-green);
+  --sidebar-primary: var(--ff-green-deep);
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.93 0.02 75);
   --sidebar-accent-foreground: var(--ff-charcoal);
   --sidebar-border: oklch(0.88 0.014 75);
-  --sidebar-ring: var(--ff-green);
+  --sidebar-ring: var(--ff-green-deep);
 }
 
-.dark {
-  --background: oklch(0.16 0.005 270);
-  --foreground: oklch(0.97 0 0);
-  --card: oklch(0.22 0.006 270);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.22 0.006 270);
-  --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.7 0.18 142);
-  --primary-foreground: oklch(0.16 0.005 270);
-  --secondary: oklch(0.26 0.006 270);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.26 0.006 270);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.7 0.18 142);
-  --accent-foreground: oklch(0.16 0.005 270);
-  --destructive: oklch(0.7 0.19 22);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.7 0.18 142);
-}
 
 @layer base {
   * {
@@ -129,8 +125,27 @@
     overflow-x: clip;
   }
   ::selection {
-    background-color: var(--ff-green);
+    background-color: var(--ff-green-deep);
     color: white;
+  }
+  /* Links and custom interactive elements that don't ship their own ring
+     (primitives do) get a solid, offset leaf-deep outline on keyboard focus. */
+  :where(a, summary, [role="button"], [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Honour reduced-motion globally: tw-animate-css enter/exit animations,
+   marquees and hover transforms all collapse to an instant change. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -149,6 +164,6 @@
     font-weight: 600;
   }
   .eyebrow {
-    @apply text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground;
+    @apply font-mono text-xs font-medium uppercase tracking-[0.18em] text-foreground/70;
   }
 }

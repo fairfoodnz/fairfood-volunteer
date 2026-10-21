@@ -35,7 +35,7 @@ export default async function SignInPage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-16 md:py-24">
         <div className="container-x grid gap-16 lg:grid-cols-2">
           <div className="max-w-md space-y-6">
             <p className="eyebrow">Kia ora — welcome back</p>
@@ -67,7 +67,7 @@ export default async function SignInPage({ searchParams }: Props) {
               {errorMsg && (
                 <div
                   role="alert"
-                  className="mb-5 flex items-start gap-3 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-tomato"
+                  className="mb-5 flex items-start gap-3 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-tomato-deep"
                 >
                   <AlertCircle className="mt-0.5 size-5 shrink-0" aria-hidden />
                   <p className="text-sm font-medium">{errorMsg}</p>
@@ -111,7 +111,7 @@ function DevQuickLogin() {
   if (process.env.NODE_ENV !== "development") return null;
   return (
     <div className="mt-6 rounded-md border border-dashed border-leaf/40 bg-leaf/5 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         Dev only — seed accounts
       </p>
       <p className="mt-1 text-xs text-foreground/65">
@@ -122,7 +122,7 @@ function DevQuickLogin() {
           <input type="hidden" name="role" value="volunteer" />
           <button
             type="submit"
-            className="inline-flex h-9 items-center rounded border border-leaf/40 bg-card px-3 text-xs font-semibold text-leaf-deep transition-colors hover:bg-leaf hover:text-cream"
+            className="inline-flex h-9 items-center rounded border border-leaf/40 bg-card px-3 text-xs font-semibold text-leaf-deep transition-colors hover:bg-leaf-deep hover:text-cream"
           >
             Sign in as volunteer
           </button>

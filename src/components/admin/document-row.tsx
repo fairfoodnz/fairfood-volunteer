@@ -46,7 +46,7 @@ export function DocumentRow(props: DocumentRowProps) {
         <p className="truncate text-sm font-semibold text-foreground">
           {props.title}
         </p>
-        <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-foreground/55">
+        <p className="mt-0.5 font-mono text-[11px] uppercase tracking-widest text-foreground/65">
           {shortType(props.mimeType)} · {formatBytes(props.sizeBytes)} ·{" "}
           {props.createdAt}
         </p>
@@ -71,7 +71,7 @@ export function DocumentRow(props: DocumentRowProps) {
             render={(props) => (
               <button
                 {...props}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-tomato/40 px-2.5 text-xs font-medium text-tomato hover:bg-tomato/10"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-tomato/40 px-2.5 text-xs font-medium text-tomato-deep hover:bg-tomato/10"
               >
                 <Trash2 className="size-3.5" />
                 Delete
@@ -102,7 +102,7 @@ export function DocumentRow(props: DocumentRowProps) {
                 type="button"
                 disabled={pending}
                 onClick={handleDelete}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-tomato px-4 text-sm font-semibold text-cream hover:bg-tomato/90 disabled:opacity-70"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-tomato-deep px-4 text-sm font-semibold text-cream hover:bg-tomato-deep/90 disabled:opacity-70"
               >
                 {pending && <Loader2 className="size-3.5 animate-spin" />}
                 Delete

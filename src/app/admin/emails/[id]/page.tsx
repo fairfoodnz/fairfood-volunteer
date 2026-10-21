@@ -95,7 +95,7 @@ export default async function EmailDetailPage({ params }: Props) {
             </span>
           </p>
           {row.providerId && (
-            <p className="mt-2 font-mono text-xs text-foreground/55">
+            <p className="mt-2 font-mono text-xs text-foreground/65">
               Resend id · {row.providerId}
             </p>
           )}
@@ -103,10 +103,10 @@ export default async function EmailDetailPage({ params }: Props) {
 
         {row.error && (
           <div className="mb-8 rounded-md border border-tomato/30 bg-tomato/5 p-4">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-tomato">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-tomato-deep">
               Delivery error
             </p>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-tomato">
+            <p className="mt-2 whitespace-pre-wrap text-sm text-tomato-deep">
               {row.error}
             </p>
             {row.status === EmailLogStatus.FAILED && (

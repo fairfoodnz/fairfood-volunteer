@@ -50,7 +50,7 @@ export function BookForm({
       {user && (
         <div className="space-y-1.5">
           <Label htmlFor="notes">
-            Anything we should know? <span className="text-foreground/50">(optional)</span>
+            Anything we should know? <span className="text-foreground/65">(optional)</span>
           </Label>
           <Textarea
             id="notes"
@@ -73,7 +73,7 @@ export function BookForm({
           type="submit"
           size="lg"
           disabled={pending}
-          className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+          className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
         >
           {pending ? "Booking…" : "Confirm booking"}
         </Button>
@@ -82,7 +82,7 @@ export function BookForm({
           <Button
             asChild
             size="lg"
-            className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+            className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
           >
             <Link href={`/auth/sign-up?next=${encodeURIComponent(`/shifts/${shiftId}`)}`}>
               Create account & book →

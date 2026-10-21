@@ -119,7 +119,7 @@ export function AdminSidebar({
         >
           <LogoMark size={36} />
           <span className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/65">
               Fair Food
             </span>
             <span className="text-sm font-semibold">Admin</span>
@@ -130,7 +130,7 @@ export function AdminSidebar({
       <SidebarContent>
         {SECTIONS.map((section) => (
           <SidebarGroup key={section.label}>
-            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
+            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/65">
               {section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -151,7 +151,7 @@ export function AdminSidebar({
                           <Icon className="size-4" />
                           <span className="flex w-full items-center justify-between gap-2">
                             <span>{link.label}</span>
-                            <span className="rounded-full bg-foreground/10 px-1.5 text-[9px] font-semibold uppercase tracking-widest text-foreground/55 group-data-[collapsible=icon]:hidden">
+                            <span className="rounded-full bg-foreground/10 px-1.5 text-[9px] font-semibold uppercase tracking-widest text-foreground/65 group-data-[collapsible=icon]:hidden">
                               Soon
                             </span>
                           </span>
@@ -227,7 +227,7 @@ export function AdminSidebar({
         </SidebarMenu>
         <div className="px-2 pt-1 pb-2 group-data-[collapsible=icon]:hidden">
           <p className="truncate text-xs font-medium">{fullName(user)}</p>
-          <p className="truncate text-[11px] text-foreground/55">{user.email}</p>
+          <p className="truncate text-[11px] text-foreground/65">{user.email}</p>
         </div>
       </SidebarFooter>
     </Sidebar>
