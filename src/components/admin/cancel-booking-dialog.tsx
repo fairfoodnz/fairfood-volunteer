@@ -1,35 +1,12 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
-import { AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { setBookingStatus } from "@/app/admin/actions";
 import { BookingStatus } from "@/generated/prisma";
+import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-function ConfirmButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button
-      type="submit"
-      disabled={pending}
-      className="bg-tomato-deep text-cream hover:bg-tomato-deep/90"
-    >
-      {pending ? "Cancelling…" : "Cancel booking"}
-    </Button>
-  );
-}
 
 export function CancelBookingDialog({
   bookingId,
@@ -39,51 +16,38 @@ export function CancelBookingDialog({
   volunteerName: string;
 }) {
   return (
-    <Dialog>
-      <DialogTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-xs text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
-          />
-        }
-      >
-        Cancel
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <span
-            aria-hidden
-            className="flex size-10 items-center justify-center rounded-full bg-tomato/12 text-tomato-deep"
-          >
-            <AlertTriangle className="size-5" />
-          </span>
-          <DialogTitle>Cancel this booking?</DialogTitle>
-          <DialogDescription>
-            {volunteerName} will lose their spot on this shift. This frees the
-            spot for someone else — you can reinstate the booking later if
-            needed.
-          </DialogDescription>
-        </DialogHeader>
-        <form action={setBookingStatus} className="contents">
-          <input type="hidden" name="bookingId" value={bookingId} />
-          <input type="hidden" name="status" value={BookingStatus.CANCELLED} />
-          <Label className="cursor-pointer items-start rounded-lg border border-border bg-muted/40 p-3 font-normal">
-            <Checkbox name="notify" defaultChecked className="mt-0.5" />
-            <span className="text-foreground/80">
-              Email {volunteerName} to let them know their booking was cancelled
-            </span>
-          </Label>
-          <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
-              Keep booking
-            </DialogClose>
-            <ConfirmButton />
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <ConfirmDialog
+      trigger={
+        <Button
+          type="button"
+          variant="outline"
+          aria-label={`Cancel ${volunteerName}'s booking`}
+          className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
+        >
+          Cancel
+        </Button>
+      }
+      title="Cancel this booking?"
+      description={`${volunteerName} will lose their spot on this shift, which frees it for someone else. You can reinstate the booking later if needed.`}
+      confirmLabel="Cancel booking"
+      pendingLabel="Cancelling…"
+      cancelLabel="Keep booking"
+      fields={{ bookingId, status: BookingStatus.CANCELLED }}
+      action={async (formData) => {
+        await setBookingStatus(formData);
+        toast.success(
+          formData.get("notify") != null
+            ? `Booking cancelled. ${volunteerName} has been emailed.`
+            : "Booking cancelled. No email sent.",
+        );
+      }}
+    >
+      <Label className="min-h-11 cursor-pointer items-start rounded-md border border-border bg-muted/40 p-3 font-normal leading-snug">
+        <Checkbox name="notify" defaultChecked className="mt-0.5" />
+        <span className="text-foreground/85">
+          Email {volunteerName} to let them know their booking was cancelled
+        </span>
+      </Label>
+    </ConfirmDialog>
   );
 }

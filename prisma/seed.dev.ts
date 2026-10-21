@@ -6,6 +6,8 @@ import {
   Role,
 } from "../src/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { nzDateKey } from "../src/lib/programs";
+import { nzWallTimeToUtc } from "../src/lib/schedule";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -155,14 +157,22 @@ function makeRandom(seed: number) {
 const rand = makeRandom(20260512);
 const chance = (p: number) => rand() < p;
 
+// Shift times are NZ wall-clock ("9am Tuesday"), whatever zone the seeding
+// machine runs in — CI and the cloud are UTC, where a naive `setHours` would
+// land every demo shift around 10pm NZ. Day arithmetic happens on the NZ
+// calendar date, then `nzWallTimeToUtc` resolves the instant DST-aware.
 function shiftWeekStart(week: number, weekday: number, time: string) {
-  const [h, m] = time.split(":").map(Number);
-  const now = new Date();
-  const d = new Date(now);
-  const diff = (weekday - d.getDay() + 7) % 7;
-  d.setDate(d.getDate() + diff + week * 7);
-  d.setHours(h, m, 0, 0);
-  return d;
+  const [y, mo, d] = nzDateKey(new Date()).split("-").map(Number);
+  const today = new Date(Date.UTC(y, mo - 1, d));
+  const diff = (weekday - today.getUTCDay() + 7) % 7;
+  today.setUTCDate(today.getUTCDate() + diff + week * 7);
+  return nzWallTimeToUtc(today.toISOString().slice(0, 10), time);
+}
+
+/** NZ weekday (0 = Sunday) of an instant. */
+function nzWeekday(d: Date) {
+  const [y, mo, day] = nzDateKey(d).split("-").map(Number);
+  return new Date(Date.UTC(y, mo - 1, day)).getUTCDay();
 }
 
 type ProgramPref = "kai" | "kitchen" | "inclusive";
@@ -898,7 +908,7 @@ async function seedBookings(
     // already handled by `prefers`. For Atarangi, restrict to Monday shifts (her group).
     const restricted =
       v.email === "atarangi.hawira@seed.fairfood.test"
-        ? pool.filter((s) => s.startsAt.getDay() === 1)
+        ? pool.filter((s) => nzWeekday(s.startsAt) === 1)
         : pool;
 
     // Deterministic shuffle of the candidate pool.

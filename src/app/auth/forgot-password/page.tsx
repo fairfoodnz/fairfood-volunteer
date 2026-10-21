@@ -16,11 +16,11 @@ export default async function ForgotPasswordPage() {
   return (
     <>
       <SiteNav />
-      <main id="main" className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x grid gap-16 lg:grid-cols-2">
           <div className="max-w-md space-y-6">
             <p className="eyebrow">Kia ora — let&rsquo;s get you back in</p>
-            <h1 className="display text-balance text-4xl font-semibold leading-tight md:text-5xl">
+            <h1 className="display text-balance text-4xl font-bold leading-tight md:text-5xl">
               Forgot your password?
             </h1>
             <p className="text-foreground/75">

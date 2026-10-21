@@ -131,34 +131,31 @@ function PolaroidStack() {
         rotate="-7deg"
         position="top-2 left-2 sm:left-0"
         src="/photos/hero-rescue.webp"
-        alt="Volunteers sorting rescued kai at the Fair Food warehouse"
       />
       <Polaroid
         rotate="4deg"
         position="top-20 right-2"
         src="/photos/kai-box.webp"
-        alt="Volunteers packing kai boxes ready for whānau"
       />
       <Polaroid
         rotate="-3deg"
         position="bottom-0 left-8 sm:left-12"
         src="/photos/hero-kitchen.webp"
-        alt="Cooks preparing a meal in the Conscious Kitchen"
       />
     </div>
   );
 }
 
+// The polaroid collage is mood, not content — the headline and copy beside it
+// say everything — so the stack is aria-hidden and the photos carry alt="".
 function Polaroid({
   rotate,
   position,
   src,
-  alt,
 }: {
   rotate: string;
   position: string;
   src: string;
-  alt: string;
 }) {
   return (
     <div
@@ -169,7 +166,7 @@ function Polaroid({
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-charcoal/10">
         <Image
           src={src}
-          alt={alt}
+          alt=""
           fill
           sizes="(min-width: 640px) 224px, 176px"
           className="object-cover"

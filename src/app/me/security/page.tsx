@@ -5,11 +5,11 @@ import { db } from "@/lib/db";
 import { googleConfigured, GOOGLE_PROVIDER } from "@/lib/oauth";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/patterns/page-header";
 import { GoogleButton } from "@/components/auth/google-button";
 import { ChangePasswordForm } from "./change-password-form";
 import { PasskeyManager, type PasskeyView } from "./passkey-manager";
-import { disconnectGoogleAction } from "./actions";
+import { DisconnectGoogleButton } from "./disconnect-google";
 
 export const metadata = { title: "Sign-in & security · Fair Food Volunteer" };
 export const dynamic = "force-dynamic";
@@ -62,16 +62,11 @@ export default async function SecurityPage({ searchParams }: Props) {
       <SiteNav />
       <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x max-w-3xl">
-          <header className="mb-8">
-            <p className="eyebrow">Kia ora, {user.firstName}</p>
-            <h1 className="display mt-2 text-balance text-4xl font-bold leading-tight md:text-5xl">
-              Sign-in &amp; security
-            </h1>
-            <p className="mt-3 text-foreground/75">
-              Choose how you get into your account. We recommend keeping at
-              least two ways in.
-            </p>
-          </header>
+          <PageHeader
+            eyebrow={`Kia ora, ${user.firstName}`}
+            title="Sign-in & security"
+            lead="Choose how you get into your account. We recommend keeping at least two ways in."
+          />
 
           {connected === "google" && (
             <Banner tone="success">Google connected. You can now sign in with it.</Banner>
@@ -105,21 +100,13 @@ export default async function SecurityPage({ searchParams }: Props) {
               }
             >
               {googleAccount ? (
-                <form action={disconnectGoogleAction}>
-                  <Button
-                    type="submit"
-                    variant="destructive"
-                    className="h-11"
-                  >
-                    Disconnect Google
-                  </Button>
-                </form>
+                <DisconnectGoogleButton />
               ) : googleConfigured() ? (
                 <div className="max-w-xs">
                   <GoogleButton label="Connect Google" next="/me/security" />
                 </div>
               ) : (
-                <p className="text-sm text-foreground/60">
+                <p className="text-sm text-foreground/65">
                   Google sign-in isn&rsquo;t available right now.
                 </p>
               )}
@@ -134,10 +121,10 @@ export default async function SecurityPage({ searchParams }: Props) {
             </Section>
           </div>
 
-          <p className="mt-10 text-sm text-foreground/65">
+          <p className="mt-10 text-sm">
             <Link
               href="/me"
-              className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
+              className="inline-flex min-h-11 items-center font-semibold text-leaf-deep underline-offset-4 hover:underline"
             >
               ← Back to my shifts
             </Link>
@@ -181,7 +168,7 @@ function Banner({
       role={isError ? "alert" : "status"}
       className={`mb-6 flex items-start gap-3 rounded-md border px-5 py-4 ${
         isError
-          ? "border-tomato/30 bg-tomato/10 text-tomato-deep"
+          ? "border-destructive/30 bg-destructive/10 text-destructive"
           : "border-leaf/30 bg-leaf/10 text-leaf-deep"
       }`}
     >

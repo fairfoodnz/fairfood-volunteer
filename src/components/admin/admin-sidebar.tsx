@@ -8,7 +8,7 @@ import {
   CalendarRange,
   ListChecks,
   Boxes,
-  AlertCircle,
+  MessageCircleQuestionMark,
   Users,
   UserPlus,
   FileText,
@@ -68,8 +68,10 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
     links: [
       {
         href: "/admin/flagged",
+        // The unreviewed queue only — the Volunteers list's "Flagged" filter
+        // counts everyone who disclosed something, reviewed or not.
         label: "Needs review",
-        icon: AlertCircle,
+        icon: MessageCircleQuestionMark,
         badge: "unreviewed",
       },
       { href: "/admin/volunteers", label: "All volunteers", icon: Users, exact: true },
@@ -167,17 +169,19 @@ export function AdminSidebar({
                         isActive={active}
                         tooltip={
                           showBadge
-                            ? `${link.label} (${count})`
+                            ? `${link.label} (${count} still to review)`
                             : link.label
                         }
                         render={<Link href={link.href} />}
                       >
                         <span className="relative">
                           <Icon className="size-4" />
+                          {/* Forest, not red: per admin-flagged.md these are
+                              people to chat with, not an alarm. */}
                           {showBadge ? (
                             <span
                               aria-hidden
-                              className="absolute -top-1 -right-1 hidden size-2 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block"
+                              className="absolute -top-1 -right-1 hidden size-2 rounded-full bg-forest ring-2 ring-sidebar group-data-[collapsible=icon]:block"
                             />
                           ) : null}
                         </span>
@@ -185,8 +189,8 @@ export function AdminSidebar({
                           <span>{link.label}</span>
                           {showBadge ? (
                             <span
-                              className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums group-data-[collapsible=icon]:hidden"
-                              aria-label={`${count} awaiting review`}
+                              className="rounded-full bg-forest px-1.5 py-0.5 text-[10px] font-semibold leading-none text-cream tabular-nums group-data-[collapsible=icon]:hidden"
+                              aria-label={`${count} still to review`}
                             >
                               {count}
                             </span>

@@ -4,7 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/patterns/form-field";
+import { FormMessage } from "@/components/auth/form-message";
 import { changePasswordAction, type ChangePasswordState } from "./actions";
 
 export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
@@ -39,7 +40,6 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
       <Button
         type="button"
         variant="outline"
-        className="h-11"
         onClick={() => {
           setState({});
           setOpen(true);
@@ -55,39 +55,53 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
   return (
     <form ref={formRef} action={onSubmit} className="space-y-5" noValidate>
       {hasPasswordNow && (
-        <Field
-          label="Current password"
+        <FormField
           id="currentPassword"
-          autoComplete="current-password"
+          label="Current password"
           error={fe.currentPassword}
           required
-        />
+        >
+          <Input
+            name="currentPassword"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
+        </FormField>
       )}
-      <Field
-        label="New password"
+      <FormField
         id="newPassword"
-        autoComplete="new-password"
+        label="New password"
         helper="At least 8 characters."
         error={fe.newPassword}
         required
-      />
-      <Field
-        label="Confirm new password"
+      >
+        <Input
+          name="newPassword"
+          type="password"
+          autoComplete="new-password"
+          required
+        />
+      </FormField>
+      <FormField
         id="confirm"
-        autoComplete="new-password"
+        label="Confirm new password"
         error={fe.confirm}
         required
-      />
-      {state.error && (
-        <p role="alert" aria-live="polite" className="text-sm text-destructive">
-          {state.error}
-        </p>
-      )}
+      >
+        <Input
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          required
+        />
+      </FormField>
+      <FormMessage tone="error" message={state.error} />
       <div className="flex flex-wrap gap-3">
         <Button
           type="submit"
           disabled={pending}
-          className="h-11 bg-leaf-deep font-semibold text-cream hover:bg-leaf-ink"
+          className="font-semibold"
         >
           {pending
             ? "Saving…"
@@ -98,7 +112,6 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
         <Button
           type="button"
           variant="ghost"
-          className="h-11"
           disabled={pending}
           onClick={() => {
             formRef.current?.reset();
@@ -119,59 +132,3 @@ export function ChangePasswordForm({ hasPassword }: { hasPassword: boolean }) {
   );
 }
 
-function Field({
-  label,
-  id,
-  autoComplete,
-  helper,
-  error,
-  required,
-}: {
-  label: string;
-  id: string;
-  autoComplete?: string;
-  helper?: string;
-  error?: string;
-  required?: boolean;
-}) {
-  // Only point aria-describedby at the helper while it's actually rendered —
-  // when an error is shown, the helper <p> below is hidden, so pointing to a
-  // non-existent id would be a dangling ARIA reference.
-  const helperId = helper && !error ? `${id}-helper` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>
-        {label}
-        {required && <span className="ml-1 text-tomato-deep">*</span>}
-      </Label>
-      <Input
-        id={id}
-        name={id}
-        type="password"
-        autoComplete={autoComplete}
-        required={required}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={
-          [helperId, errorId].filter(Boolean).join(" ") || undefined
-        }
-        className="h-11"
-      />
-      {helper && !error && (
-        <p id={helperId} className="text-xs text-foreground/65">
-          {helper}
-        </p>
-      )}
-      {error && (
-        <p
-          id={errorId}
-          role="alert"
-          aria-live="polite"
-          className="text-sm text-destructive"
-        >
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}

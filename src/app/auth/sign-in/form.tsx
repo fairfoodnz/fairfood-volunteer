@@ -4,7 +4,8 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/patterns/form-field";
+import { FormMessage } from "@/components/auth/form-message";
 import { signInAction, type SignInState } from "../actions";
 
 export function SignInForm({ next }: { next?: string }) {
@@ -15,64 +16,43 @@ export function SignInForm({ next }: { next?: string }) {
 
   return (
     <form action={formAction} className="space-y-5">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <FormField id="email" label="Email" required>
         <Input
-          id="email"
           name="email"
           type="email"
           required
           autoComplete="email"
           placeholder="you@example.com"
-          className="h-11"
         />
-      </div>
-      <div className="space-y-2">
-        <div className="flex items-baseline justify-between">
-          <Label htmlFor="password">Password</Label>
+      </FormField>
+      <div>
+        <FormField id="password" label="Password" required>
+          <Input
+            name="password"
+            type="password"
+            required
+            autoComplete="current-password"
+          />
+        </FormField>
+        <div className="flex justify-end">
           <Link
             href="/auth/forgot-password"
-            className="text-xs text-foreground/60 underline-offset-4 hover:text-foreground hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-medium text-leaf-deep underline-offset-4 hover:underline"
           >
-            Forgot?
+            Forgot password?
           </Link>
         </div>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          className="h-11"
-        />
       </div>
       {next && <input type="hidden" name="next" value={next} />}
-      {state.error && (
-        <p
-          role="alert"
-          aria-live="polite"
-          className="text-sm text-destructive"
-        >
-          {state.error}
-        </p>
-      )}
+      <FormMessage tone="error" message={state.error} />
       <Button
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
+        className="w-full text-base font-semibold"
       >
         {pending ? "Signing in…" : "Sign in"}
       </Button>
-      <p className="text-sm text-foreground/65">
-        New here?{" "}
-        <Link
-          href={next ? `/auth/sign-up?next=${encodeURIComponent(next)}` : "/auth/sign-up"}
-          className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
-        >
-          Create an account →
-        </Link>
-      </p>
     </form>
   );
 }

@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "I want to bring my workplace — how does that work?",
-    a: "Email volunteering@fairfood.org.nz or use the “Bring your team” page. We’ve hosted 150+ companies and tailor the session around your group’s size and interests.",
+    a: "Email volunteering@fairfood.org.nz with your group’s size and a few dates that suit. We’ve hosted 150+ companies and shape each session around your group’s interests.",
   },
   {
     q: "What if I need to cancel?",
@@ -38,17 +38,17 @@ const faqs = [
 
 export function Faq() {
   return (
-    <section id="faq" className="container-x py-20 md:py-28">
+    <section id="faq" className="container-x py-16 md:py-20">
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr]">
         <div className="space-y-4">
-          <p className="eyebrow">Pātai</p>
+          <p className="eyebrow">Good to know</p>
           <h2 className="display text-balance text-4xl font-semibold leading-tight md:text-5xl">
             Things people ask before their first shift.
           </h2>
           <p className="text-foreground/70">
             Still got pātai? Flick us an email at{" "}
             <a
-              className="font-semibold text-leaf-deep underline underline-offset-4"
+              className="font-semibold text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
               href="mailto:volunteering@fairfood.org.nz"
             >
               volunteering@fairfood.org.nz

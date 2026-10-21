@@ -1,19 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import {
-  ArrowUpRight,
-  Copy,
-  Download,
-  ShieldAlert,
-  Users,
-  X,
-} from "lucide-react";
+import { ArrowUpRight, Copy, Download, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { countOf, plural } from "@/lib/format";
 import { Checkbox } from "@/components/ui/checkbox";
 import { buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { StatusPill } from "@/components/patterns/status-pill";
+import type { VolunteerQueryParams } from "./query";
+import { matchingEmailsAction } from "./actions";
 
 export type VolunteerRow = {
   id: string;
@@ -29,18 +27,12 @@ export type VolunteerRow = {
   programmes: { slug: string; title: string }[];
 };
 
-function plural(n: number, one: string, many = `${one}s`) {
-  return n === 1 ? one : many;
-}
-
 async function copyEmails(emails: string[]) {
   if (emails.length === 0) return;
   const text = emails.join(", ");
   try {
     await navigator.clipboard.writeText(text);
-    toast.success(
-      `Copied ${emails.length} ${plural(emails.length, "email")} to your clipboard.`,
-    );
+    toast.success(`Copied ${countOf(emails.length, "email")} to your clipboard.`);
   } catch {
     toast.error("Couldn't access the clipboard. Try the CSV export instead.");
   }
@@ -48,19 +40,35 @@ async function copyEmails(emails: string[]) {
 
 export function VolunteersTable({
   rows,
-  capped,
+  total,
+  rangeLabel,
   facets,
+  audience,
   exportAllHref,
 }: {
+  /** The current page of results. */
   rows: VolunteerRow[];
-  capped: boolean;
+  /** Everyone matching the filters, across every page. */
+  total: number;
+  rangeLabel: string | null;
   facets: string[];
+  audience: VolunteerQueryParams;
   exportAllHref: string;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [copying, startCopy] = useTransition();
 
-  const total = rows.length;
-  const allEmails = useMemo(() => rows.map((r) => r.email), [rows]);
+  const pageSize = rows.length;
+  // "Copy emails" covers the whole audience, like Export CSV — not just the
+  // page on screen.
+  const copyAll = () =>
+    startCopy(async () => {
+      try {
+        await copyEmails(await matchingEmailsAction(audience));
+      } catch {
+        toast.error("Couldn't fetch those emails. Try again.");
+      }
+    });
   // Derive the selection from currently-visible rows so a selection made under
   // one filter doesn't show as a ghost count after the filters change.
   const selectedRows = useMemo(
@@ -68,7 +76,7 @@ export function VolunteersTable({
     [rows, selected],
   );
   const count = selectedRows.length;
-  const allSelected = total > 0 && count === total;
+  const allSelected = pageSize > 0 && count === pageSize;
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -79,9 +87,7 @@ export function VolunteersTable({
     });
   }
   function toggleAll() {
-    setSelected((prev) =>
-      prev.size === total ? new Set() : new Set(rows.map((r) => r.id)),
-    );
+    setSelected(allSelected ? new Set() : new Set(rows.map((r) => r.id)));
   }
 
   return (
@@ -90,10 +96,7 @@ export function VolunteersTable({
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
           <span className="flex items-baseline gap-1.5">
-            <span className="text-lg font-bold tabular-nums">
-              {total}
-              {capped ? "+" : ""}
-            </span>
+            <span className="text-lg font-bold tabular-nums">{total}</span>
             <span className="text-sm font-medium text-foreground/70">
               {plural(total, "volunteer")}
             </span>
@@ -110,19 +113,31 @@ export function VolunteersTable({
               ))}
             </span>
           ) : (
-            <span className="text-sm text-foreground/65">across all programmes</span>
+            <span className="text-sm text-foreground/70">across all programmes</span>
+          )}
+          {rangeLabel && (
+            <span
+              aria-live="polite"
+              className="text-xs tabular-nums text-foreground/70"
+            >
+              · {rangeLabel}
+            </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => copyEmails(allEmails)}
-            disabled={total === 0}
+            onClick={copyAll}
+            disabled={total === 0 || copying}
             className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
           >
-            <Copy className="size-4" />
-            Copy emails
+            {copying ? (
+              <Loader2 aria-hidden className="size-4 motion-safe:animate-spin" />
+            ) : (
+              <Copy aria-hidden className="size-4" />
+            )}
+            {copying ? "Copying…" : `Copy ${plural(total, "email")}`}
           </button>
           <a
             href={total === 0 ? undefined : exportAllHref}
@@ -133,40 +148,38 @@ export function VolunteersTable({
               total === 0 && "pointer-events-none opacity-50",
             )}
           >
-            <Download className="size-4" />
+            <Download aria-hidden className="size-4" />
             Export CSV
           </a>
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-        {total === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
-            <span
-              aria-hidden
-              className="flex size-11 items-center justify-center rounded-full bg-foreground/5 text-foreground/65"
-            >
-              <Users className="size-5" />
-            </span>
-            <p className="text-sm font-semibold text-foreground/80">
-              No volunteers match these filters
-            </p>
-            <p className="max-w-sm text-sm text-foreground/65">
-              Try widening the booking status, switching programme, or clearing
-              the search.
-            </p>
-          </div>
-        ) : (
+      {rows.length === 0 ? (
+        <EmptyState
+          className="mt-4"
+          action={{ href: "/admin/volunteers", label: "Clear all filters →" }}
+        >
+          No volunteers match these filters. Try widening the booking status,
+          switching programme, or clearing the search.
+        </EmptyState>
+      ) : (
+        <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-cream-deep text-left text-foreground/65">
+              <caption className="sr-only">
+                Volunteers matching the current filters
+                {rangeLabel ? ` (${rangeLabel.toLowerCase()})` : ""}
+              </caption>
+              <thead className="bg-cream-deep text-left text-foreground/70">
                 <tr>
                   <th className="w-10 px-4 py-3">
                     <Checkbox
                       checked={allSelected}
                       onCheckedChange={toggleAll}
                       aria-label={
-                        allSelected ? "Deselect all" : "Select all volunteers"
+                        allSelected
+                          ? "Deselect all on this page"
+                          : "Select all on this page"
                       }
                     />
                   </th>
@@ -175,7 +188,9 @@ export function VolunteersTable({
                   <Th className="hidden lg:table-cell">Programmes</Th>
                   <Th>Bookings</Th>
                   <Th className="hidden sm:table-cell">Last active</Th>
-                  <th className="px-4 py-3" />
+                  <th className="px-4 py-3">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -200,15 +215,15 @@ export function VolunteersTable({
                         <div className="flex flex-col gap-1">
                           <span className="font-semibold">{u.name}</span>
                           <span className="flex flex-wrap items-center gap-1">
-                            {u.isAdmin && <Pill tone="leaf">Admin</Pill>}
-                            {!u.profileComplete && (
-                              <Pill tone="muted">Profile pending</Pill>
+                            {u.isAdmin && (
+                              <StatusPill tone="positive">Admin</StatusPill>
                             )}
+                            {!u.profileComplete && (
+                              <StatusPill tone="neutral">Profile pending</StatusPill>
+                            )}
+                            {/* Neutral, never red — see admin-flagged.md. */}
                             {u.flagged && (
-                              <Pill tone="tomato">
-                                <ShieldAlert className="size-3" />
-                                Needs review
-                              </Pill>
+                              <StatusPill tone="neutral">Flagged</StatusPill>
                             )}
                           </span>
                           {/* Contact collapses into the name cell on mobile */}
@@ -240,11 +255,11 @@ export function VolunteersTable({
                       <td className="px-4 py-3 text-right align-top">
                         <Link
                           href={`/admin/volunteers/${u.id}`}
-                          className="inline-flex items-center gap-0.5 font-semibold text-leaf-deep hover:underline"
+                          className="inline-flex min-h-9 items-center gap-0.5 font-semibold text-leaf-deep hover:underline"
                           aria-label={`Open ${u.name}`}
                         >
                           Open
-                          <ArrowUpRight className="size-3.5" />
+                          <ArrowUpRight aria-hidden className="size-3.5" />
                         </Link>
                       </td>
                     </tr>
@@ -253,14 +268,7 @@ export function VolunteersTable({
               </tbody>
             </table>
           </div>
-        )}
-      </div>
-
-      {capped && total > 0 && (
-        <p className="mt-3 text-xs text-foreground/65">
-          Showing the first {total}. Narrow the filters to see everyone — the CSV
-          export still includes the full matching list.
-        </p>
+        </div>
       )}
 
       {/* Floating bar for a hand-picked selection. */}
@@ -270,30 +278,32 @@ export function VolunteersTable({
           aria-label="Selected volunteers"
           className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4"
         >
-          <div className="flex w-full max-w-2xl items-center gap-3 rounded-xl border border-border bg-card p-3 pl-4 shadow-lg ring-1 ring-foreground/5">
-            <p className="text-sm font-semibold tabular-nums">
-              {count} selected
-            </p>
-            <button
-              type="button"
-              onClick={() => setSelected(new Set())}
-              className="inline-flex items-center gap-1 text-xs text-foreground/65 hover:text-foreground"
-            >
-              <X className="size-3.5" />
-              Clear
-            </button>
-            <div className="ml-auto flex items-center gap-2">
+          <div className="flex w-full max-w-2xl flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-lg ring-1 ring-foreground/5 sm:flex-row sm:items-center sm:pl-4">
+            <div className="flex items-center justify-between gap-3 sm:justify-start">
+              <p className="text-sm font-semibold tabular-nums">
+                {count} selected
+              </p>
+              <button
+                type="button"
+                onClick={() => setSelected(new Set())}
+                className="inline-flex h-9 items-center gap-1 rounded-md px-2 text-xs font-semibold text-foreground/70 hover:text-foreground"
+              >
+                <X aria-hidden className="size-3.5" />
+                Clear
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:ml-auto sm:flex sm:items-center">
               <button
                 type="button"
                 onClick={() => copyEmails(selectedRows.map((r) => r.email))}
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
               >
-                <Copy className="size-4" />
+                <Copy aria-hidden className="size-4" />
                 Copy {plural(count, "email")}
               </button>
               {/* POST so a large selection's IDs ride in the body, not a URL
                   that could blow past proxy length limits. */}
-              <form method="POST" action="/admin/volunteers/export">
+              <form method="POST" action="/admin/volunteers/export" className="contents sm:block">
                 <input
                   type="hidden"
                   name="ids"
@@ -303,10 +313,10 @@ export function VolunteersTable({
                   type="submit"
                   className={cn(
                     buttonVariants({ size: "lg" }),
-                    "bg-leaf-deep text-cream hover:bg-leaf-ink",
+                    "w-full bg-leaf-deep text-cream hover:bg-leaf-ink",
                   )}
                 >
-                  <Download className="size-4" />
+                  <Download aria-hidden className="size-4" />
                   Export {count}
                 </button>
               </form>
@@ -361,30 +371,6 @@ function ProgrammeTags({
           +{extra}
         </span>
       )}
-    </span>
-  );
-}
-
-function Pill({
-  tone,
-  children,
-}: {
-  tone: "leaf" | "tomato" | "muted";
-  children: React.ReactNode;
-}) {
-  const palette = {
-    leaf: "bg-leaf/15 text-leaf-deep",
-    tomato: "bg-tomato/15 text-tomato-deep",
-    muted: "bg-foreground/10 text-foreground/65",
-  }[tone];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest",
-        palette,
-      )}
-    >
-      {children}
     </span>
   );
 }

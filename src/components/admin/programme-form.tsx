@@ -352,7 +352,7 @@ export function ProgrammeForm({ program }: { program?: ProgrammeRecord }) {
                     />
                     <span>
                       <span className="font-medium">{opt.label}</span>
-                      <span className="mt-0.5 block text-xs leading-relaxed text-foreground/60">
+                      <span className="mt-0.5 block text-xs leading-relaxed text-foreground/70">
                         {opt.hint}
                       </span>
                     </span>

@@ -2,7 +2,15 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
-import { formatShiftRange, INCLUSIVE_SLUG } from "@/lib/programs";
+import { PageHeader } from "@/components/patterns/page-header";
+import { EmptyState } from "@/components/patterns/empty-state";
+import {
+  formatShiftRange,
+  formatShiftTimes,
+  INCLUSIVE_SLUG,
+  nzDateKey,
+  nzWeekBucket,
+} from "@/lib/programs";
 import {
   sumBlocks,
   shiftAvailability,
@@ -11,7 +19,8 @@ import {
 import { currentUser } from "@/lib/auth";
 import { BookingStatus } from "@/generated/prisma";
 import { firstTimePrompt } from "@/lib/first-time";
-import { ShiftsList, type ShiftCard, type ShiftDay } from "./shifts-list";
+import { cn } from "@/lib/utils";
+import { ShiftsList, type ShiftCard, type ShiftWeek } from "./shifts-list";
 
 const description =
   "Browse open volunteer shifts with Fair Food in Avondale and book one that fits your week. Most run about three hours and finish with a cuppa together.";
@@ -111,88 +120,105 @@ export default async function ShiftsPage({ searchParams }: Props) {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const grouped = groupByDay(shifts);
-  const groupedForClient: ShiftDay[] = grouped.map(({ day, shifts }) => ({
-    day,
-    shifts: shifts.map<ShiftCard>((s) => {
-      const { free, isFull } = shiftAvailability(
-        s.capacity,
-        s._count.bookings,
-        sumBlocks(s.blocks),
-      );
-      const alreadyBooked = myBookedShiftIds.has(s.id);
-      const bookable = !isFull && !alreadyBooked;
-      return {
-        id: s.id,
-        whenLabel: formatShiftRange(s.startsAt, s.endsAt),
-        capacity: s.capacity,
-        free,
-        isFull,
-        isAlmostFull: !isFull && free <= 2,
-        notes: s.notes,
-        bookable,
-        groupBlocks: summarizeBlocks(s.blocks),
-        unbookableReason: alreadyBooked
-          ? "Already booked"
-          : isFull
-            ? "Full"
-            : null,
-        program: {
-          id: s.program.id,
-          title: s.program.title,
-          slug: s.program.slug,
-          imageUrl: s.program.imageUrl,
-          imageKey: s.program.imageKey,
-        },
-      };
-    }),
-  }));
+  const toCard = (s: ShiftWithCount): ShiftCard => {
+    const { free, isFull } = shiftAvailability(
+      s.capacity,
+      s._count.bookings,
+      sumBlocks(s.blocks),
+    );
+    const alreadyBooked = myBookedShiftIds.has(s.id);
+    const bookable = !isFull && !alreadyBooked;
+    return {
+      id: s.id,
+      whenLabel: formatShiftRange(s.startsAt, s.endsAt),
+      timeLabel: formatShiftTimes(s.startsAt, s.endsAt),
+      capacity: s.capacity,
+      free,
+      isFull,
+      isAlmostFull: !isFull && free <= 2,
+      notes: s.notes,
+      bookable,
+      groupBlocks: summarizeBlocks(s.blocks),
+      unbookableReason: alreadyBooked
+        ? "Already booked"
+        : isFull
+          ? "Full"
+          : null,
+      program: {
+        id: s.program.id,
+        title: s.program.title,
+        slug: s.program.slug,
+        imageUrl: s.program.imageUrl,
+        imageKey: s.program.imageKey,
+        theme: s.program.theme,
+      },
+    };
+  };
+  const weeks = groupByWeek(shifts, toCard);
+  const activeTitle = programmes.find((p) => p.slug === filter)?.title;
 
   return (
     <>
       <SiteNav />
       <main id="main" className="flex-1">
-        <section className="border-b border-border/60 bg-cream-deep">
-          <div className="container-x py-12 md:py-16">
-            <p className="eyebrow">Roster</p>
-            <h1 className="display mt-3 text-balance text-4xl font-semibold leading-tight md:text-5xl">
-              Open shifts in Avondale.
-            </h1>
-            <p className="mt-3 max-w-2xl text-foreground/75">
+        <PageHeader
+          band
+          eyebrow="Roster"
+          title="Open shifts in Avondale."
+          lead={
+            <>
               Pick a shift that fits the day you&rsquo;ve got. Most run for 3
               hours and finish with a cuppa together.
-            </p>
-
-            <div className="mt-7 flex flex-wrap gap-2">
+            </>
+          }
+        >
+          <nav aria-label="Filter by programme" className="mt-7">
+            <ul className="flex flex-wrap gap-2">
               {filters.map((f) => {
                 const active = filter === f.slug;
-                const href = f.slug === "ALL" ? "/shifts" : `/shifts?programme=${f.slug}`;
+                const href =
+                  f.slug === "ALL" ? "/shifts" : `/shifts?programme=${f.slug}`;
                 return (
-                  <Link
-                    key={f.slug}
-                    href={href}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                      active
-                        ? "border-leaf bg-leaf-deep text-cream"
-                        : "border-foreground/15 bg-background text-foreground/75 hover:border-foreground/35"
-                    }`}
-                  >
-                    {f.label}
-                  </Link>
+                  <li key={f.slug}>
+                    <Link
+                      href={href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors",
+                        active
+                          ? "border-leaf-deep bg-leaf-deep text-cream"
+                          : "border-foreground/15 bg-background text-foreground/85 hover:border-foreground/35",
+                      )}
+                    >
+                      {f.label}
+                    </Link>
+                  </li>
                 );
               })}
-            </div>
-          </div>
-        </section>
+            </ul>
+          </nav>
+        </PageHeader>
 
-        <section className="container-x py-12 md:py-16">
-          <ShiftsList
-            groupedShifts={groupedForClient}
-            initialSelection={initialSelection}
-            authed={!!user}
-            firstTimePrompt={firstTimeLabel}
-            isEmpty={groupedForClient.length === 0}
-          />
+        <section aria-label="Shifts" className="container-x py-12 md:py-16">
+          {weeks.length === 0 ? (
+            filter === "ALL" ? (
+              <EmptyState action={{ href: "/programs", label: "See all programmes →" }}>
+                No open shifts right now — new dates open every week.
+              </EmptyState>
+            ) : (
+              <EmptyState action={{ href: "/shifts", label: "Show every programme →" }}>
+                No open {activeTitle} shifts right now — come back soon, or
+                try another programme.
+              </EmptyState>
+            )
+          ) : (
+            <ShiftsList
+              weeks={weeks}
+              initialSelection={initialSelection}
+              authed={!!user}
+              firstTimePrompt={firstTimeLabel}
+            />
+          )}
         </section>
       </main>
       <SiteFooter />
@@ -211,22 +237,39 @@ type ShiftWithCount = Awaited<
     slug: string;
     imageUrl: string | null;
     imageKey: string | null;
+    theme: string;
   };
 };
 
-function groupByDay(shifts: ShiftWithCount[]) {
-  const map = new Map<string, ShiftWithCount[]>();
-  const fmt = new Intl.DateTimeFormat("en-NZ", {
+// Monday-start NZ weeks → NZ days, both in listing (startsAt) order, so the
+// jump links above the list can say "This week / Next week / Week of …".
+function groupByWeek(
+  shifts: ShiftWithCount[],
+  toCard: (s: ShiftWithCount) => ShiftCard,
+): ShiftWeek[] {
+  const dayFmt = new Intl.DateTimeFormat("en-NZ", {
     weekday: "long",
     day: "numeric",
     month: "long",
     timeZone: "Pacific/Auckland",
   });
+  const todayKey = nzDateKey(new Date());
+  const weeks: ShiftWeek[] = [];
   for (const s of shifts) {
-    const k = fmt.format(s.startsAt);
-    if (!map.has(k)) map.set(k, []);
-    map.get(k)!.push(s);
+    const dayKey = nzDateKey(s.startsAt);
+    const bucket = nzWeekBucket(dayKey, todayKey);
+    let week = weeks.at(-1);
+    if (!week || week.key !== bucket.key) {
+      week = { key: bucket.key, label: bucket.label, count: 0, days: [] };
+      weeks.push(week);
+    }
+    let day = week.days.at(-1);
+    if (!day || day.key !== dayKey) {
+      day = { key: dayKey, day: dayFmt.format(s.startsAt), shifts: [] };
+      week.days.push(day);
+    }
+    day.shifts.push(toCard(s));
+    week.count++;
   }
-  return Array.from(map, ([day, shifts]) => ({ day, shifts }));
+  return weeks;
 }
-

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
 import { BookingStatus, Role } from "@/generated/prisma";
 import { fullName } from "@/lib/users";
@@ -8,11 +10,13 @@ import {
 } from "./query";
 import { VolunteersFilters } from "./volunteers-filters";
 import { VolunteersTable, type VolunteerRow } from "./volunteers-table";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 
 export const metadata = { title: "Volunteers · Admin" };
 export const dynamic = "force-dynamic";
 
-const ROW_CAP = 200;
+// Same page size as Manage shifts.
+const PAGE_SIZE = 50;
 
 const NZ_DATE = new Intl.DateTimeFormat("en-NZ", {
   day: "numeric",
@@ -24,9 +28,9 @@ const NZ_DATE = new Intl.DateTimeFormat("en-NZ", {
 export default async function VolunteersPage({
   searchParams,
 }: {
-  searchParams: Promise<VolunteerQueryParams>;
+  searchParams: Promise<VolunteerQueryParams & { page?: string }>;
 }) {
-  const raw = await searchParams;
+  const { page: pageParam, ...raw } = await searchParams;
   const resolved = resolveVolunteerQuery(raw);
   const { where, orderBy, programme } = resolved;
 
@@ -46,12 +50,21 @@ export default async function VolunteersPage({
   const countFor = (filter: string) =>
     db.user.count({ where: resolveVolunteerQuery({ ...raw, filter }).where });
 
+  const total = await db.user.count({ where });
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pageRaw = Number.parseInt(pageParam ?? "1", 10);
+  const page = Math.min(
+    Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1,
+    pageCount,
+  );
+
   const [users, countAll, countFlagged, countPending, countAdmins] =
     await Promise.all([
       db.user.findMany({
         where,
         orderBy,
-        take: ROW_CAP,
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
         include: {
           _count: {
             select: { bookings: { where: { status: BookingStatus.CONFIRMED } } },
@@ -108,19 +121,24 @@ export default async function VolunteersPage({
   const exportQs = exportParams.toString();
   const exportAllHref = `/admin/volunteers/export${exportQs ? `?${exportQs}` : ""}`;
 
+  // Pagination links keep every filter and only swap the page.
+  const pageHref = (n: number) => {
+    const qs = new URLSearchParams(exportParams);
+    if (n > 1) qs.set("page", String(n));
+    const str = qs.toString();
+    return `/admin/volunteers${str ? `?${str}` : ""}`;
+  };
+  const start = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const end = (page - 1) * PAGE_SIZE + rows.length;
+
   return (
     <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8">
-          <p className="eyebrow">Volunteers</p>
-          <h1 className="display mt-2 text-3xl font-bold leading-tight md:text-4xl">
-            Find &amp; export volunteers
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm text-foreground/70">
-            Filter to the people you need, then copy their emails or export a
-            CSV. Tick rows to pull a hand-picked group.
-          </p>
-        </header>
+        <AdminPageHeader
+          eyebrow="Volunteers"
+          title="Find & export volunteers"
+          description="Filter to the people you need, then copy their emails or export a CSV. Tick rows to pull a hand-picked group."
+        />
 
         <VolunteersFilters
           programmes={programmes}
@@ -132,13 +150,85 @@ export default async function VolunteersPage({
           }}
         />
 
-        <VolunteersTable
-          rows={rows}
-          capped={rows.length >= ROW_CAP}
-          facets={facets}
-          exportAllHref={exportAllHref}
-        />
+        {/* Padding so the floating selection bar never hides the pager. */}
+        <div className="pb-24">
+          <VolunteersTable
+            key={`${exportQs}|${page}`}
+            rows={rows}
+            total={total}
+            rangeLabel={
+              pageCount > 1 ? `Showing ${start}–${end} of ${total}` : null
+            }
+            facets={facets}
+            audience={{
+              q: resolved.search || undefined,
+              filter: resolved.filter,
+              sort: resolved.sort,
+              programme: resolved.programme,
+              scope: resolved.scope,
+            }}
+            exportAllHref={exportAllHref}
+          />
+
+          {pageCount > 1 && (
+            <nav
+              aria-label="Volunteer pages"
+              className="mt-6 flex items-center justify-between gap-3"
+            >
+              <PageLink
+                href={page > 1 ? pageHref(page - 1) : null}
+                rel="prev"
+              >
+                <ChevronLeft aria-hidden className="size-4" />
+                Previous
+              </PageLink>
+              <p className="text-xs tabular-nums text-foreground/70">
+                Page {page} of {pageCount}
+              </p>
+              <PageLink
+                href={page < pageCount ? pageHref(page + 1) : null}
+                rel="next"
+              >
+                Next
+                <ChevronRight aria-hidden className="size-4" />
+              </PageLink>
+            </nav>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+// Mirrors the pager on Manage shifts.
+function PageLink({
+  href,
+  rel,
+  children,
+}: {
+  href: string | null;
+  rel: "prev" | "next";
+  children: React.ReactNode;
+}) {
+  const className =
+    "inline-flex h-10 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-semibold transition-colors";
+  if (!href) {
+    return (
+      <span
+        aria-disabled
+        className={`${className} cursor-not-allowed text-foreground/65`}
+      >
+        {children}
+      </span>
+    );
+  }
+  return (
+    <Link
+      href={href}
+      rel={rel}
+      className={`${className} text-foreground/85 hover:border-leaf/40 hover:text-leaf-deep`}
+    >
+      {children}
+    </Link>
   );
 }

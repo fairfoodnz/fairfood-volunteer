@@ -14,17 +14,73 @@ import {
 } from "@/lib/email";
 import { buildICS, calendarLinks } from "@/lib/calendar";
 import { fullName } from "@/lib/users";
+import { countOf } from "@/lib/format";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { BookingStatus, Prisma, SlotBlockKind } from "@/generated/prisma";
 import { appUrl } from "../../../emails/brand";
 
 const ShiftFieldsSchema = z.object({
-  programSlug: z.string().min(1),
-  startsAt: z.string().min(1),
-  endsAt: z.string().min(1),
-  capacity: z.coerce.number().int().min(1).max(200),
-  notes: z.string().trim().max(1000).optional(),
+  programSlug: z
+    .string({ error: "Choose a programme." })
+    .min(1, "Choose a programme."),
+  startsAt: z
+    .string({ error: "Enter a start date and time." })
+    .min(1, "Enter a start date and time."),
+  endsAt: z
+    .string({ error: "Enter an end date and time." })
+    .min(1, "Enter an end date and time."),
+  capacity: z.coerce
+    .number({ error: "Capacity must be a number." })
+    .int("Capacity must be a whole number.")
+    .min(1, "Capacity must be at least 1.")
+    .max(200, "Capacity can't be more than 200."),
+  notes: z
+    .string()
+    .trim()
+    .max(1000, "Notes can be up to 1,000 characters.")
+    .optional(),
 });
+
+export type ShiftField =
+  | "programSlug"
+  | "startsAt"
+  | "endsAt"
+  | "capacity"
+  | "notes";
+
+/**
+ * Returned (never thrown) by createShift / updateShift so ShiftForm can show
+ * the problem next to the field and keep what the coordinator typed. Success
+ * redirects, so a returned state always carries an error.
+ */
+export type ShiftFormState = { error?: string; field?: ShiftField };
+
+const SHIFT_FIELDS: readonly ShiftField[] = [
+  "programSlug",
+  "startsAt",
+  "endsAt",
+  "capacity",
+  "notes",
+];
+
+function shiftFieldError(error: z.ZodError): ShiftFormState {
+  const issue = error.issues[0];
+  const key = issue?.path[0];
+  return {
+    error: issue?.message ?? "Check the shift details and try again.",
+    field: SHIFT_FIELDS.find((f) => f === key),
+  };
+}
+
+function readShiftFields(formData: FormData) {
+  return {
+    programSlug: formData.get("programSlug"),
+    startsAt: formData.get("startsAt"),
+    endsAt: formData.get("endsAt"),
+    capacity: formData.get("capacity"),
+    notes: formData.get("notes") || undefined,
+  };
+}
 
 // Statuses that hold a real spot on the roster. Used to stop capacity being
 // edited below the number of volunteers already counting on the shift.
@@ -43,24 +99,31 @@ function dateTimeLocalToUtc(value: string): Date {
   return nzWallTimeToUtc(date, time);
 }
 
-export async function createShift(formData: FormData) {
+export async function createShift(
+  _prev: ShiftFormState,
+  formData: FormData,
+): Promise<ShiftFormState> {
   await requireAdmin();
-  const parsed = ShiftFieldsSchema.parse({
-    programSlug: formData.get("programSlug"),
-    startsAt: formData.get("startsAt"),
-    endsAt: formData.get("endsAt"),
-    capacity: formData.get("capacity"),
-    notes: formData.get("notes") || undefined,
-  });
+  const result = ShiftFieldsSchema.safeParse(readShiftFields(formData));
+  if (!result.success) return shiftFieldError(result.error);
+  const parsed = result.data;
   const program = await db.program.findUnique({
     where: { slug: parsed.programSlug },
   });
-  if (!program) throw new Error("Program not found");
+  if (!program) {
+    return {
+      error: "That programme no longer exists. Choose another one.",
+      field: "programSlug",
+    };
+  }
 
   const startsAt = dateTimeLocalToUtc(parsed.startsAt);
   const endsAt = dateTimeLocalToUtc(parsed.endsAt);
   if (endsAt <= startsAt) {
-    throw new Error("Shift end time must be after the start time.");
+    return {
+      error: "The end time must be after the start time.",
+      field: "endsAt",
+    };
   }
 
   const shift = await db.shift.create({
@@ -74,40 +137,50 @@ export async function createShift(formData: FormData) {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/shifts");
   revalidatePath("/shifts");
-  redirect(`/admin/shifts/${shift.id}`);
+  redirect(`/admin/shifts/${shift.id}?flash=created`);
 }
 
 const UpdateShiftSchema = ShiftFieldsSchema.extend({
   shiftId: z.string().min(1),
 });
 
-export async function updateShift(formData: FormData) {
+export async function updateShift(
+  _prev: ShiftFormState,
+  formData: FormData,
+): Promise<ShiftFormState> {
   await requireAdmin();
-  const parsed = UpdateShiftSchema.parse({
+  const result = UpdateShiftSchema.safeParse({
     shiftId: formData.get("shiftId"),
-    programSlug: formData.get("programSlug"),
-    startsAt: formData.get("startsAt"),
-    endsAt: formData.get("endsAt"),
-    capacity: formData.get("capacity"),
-    notes: formData.get("notes") || undefined,
+    ...readShiftFields(formData),
   });
+  if (!result.success) return shiftFieldError(result.error);
+  const parsed = result.data;
 
   const existing = await db.shift.findUnique({
     where: { id: parsed.shiftId },
     include: { program: true },
   });
-  if (!existing) throw new Error("Shift not found");
+  if (!existing) return { error: "This shift no longer exists." };
 
   const program = await db.program.findUnique({
     where: { slug: parsed.programSlug },
   });
-  if (!program) throw new Error("Program not found");
+  if (!program) {
+    return {
+      error: "That programme no longer exists. Choose another one.",
+      field: "programSlug",
+    };
+  }
 
   const startsAt = dateTimeLocalToUtc(parsed.startsAt);
   const endsAt = dateTimeLocalToUtc(parsed.endsAt);
   if (endsAt <= startsAt) {
-    throw new Error("Shift end time must be after the start time.");
+    return {
+      error: "The end time must be after the start time.",
+      field: "endsAt",
+    };
   }
 
   // Don't let capacity drop below spots already held — confirmed volunteers
@@ -128,9 +201,10 @@ export async function updateShift(formData: FormData) {
   const blocked = sumBlocks(blocks);
   const held = bookedCount + blocked;
   if (parsed.capacity < held) {
-    throw new Error(
-      `Capacity can't be lower than the ${held} spot${held === 1 ? "" : "s"} already held (${bookedCount} booked${blocked > 0 ? `, ${blocked} blocked` : ""}). Remove a booking or slot block first, or pick a higher number.`,
-    );
+    return {
+      error: `Capacity can't be lower than the ${countOf(held, "spot")} already held (${bookedCount} booked${blocked > 0 ? `, ${blocked} blocked` : ""}). Remove a booking or slot block first, or pick a higher number.`,
+      field: "capacity",
+    };
   }
 
   await db.shift.update({
@@ -152,7 +226,8 @@ export async function updateShift(formData: FormData) {
   if (program.slug !== existing.program.slug) {
     revalidatePath(`/programs/${existing.program.slug}`);
   }
-  redirect(`/admin/shifts/${parsed.shiftId}`);
+  revalidatePath("/admin/shifts");
+  redirect(`/admin/shifts/${parsed.shiftId}?flash=saved`);
 }
 
 const StatusSchema = z.object({
@@ -185,6 +260,17 @@ export async function setBookingStatus(formData: FormData) {
     },
   });
   if (!existing) return;
+
+  // A cancelled shift has no live bookings (cancelShift cancels them), so
+  // don't let a stray Reinstate put someone back on it — restore the shift
+  // first.
+  if (
+    existing.shift.cancelled &&
+    parsed.status === BookingStatus.CONFIRMED &&
+    existing.status === BookingStatus.CANCELLED
+  ) {
+    return;
+  }
 
   const booking = await db.booking.update({
     where: { id: parsed.bookingId },
@@ -230,15 +316,120 @@ export async function setBookingStatus(formData: FormData) {
   revalidatePath(`/programs/${existing.shift.program.slug}`);
 }
 
-export async function cancelShift(formData: FormData) {
+export type CancelShiftResult = {
+  ok?: boolean;
+  error?: string;
+  /** Bookings flipped from CONFIRMED to CANCELLED by this cancellation. */
+  cancelledBookings?: number;
+  /** Cancellation emails that actually went out. */
+  emailed?: number;
+};
+
+/**
+ * Take one shift off the schedule. Its CONFIRMED bookings are cancelled with
+ * it — volunteers lose their spot, and their dashboards stop showing the
+ * shift as upcoming. With the dialog's "notify" box ticked (the default),
+ * each of them gets the same cancellation email as cancelling one booking.
+ *
+ * Restoring the shift later (restoreShift) does NOT re-book anyone; the
+ * coordinator re-adds people with Assign volunteer, which reinstates rows.
+ */
+export async function cancelShift(
+  formData: FormData,
+): Promise<CancelShiftResult> {
   await requireAdmin();
   const id = formData.get("shiftId");
-  if (typeof id !== "string") return;
-  await db.shift.update({ where: { id }, data: { cancelled: true } });
+  if (typeof id !== "string" || !id) return { error: "Missing shift." };
+  const notify = formData.get("notify") != null;
+
+  // Flip the flag first (idempotently) so no new public booking can land
+  // between reading the roster and cancelling it — bookShiftAction refuses
+  // cancelled shifts.
+  await db.shift.updateMany({
+    where: { id, cancelled: false },
+    data: { cancelled: true },
+  });
+  const shift = await db.shift.findUnique({
+    where: { id },
+    include: {
+      program: { select: { title: true, location: true, slug: true } },
+      bookings: {
+        where: { status: BookingStatus.CONFIRMED },
+        include: {
+          user: { select: { id: true, email: true, firstName: true } },
+        },
+      },
+    },
+  });
+  if (!shift) return { error: "That shift no longer exists." };
+
+  const bookings = shift.bookings;
+  if (bookings.length > 0) {
+    await db.booking.updateMany({
+      where: {
+        id: { in: bookings.map((b) => b.id) },
+        status: BookingStatus.CONFIRMED,
+      },
+      data: { status: BookingStatus.CANCELLED },
+    });
+  }
+
+  // Best-effort and sequential (Resend rate-limits bursts): the cancellation
+  // is committed, so a failed send is logged, not surfaced as a failure.
+  let emailed = 0;
+  if (notify && bookings.length > 0) {
+    const whenLabel = formatShiftRange(shift.startsAt, shift.endsAt);
+    for (const b of bookings) {
+      try {
+        await sendBookingCancellationEmail({
+          to: b.user.email,
+          userId: b.user.id,
+          userName: b.user.firstName || undefined,
+          programTitle: shift.program.title,
+          whenLabel,
+          location: shift.program.location,
+        });
+        emailed += 1;
+      } catch (e) {
+        console.error("Shift cancellation email failed to send:", e);
+      }
+    }
+  }
+
+  revalidateShift(shift.id, shift.program.slug);
+  return { ok: true, cancelledBookings: bookings.length, emailed };
+}
+
+/**
+ * Put a cancelled shift back on the schedule. Bookings cancelled along with
+ * it stay cancelled — volunteers were told their spot was gone, so silently
+ * re-booking them would be worse than asking the coordinator to re-add them.
+ */
+export async function restoreShift(
+  formData: FormData,
+): Promise<{ ok?: boolean; error?: string }> {
+  await requireAdmin();
+  const id = formData.get("shiftId");
+  if (typeof id !== "string" || !id) return { error: "Missing shift." };
+  const shift = await db.shift.findUnique({
+    where: { id },
+    select: { id: true, program: { select: { slug: true } } },
+  });
+  if (!shift) return { error: "That shift no longer exists." };
+  await db.shift.update({ where: { id }, data: { cancelled: false } });
+  revalidateShift(shift.id, shift.program.slug);
+  return { ok: true };
+}
+
+// Every surface that shows one shift's status or availability.
+function revalidateShift(shiftId: string, programSlug: string) {
   revalidatePath("/admin");
   revalidatePath("/admin/shifts");
+  revalidatePath(`/admin/shifts/${shiftId}`);
   revalidatePath("/shifts");
-  redirect("/admin");
+  revalidatePath(`/shifts/${shiftId}`);
+  revalidatePath("/me");
+  revalidatePath(`/programs/${programSlug}`);
 }
 
 // --- Bulk shift operations -----------------------------------------------
@@ -269,9 +460,10 @@ function revalidateShiftLists(slugs: string[]) {
 }
 
 /**
- * Soft-cancel many shifts at once — the same `cancelled: true` flip as the
- * single-shift dialog, just batched. Already-cancelled shifts are skipped, so
- * the returned count is the number actually taken off the schedule.
+ * Soft-cancel many shifts at once — the same flip as the single-shift dialog
+ * (shift off the schedule, its CONFIRMED bookings cancelled), just batched and
+ * without emails. Already-cancelled shifts are skipped, so the returned count
+ * is the number actually taken off the schedule.
  */
 export async function bulkCancelShifts(
   shiftIds: string[],
@@ -281,12 +473,47 @@ export async function bulkCancelShifts(
   if (!parsed.success) return { error: "Select at least one shift." };
 
   const slugs = await affectedProgramSlugs(parsed.data.shiftIds);
-  const { count } = await db.shift.updateMany({
+  const live = await db.shift.findMany({
     where: { id: { in: parsed.data.shiftIds }, cancelled: false },
-    data: { cancelled: true },
+    select: { id: true },
+  });
+  const liveIds = live.map((s) => s.id);
+  const [{ count }] = await db.$transaction([
+    db.shift.updateMany({
+      where: { id: { in: liveIds }, cancelled: false },
+      data: { cancelled: true },
+    }),
+    db.booking.updateMany({
+      where: { shiftId: { in: liveIds }, status: BookingStatus.CONFIRMED },
+      data: { status: BookingStatus.CANCELLED },
+    }),
+  ]);
+
+  revalidateShiftLists(slugs);
+  for (const id of liveIds) revalidatePath(`/admin/shifts/${id}`);
+  return { ok: true, count };
+}
+
+/**
+ * Put many cancelled shifts back on the schedule. Like restoreShift, the
+ * bookings cancelled with them stay cancelled. Shifts that aren't cancelled
+ * are skipped, so the count is the number actually restored.
+ */
+export async function bulkRestoreShifts(
+  shiftIds: string[],
+): Promise<BulkShiftResult> {
+  await requireAdmin();
+  const parsed = BulkShiftIdsSchema.safeParse({ shiftIds });
+  if (!parsed.success) return { error: "Select at least one shift." };
+
+  const slugs = await affectedProgramSlugs(parsed.data.shiftIds);
+  const { count } = await db.shift.updateMany({
+    where: { id: { in: parsed.data.shiftIds }, cancelled: true },
+    data: { cancelled: false },
   });
 
   revalidateShiftLists(slugs);
+  for (const id of parsed.data.shiftIds) revalidatePath(`/admin/shifts/${id}`);
   return { ok: true, count };
 }
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/patterns/form-field";
 import { Textarea } from "@/components/ui/textarea";
 import { YesNoField } from "@/components/site/yes-no-field";
+import { useFocusFirstError } from "./focus-first-error";
 import {
   saveProfileAction,
   type ProfileState,
@@ -34,46 +35,57 @@ export function ProfileForm({
   // React resets the form after every action; remounting on the values
   // re-seeds the uncontrolled inputs (Base UI ignores a changed defaultValue).
   const formKey = JSON.stringify(v);
+  const formRef = useRef<HTMLFormElement>(null);
+  useFocusFirstError(formRef, state.fieldErrors);
 
   useEffect(() => {
     if (state.ok) toast.success("Profile saved.");
   }, [state]);
 
   return (
-    <form key={formKey} action={formAction} className="mt-10 space-y-8" noValidate>
+    <form ref={formRef} key={formKey} action={formAction} className="mt-10 space-y-8" noValidate>
       <Card title="The basics">
-        <Field
+        <FormField
+          id="firstName"
           label="First name"
-          name="firstName"
-          defaultValue={v.firstName}
-          autoComplete="given-name"
           helper="English alphabet, please. Macrons and accents are fine."
           error={fe.firstName}
           required
-        />
-        <Field
-          label="Last name"
-          name="lastName"
-          defaultValue={v.lastName}
-          autoComplete="family-name"
-          error={fe.lastName}
-        />
-        <Field label="Email" name="email" value={email} disabled />
-        <Field
-          label="Phone"
-          name="phone"
-          type="tel"
-          defaultValue={v.phone}
-          autoComplete="tel"
-          error={fe.phone}
-        />
-        <Field
-          label="Pronouns"
-          name="pronouns"
-          defaultValue={v.pronouns}
-          placeholder="e.g. she/they"
-          error={fe.pronouns}
-        />
+        >
+          <Input
+            name="firstName"
+            defaultValue={v.firstName}
+            autoComplete="given-name"
+            required
+          />
+        </FormField>
+        <FormField id="lastName" label="Last name" error={fe.lastName}>
+          <Input
+            name="lastName"
+            defaultValue={v.lastName}
+            autoComplete="family-name"
+          />
+        </FormField>
+        <FormField id="email" label="Email">
+          {/* Disabled inputs aren't submitted, so the read-only email never
+              reaches the action. */}
+          <Input value={email} disabled />
+        </FormField>
+        <FormField id="phone" label="Phone" error={fe.phone}>
+          <Input
+            name="phone"
+            type="tel"
+            defaultValue={v.phone}
+            autoComplete="tel"
+          />
+        </FormField>
+        <FormField id="pronouns" label="Pronouns" error={fe.pronouns}>
+          <Input
+            name="pronouns"
+            defaultValue={v.pronouns}
+            placeholder="e.g. she/they"
+          />
+        </FormField>
       </Card>
 
       <Card title="Volunteering with us">
@@ -86,41 +98,39 @@ export function ProfileForm({
             yesLabel="Yes, I've been before"
             defaultValue={yesNo(v.volunteeredBefore)}
             error={fe.volunteeredBefore}
+            // Optional here (unlike onboarding): see ProfileSchema.
+            required={false}
           />
         </div>
       </Card>
 
       <Card title="Emergency contact">
-        <Field
-          label="Name"
-          name="emergencyName"
-          defaultValue={v.emergencyName}
-          error={fe.emergencyName}
-        />
-        <Field
-          label="Phone"
-          name="emergencyPhone"
-          type="tel"
-          defaultValue={v.emergencyPhone}
-          error={fe.emergencyPhone}
-        />
+        <FormField id="emergencyName" label="Name" error={fe.emergencyName}>
+          <Input name="emergencyName" defaultValue={v.emergencyName} />
+        </FormField>
+        <FormField id="emergencyPhone" label="Phone" error={fe.emergencyPhone}>
+          <Input
+            name="emergencyPhone"
+            type="tel"
+            defaultValue={v.emergencyPhone}
+          />
+        </FormField>
       </Card>
 
       <Card title="Access needs">
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="accessNeeds">
-            Anything we can do to make your shifts easier?
-          </Label>
+        <FormField
+          id="accessNeeds"
+          label="Anything we can do to make your shifts easier?"
+          error={fe.accessNeeds}
+          className="sm:col-span-2"
+        >
           <Textarea
-            id="accessNeeds"
             name="accessNeeds"
             rows={4}
             placeholder="Mobility, sensory, support person, anything else."
             defaultValue={v.accessNeeds}
-            aria-invalid={fe.accessNeeds ? true : undefined}
           />
-          <Err id="accessNeeds-error">{fe.accessNeeds}</Err>
-        </div>
+        </FormField>
       </Card>
 
       {next && <input type="hidden" name="next" value={next} />}
@@ -130,7 +140,7 @@ export function ProfileForm({
           type="submit"
           size="lg"
           disabled={pending}
-          className="bg-leaf-deep hover:bg-leaf-ink"
+          className="w-full font-semibold sm:w-auto"
         >
           {pending ? "Saving…" : next ? "Save and continue →" : "Save profile"}
         </Button>
@@ -151,70 +161,3 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-function Field({
-  label,
-  name,
-  type = "text",
-  defaultValue,
-  value,
-  placeholder,
-  autoComplete,
-  helper,
-  error,
-  required,
-  disabled,
-}: {
-  label: string;
-  name: string;
-  type?: string;
-  defaultValue?: string;
-  value?: string;
-  placeholder?: string;
-  autoComplete?: string;
-  helper?: string;
-  error?: string;
-  required?: boolean;
-  disabled?: boolean;
-}) {
-  const helperId = helper ? `${name}-helper` : undefined;
-  const errorId = error ? `${name}-error` : undefined;
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={name}>
-        {label}
-        {required && <span className="ml-1 text-tomato-deep">*</span>}
-      </Label>
-      <Input
-        id={name}
-        // Disabled inputs aren't submitted, so the read-only email never
-        // reaches the action.
-        name={disabled ? undefined : name}
-        type={type}
-        defaultValue={defaultValue}
-        value={value}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        required={required}
-        disabled={disabled}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={[helperId, errorId].filter(Boolean).join(" ") || undefined}
-        className="h-11"
-      />
-      <Err id={errorId}>{error}</Err>
-      {helper && (
-        <p id={helperId} className="text-xs text-foreground/65">
-          {helper}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Err({ id, children }: { id?: string; children?: React.ReactNode }) {
-  if (!children) return null;
-  return (
-    <p id={id} role="alert" aria-live="polite" className="text-sm text-destructive">
-      {children}
-    </p>
-  );
-}

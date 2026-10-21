@@ -11,6 +11,9 @@ import {
   INCLUSIVE_SLUG,
   dayOfWeek,
   formatShiftRange,
+  formatShiftTimes,
+  nzDateKey,
+  nzWeekBucket,
   programHref,
   programmeImageSrc,
   slugify,
@@ -79,31 +82,122 @@ describe("formatShiftRange", () => {
   it("renders a single-day shift with a time range in NZ time", () => {
     const start = new Date("2026-01-15T02:00:00Z"); // 15:00 Thu NZ
     const end = new Date("2026-01-15T05:00:00Z"); // 18:00 Thu NZ
-    const out = formatShiftRange(start, end);
-    expect(out).toContain("Thu");
-    expect(out).toContain("15 Jan");
-    expect(out).toContain("3:00");
-    expect(out).toContain("6:00");
-    expect(out).toContain("·");
+    expect(formatShiftRange(start, end)).toBe("Thu, 15 Jan · 3:00 pm – 6:00 pm");
   });
 
-  it("renders a multi-day range as two dates without times", () => {
-    const start = new Date("2026-01-15T02:00:00Z"); // Thu 15 Jan NZ
-    const end = new Date("2026-01-16T05:00:00Z"); // Fri 16 Jan NZ
-    const out = formatShiftRange(start, end);
-    expect(out).toContain("15 Jan");
-    expect(out).toContain("16 Jan");
-    expect(out).toContain("–");
-    expect(out).not.toContain("·");
+  it("keeps both times on a shift that runs past NZ midnight", () => {
+    // Wed 21 Oct 2026 22:00 NZDT → Thu 22 Oct 01:00 NZDT.
+    const start = new Date("2026-10-21T09:00:00Z");
+    const end = new Date("2026-10-21T12:00:00Z");
+    expect(formatShiftRange(start, end)).toBe(
+      "Wed, 21 Oct · 10:00 pm – Thu, 22 Oct · 1:00 am",
+    );
   });
 
   it("treats a shift crossing NZ midnight as multi-day even within one UTC day", () => {
     const start = new Date("2026-01-15T10:00:00Z"); // Thu 15 Jan 23:00 NZDT
     const end = new Date("2026-01-15T11:30:00Z"); // Fri 16 Jan 00:30 NZDT
-    const out = formatShiftRange(start, end);
-    expect(out).toContain("15 Jan");
-    expect(out).toContain("16 Jan");
-    expect(out).toContain("–");
+    expect(formatShiftRange(start, end)).toBe(
+      "Thu, 15 Jan · 11:00 pm – Fri, 16 Jan · 12:30 am",
+    );
+  });
+
+  it("treats a shift that crosses UTC midnight but not NZ midnight as one day", () => {
+    const start = new Date("2026-01-14T20:00:00Z"); // Thu 15 Jan 09:00 NZDT
+    const end = new Date("2026-01-15T01:00:00Z"); // Thu 15 Jan 14:00 NZDT
+    expect(formatShiftRange(start, end)).toBe("Thu, 15 Jan · 9:00 am – 2:00 pm");
+  });
+
+  it("reads NZ wall-clock on both sides of the DST switch", () => {
+    // NZST (UTC+12) in July, NZDT (UTC+13) in January: 9am is a different
+    // UTC hour in each, but renders as 9am either way.
+    expect(
+      formatShiftRange(
+        new Date("2026-07-14T21:00:00Z"),
+        new Date("2026-07-15T00:00:00Z"),
+      ),
+    ).toBe("Wed, 15 Jul · 9:00 am – 12:00 pm");
+    expect(
+      formatShiftRange(
+        new Date("2026-01-13T20:00:00Z"),
+        new Date("2026-01-13T23:00:00Z"),
+      ),
+    ).toBe("Wed, 14 Jan · 9:00 am – 12:00 pm");
+  });
+
+  it("handles a shift spanning the spring-forward night", () => {
+    // NZ springs forward at 02:00 NZST on Sun 27 Sep 2026 → 03:00 NZDT.
+    // Sat 26 Sep 23:00 NZST (11:00Z) → Sun 27 Sep 04:00 NZDT (15:00Z).
+    expect(
+      formatShiftRange(
+        new Date("2026-09-26T11:00:00Z"),
+        new Date("2026-09-26T15:00:00Z"),
+      ),
+      // ICU spells September "Sep" or "Sept" depending on its version.
+    ).toMatch(/^Sat, 26 Sept? · 11:00 pm – Sun, 27 Sept? · 4:00 am$/);
+  });
+});
+
+describe("formatShiftTimes", () => {
+  it("renders times only for a same-day shift", () => {
+    expect(
+      formatShiftTimes(
+        new Date("2026-01-15T02:00:00Z"),
+        new Date("2026-01-15T05:00:00Z"),
+      ),
+    ).toBe("3:00 pm – 6:00 pm");
+  });
+
+  it("names the end day when the shift crosses NZ midnight", () => {
+    expect(
+      formatShiftTimes(
+        new Date("2026-10-21T09:00:00Z"),
+        new Date("2026-10-21T12:00:00Z"),
+      ),
+    ).toBe("10:00 pm – 1:00 am Thu, 22 Oct");
+  });
+});
+
+describe("nzDateKey", () => {
+  it("returns the NZ calendar date, not the UTC one", () => {
+    // 2026-01-15T12:00Z is 2026-01-16 01:00 NZDT.
+    expect(nzDateKey(new Date("2026-01-15T12:00:00Z"))).toBe("2026-01-16");
+    expect(nzDateKey(new Date("2026-01-15T10:00:00Z"))).toBe("2026-01-15");
+  });
+});
+
+describe("nzWeekBucket", () => {
+  // 2026-10-21 is a Wednesday; its week starts Mon 19 Oct.
+  const today = "2026-10-21";
+
+  it("groups the rest of the current Monday-start week as this week", () => {
+    expect(nzWeekBucket("2026-10-21", today)).toEqual({
+      key: "2026-10-19",
+      label: "This week",
+    });
+    expect(nzWeekBucket("2026-10-25", today).label).toBe("This week"); // Sun
+  });
+
+  it("starts next week on the following Monday", () => {
+    expect(nzWeekBucket("2026-10-26", today)).toEqual({
+      key: "2026-10-26",
+      label: "Next week",
+    });
+  });
+
+  it("labels later weeks by their Monday", () => {
+    expect(nzWeekBucket("2026-11-05", today)).toEqual({
+      key: "2026-11-02",
+      label: "Week of 2 Nov",
+    });
+  });
+
+  it("is stable across the DST switch", () => {
+    // NZ springs forward on Sun 27 Sep 2026.
+    expect(nzWeekBucket("2026-09-28", "2026-09-24")).toEqual({
+      key: "2026-09-28",
+      label: "Next week",
+    });
   });
 });
 

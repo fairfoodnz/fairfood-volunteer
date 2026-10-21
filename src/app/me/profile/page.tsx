@@ -5,6 +5,7 @@ import { hasEnglishName } from "@/lib/users";
 import { getSiteCopy } from "@/lib/site-copy";
 import { EnglishRequirementNote } from "@/components/site/english-requirement-note";
 import { SiteNav } from "@/components/site/nav";
+import { PageHeader } from "@/components/patterns/page-header";
 import { SiteFooter } from "@/components/site/footer";
 import { ProfileForm } from "./form";
 
@@ -27,17 +28,14 @@ export default async function ProfilePage({ searchParams }: Props) {
       <SiteNav />
       <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x max-w-3xl">
-          <p className="eyebrow">Kaiāwhina profile</p>
-          <h1 className="display mt-2 text-balance text-3xl font-bold leading-tight md:text-4xl">
-            Help us know who&rsquo;s coming.
-          </h1>
-          <p className="mt-3 text-foreground/75">
-            We use these details only for shift rosters and to look after you on
-            the day. Edit anytime.
-          </p>
+          <PageHeader
+            eyebrow="Kaiāwhina profile"
+            title="Help us know who’s coming."
+            lead="We use these details only for shift rosters and to look after you on the day. Edit anytime."
+          />
 
           {needsEnglishName && (
-            <div className="mt-8 flex gap-3 rounded-md border border-tomato/30 bg-tomato/5 px-5 py-4">
+            <div className="mb-8 flex gap-3 rounded-md border border-tomato/30 bg-tomato/5 px-5 py-4">
               <Languages className="mt-0.5 size-5 shrink-0 text-tomato-deep" aria-hidden />
               <div className="space-y-1">
                 <p className="font-semibold text-foreground">
@@ -53,7 +51,6 @@ export default async function ProfilePage({ searchParams }: Props) {
           )}
 
           <EnglishRequirementNote
-            className="mt-8"
             title={copy.englishRequirementTitle}
             body={copy.englishRequirementBody}
           />

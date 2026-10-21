@@ -48,40 +48,97 @@ export function programmeImageSrc(p: {
   return p.imageUrl ?? null;
 }
 
+const NZ_TZ = "Pacific/Auckland";
+
+// "en-CA" yields a sortable "YYYY-MM-DD".
+const nzDayFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: NZ_TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const shiftDateFmt = new Intl.DateTimeFormat("en-NZ", {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  timeZone: NZ_TZ,
+});
+const shiftTimeFmt = new Intl.DateTimeFormat("en-NZ", {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: NZ_TZ,
+});
+
+/**
+ * The NZ calendar date of an instant as "YYYY-MM-DD". Never use
+ * `toDateString()` for this — it reads the process's ambient zone (UTC on CI /
+ * in the Docker image), so a shift crossing NZ midnight inside one UTC day
+ * would be mislabelled.
+ */
+export function nzDateKey(d: Date) {
+  return nzDayFmt.format(d);
+}
+
+/**
+ * "Wed, 21 Oct · 9:00 am – 12:00 pm". A shift that runs past NZ midnight
+ * keeps both times — "Wed, 21 Oct · 10:00 pm – Thu, 22 Oct · 1:00 am" — since
+ * the time is the fact a volunteer needs most.
+ */
 export function formatShiftRange(start: Date, end: Date) {
-  // Compare the NZ calendar date, not `toDateString()` — the latter uses the
-  // process's ambient zone (UTC on CI / in the Docker image), so a shift that
-  // crosses NZ midnight while staying within one UTC day would otherwise be
-  // mislabelled as single-day. "en-CA" yields a sortable "YYYY-MM-DD".
-  const nzDay = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Pacific/Auckland",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const sameDay = nzDay.format(start) === nzDay.format(end);
-  const dateFmt = new Intl.DateTimeFormat("en-NZ", {
-    weekday: "short",
+  const startLabel = `${shiftDateFmt.format(start)} · ${shiftTimeFmt.format(start)}`;
+  if (nzDateKey(start) === nzDateKey(end)) {
+    return `${startLabel} – ${shiftTimeFmt.format(end)}`;
+  }
+  return `${startLabel} – ${shiftDateFmt.format(end)} · ${shiftTimeFmt.format(end)}`;
+}
+
+/**
+ * Times only, for lists already grouped under a date heading:
+ * "9:00 am – 12:00 pm". A cross-midnight shift names the day it ends on —
+ * "10:00 pm – 1:00 am Thu, 22 Oct" — so the heading never misleads.
+ */
+export function formatShiftTimes(start: Date, end: Date) {
+  const range = `${shiftTimeFmt.format(start)} – ${shiftTimeFmt.format(end)}`;
+  if (nzDateKey(start) === nzDateKey(end)) return range;
+  return `${range} ${shiftDateFmt.format(end)}`;
+}
+
+/**
+ * Coarse week bucket for scannable shift lists, Monday-start in NZ time:
+ * "This week", "Next week", then "Week of 17 Nov". `dateKey` is an
+ * `nzDateKey()`; `todayKey` defaults to today in NZ.
+ */
+export function nzWeekBucket(
+  dateKey: string,
+  todayKey: string = nzDateKey(new Date()),
+): { key: string; label: string } {
+  const monday = mondayOf(dateKey);
+  const thisMonday = mondayOf(todayKey);
+  const weeks = Math.round((monday - thisMonday) / (7 * 86_400_000));
+  const key = new Date(monday).toISOString().slice(0, 10);
+  if (weeks <= 0) return { key, label: "This week" };
+  if (weeks === 1) return { key, label: "Next week" };
+  const label = new Intl.DateTimeFormat("en-NZ", {
     day: "numeric",
     month: "short",
-    timeZone: "Pacific/Auckland",
-  });
-  const timeFmt = new Intl.DateTimeFormat("en-NZ", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Pacific/Auckland",
-  });
-  if (sameDay) {
-    return `${dateFmt.format(start)} · ${timeFmt.format(start)} – ${timeFmt.format(end)}`;
-  }
-  return `${dateFmt.format(start)} – ${dateFmt.format(end)}`;
+    timeZone: "UTC",
+  }).format(monday);
+  return { key, label: `Week of ${label}` };
+}
+
+/** UTC-midnight epoch ms of the Monday on or before a "YYYY-MM-DD" date. */
+function mondayOf(dateKey: string) {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const ms = Date.UTC(y, m - 1, d);
+  const sinceMonday = (new Date(ms).getUTCDay() + 6) % 7;
+  return ms - sinceMonday * 86_400_000;
 }
 
 export function dayOfWeek(d: Date) {
   return new Intl.DateTimeFormat("en-NZ", {
     weekday: "long",
-    timeZone: "Pacific/Auckland",
+    timeZone: NZ_TZ,
   }).format(d);
 }
 
