@@ -33,13 +33,13 @@ export function Hero() {
             <Button
               asChild
               size="lg"
-              className="h-12 bg-leaf px-7 text-base font-semibold tracking-tight hover:bg-leaf-deep"
+              className="h-12 bg-leaf-deep px-7 text-base font-semibold tracking-tight hover:bg-leaf-ink"
             >
               <Link href="/shifts">Browse open shifts →</Link>
             </Button>
             <Button
               asChild
-              variant="ghost"
+              variant="outline"
               size="lg"
               className="h-12 px-5 text-base"
             >
@@ -51,15 +51,15 @@ export function Hero() {
 
           <dl className="flex flex-wrap items-center gap-x-8 gap-y-2 pt-2 text-sm text-foreground/70">
             <div className="flex items-baseline gap-2">
-              <dt className="font-mono text-xs text-foreground/50">est.</dt>
+              <dt className="font-mono text-xs text-foreground/65">est.</dt>
               <dd className="font-medium text-foreground">2011</dd>
             </div>
             <div className="flex items-baseline gap-2">
-              <dt className="font-mono text-xs text-foreground/50">place</dt>
+              <dt className="font-mono text-xs text-foreground/65">place</dt>
               <dd className="font-medium text-foreground">Tāmaki Makaurau</dd>
             </div>
             <div className="flex items-baseline gap-2">
-              <dt className="font-mono text-xs text-foreground/50">mahi</dt>
+              <dt className="font-mono text-xs text-foreground/65">mahi</dt>
               <dd className="font-medium text-foreground">
                 2,400 kg of kai / day
               </dd>
@@ -131,34 +131,31 @@ function PolaroidStack() {
         rotate="-7deg"
         position="top-2 left-2 sm:left-0"
         src="/photos/hero-rescue.webp"
-        alt="Volunteers sorting rescued kai at the Fair Food warehouse"
       />
       <Polaroid
         rotate="4deg"
         position="top-20 right-2"
         src="/photos/kai-box.webp"
-        alt="Volunteers packing kai boxes ready for whānau"
       />
       <Polaroid
         rotate="-3deg"
         position="bottom-0 left-8 sm:left-12"
         src="/photos/hero-kitchen.webp"
-        alt="Cooks preparing a meal in the Conscious Kitchen"
       />
     </div>
   );
 }
 
+// The polaroid collage is mood, not content — the headline and copy beside it
+// say everything — so the stack is aria-hidden and the photos carry alt="".
 function Polaroid({
   rotate,
   position,
   src,
-  alt,
 }: {
   rotate: string;
   position: string;
   src: string;
-  alt: string;
 }) {
   return (
     <div
@@ -169,7 +166,7 @@ function Polaroid({
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-charcoal/10">
         <Image
           src={src}
-          alt={alt}
+          alt=""
           fill
           sizes="(min-width: 640px) 224px, 176px"
           className="object-cover"

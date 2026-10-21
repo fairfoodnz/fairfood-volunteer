@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { MailWarning } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FormMessage } from "@/components/auth/form-message";
 import {
   resendVerificationAction,
   type ResendVerificationState,
@@ -23,7 +24,7 @@ export function VerifyEmailBanner({ email }: { email: string }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <MailWarning
-            className="mt-0.5 size-5 shrink-0 text-tomato"
+            className="mt-0.5 size-5 shrink-0 text-tomato-deep"
             aria-hidden
           />
           <div className="space-y-1">
@@ -35,32 +36,25 @@ export function VerifyEmailBanner({ email }: { email: string }) {
               <span className="font-medium text-foreground">{email}</span>. Tap
               it and you&rsquo;re good to go — booking stays locked until then.
             </p>
-            {state.sent && (
-              <p
-                className="text-sm font-medium text-leaf-deep"
-                aria-live="polite"
-              >
-                Fresh link sent — check your inbox (and your spam folder).
-              </p>
-            )}
-            {state.error && (
-              <p
-                className="text-sm text-destructive"
-                role="alert"
-                aria-live="polite"
-              >
-                {state.error}
-              </p>
-            )}
+            {/* Persistent live regions: their text is swapped in, so the
+                result of "Resend email" is announced. */}
+            <FormMessage
+              tone="success"
+              message={
+                state.sent
+                  ? "Fresh link sent — check your inbox (and your spam folder)."
+                  : null
+              }
+            />
+            <FormMessage tone="error" message={state.error} />
           </div>
         </div>
         <form action={formAction} className="shrink-0">
           <Button
             type="submit"
             variant="outline"
-            size="sm"
             disabled={pending}
-            className="border-tomato/40 text-tomato hover:bg-tomato/10 hover:text-tomato"
+            className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
           >
             {pending ? "Sending…" : "Resend email"}
           </Button>

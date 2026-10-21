@@ -8,7 +8,7 @@ import {
   CalendarRange,
   ListChecks,
   Boxes,
-  AlertCircle,
+  MessageCircleQuestionMark,
   Users,
   UserPlus,
   FileText,
@@ -68,8 +68,10 @@ const SECTIONS: { label: string; links: NavLink[] }[] = [
     links: [
       {
         href: "/admin/flagged",
+        // The unreviewed queue only — the Volunteers list's "Flagged" filter
+        // counts everyone who disclosed something, reviewed or not.
         label: "Needs review",
-        icon: AlertCircle,
+        icon: MessageCircleQuestionMark,
         badge: "unreviewed",
       },
       { href: "/admin/volunteers", label: "All volunteers", icon: Users, exact: true },
@@ -119,7 +121,7 @@ export function AdminSidebar({
         >
           <LogoMark size={36} />
           <span className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/65">
               Fair Food
             </span>
             <span className="text-sm font-semibold">Admin</span>
@@ -130,7 +132,7 @@ export function AdminSidebar({
       <SidebarContent>
         {SECTIONS.map((section) => (
           <SidebarGroup key={section.label}>
-            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/55">
+            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/65">
               {section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -151,7 +153,7 @@ export function AdminSidebar({
                           <Icon className="size-4" />
                           <span className="flex w-full items-center justify-between gap-2">
                             <span>{link.label}</span>
-                            <span className="rounded-full bg-foreground/10 px-1.5 text-[9px] font-semibold uppercase tracking-widest text-foreground/55 group-data-[collapsible=icon]:hidden">
+                            <span className="rounded-full bg-foreground/10 px-1.5 text-[10px] font-semibold uppercase tracking-widest text-foreground/70 group-data-[collapsible=icon]:hidden">
                               Soon
                             </span>
                           </span>
@@ -167,17 +169,19 @@ export function AdminSidebar({
                         isActive={active}
                         tooltip={
                           showBadge
-                            ? `${link.label} (${count})`
+                            ? `${link.label} (${count} still to review)`
                             : link.label
                         }
                         render={<Link href={link.href} />}
                       >
                         <span className="relative">
                           <Icon className="size-4" />
+                          {/* Forest, not red: per admin-flagged.md these are
+                              people to chat with, not an alarm. */}
                           {showBadge ? (
                             <span
                               aria-hidden
-                              className="absolute -top-1 -right-1 hidden size-2 rounded-full bg-destructive ring-2 ring-sidebar group-data-[collapsible=icon]:block"
+                              className="absolute -top-1 -right-1 hidden size-2 rounded-full bg-forest ring-2 ring-sidebar group-data-[collapsible=icon]:block"
                             />
                           ) : null}
                         </span>
@@ -185,8 +189,8 @@ export function AdminSidebar({
                           <span>{link.label}</span>
                           {showBadge ? (
                             <span
-                              className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums group-data-[collapsible=icon]:hidden"
-                              aria-label={`${count} awaiting review`}
+                              className="rounded-full bg-forest px-1.5 py-0.5 text-[10px] font-semibold leading-none text-cream tabular-nums group-data-[collapsible=icon]:hidden"
+                              aria-label={`${count} still to review`}
                             >
                               {count}
                             </span>
@@ -227,7 +231,7 @@ export function AdminSidebar({
         </SidebarMenu>
         <div className="px-2 pt-1 pb-2 group-data-[collapsible=icon]:hidden">
           <p className="truncate text-xs font-medium">{fullName(user)}</p>
-          <p className="truncate text-[11px] text-foreground/55">{user.email}</p>
+          <p className="truncate text-[11px] text-foreground/65">{user.email}</p>
         </div>
       </SidebarFooter>
     </Sidebar>

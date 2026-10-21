@@ -67,7 +67,7 @@ export function SiteCopyForm({ sections }: { sections: CopySectionView[] }) {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Label htmlFor={field.key}>{field.label}</Label>
                     {usingDefault ? (
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
                         Using the default
                       </span>
                     ) : (
@@ -76,7 +76,7 @@ export function SiteCopyForm({ sections }: { sections: CopySectionView[] }) {
                         onClick={() =>
                           setValues((v) => ({ ...v, [field.key]: "" }))
                         }
-                        className="text-xs font-semibold text-leaf-deep underline-offset-4 hover:underline"
+                        className="inline-flex min-h-9 items-center text-xs font-semibold text-leaf-deep underline-offset-4 hover:underline"
                       >
                         Use the default wording
                       </button>
@@ -124,7 +124,7 @@ export function SiteCopyForm({ sections }: { sections: CopySectionView[] }) {
 
                   <p
                     id={`${field.key}-help`}
-                    className="flex items-start gap-x-4 text-xs text-foreground/55"
+                    className="flex items-start gap-x-4 text-xs text-foreground/65"
                   >
                     <span className="min-w-0 flex-1">
                       {field.help} Leave it empty to use the default.
@@ -145,7 +145,7 @@ export function SiteCopyForm({ sections }: { sections: CopySectionView[] }) {
           type="submit"
           size="lg"
           disabled={pending}
-          className="bg-leaf hover:bg-leaf-deep"
+          className="bg-leaf-deep hover:bg-leaf-ink"
         >
           {pending ? "Saving…" : "Save wording"}
         </Button>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { PageHeader } from "@/components/patterns/page-header";
 
 export const metadata = {
   title: "Privacy policy · Fair Food Volunteer",
@@ -17,23 +18,18 @@ export default function PrivacyPage() {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x max-w-3xl">
-          <header className="mb-12">
-            <p className="eyebrow">Tō tūmataitinga · Your privacy</p>
-            <h1 className="display mt-2 text-balance text-4xl font-bold leading-tight md:text-5xl">
-              Privacy policy
-            </h1>
-            <p className="mt-4 text-foreground/75">
-              This explains what personal information the Fair Food NZ volunteer
-              portal collects, why we collect it, and how we look after it. We
-              only use your details to roster shifts and care for you on the
-              day — never shared for marketing, never sold.
-            </p>
-            <p className="mt-3 text-sm text-foreground/55">
+          <PageHeader
+            className="mb-12"
+            eyebrow="Tō tūmataitinga · Your privacy"
+            title="Privacy policy"
+            lead="This explains what personal information the Fair Food NZ volunteer portal collects, why we collect it, and how we look after it. We only use your details to roster shifts and care for you on the day — never shared for marketing, never sold."
+          >
+            <p className="mt-3 text-sm text-foreground/65">
               Last updated {LAST_UPDATED}
             </p>
-          </header>
+          </PageHeader>
 
           <div className="space-y-10">
             <Section title="Who we are">
@@ -44,7 +40,7 @@ export default function PrivacyPage() {
                   href="https://register.charities.govt.nz/Charity/CC48507"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-leaf-deep underline-offset-4 hover:underline"
+                  className="font-medium text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
                 >
                   CC48507
                 </a>
@@ -214,14 +210,14 @@ export default function PrivacyPage() {
                 Much of it you can view and update yourself on your{" "}
                 <Link
                   href="/me/profile"
-                  className="font-medium text-leaf-deep underline-offset-4 hover:underline"
+                  className="font-medium text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
                 >
                   profile
                 </Link>{" "}
                 and{" "}
                 <Link
                   href="/me/security"
-                  className="font-medium text-leaf-deep underline-offset-4 hover:underline"
+                  className="font-medium text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
                 >
                   sign-in &amp; security
                 </Link>{" "}
@@ -232,7 +228,7 @@ export default function PrivacyPage() {
                   href="https://www.privacy.org.nz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium text-leaf-deep underline-offset-4 hover:underline"
+                  className="font-medium text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
                 >
                   Office of the Privacy Commissioner
                 </a>
@@ -253,7 +249,7 @@ export default function PrivacyPage() {
                 For any privacy question or request, email{" "}
                 <a
                   href={`mailto:${PRIVACY_CONTACT}?subject=Privacy%20request`}
-                  className="font-medium text-leaf-deep underline-offset-4 hover:underline"
+                  className="font-medium text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
                 >
                   {PRIVACY_CONTACT}
                 </a>
@@ -266,7 +262,7 @@ export default function PrivacyPage() {
           <p className="mt-12 text-sm text-foreground/65">
             <Link
               href="/"
-              className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
+              className="inline-flex min-h-11 items-center font-semibold text-leaf-deep underline-offset-4 hover:text-leaf-ink hover:underline"
             >
               ← Back home
             </Link>

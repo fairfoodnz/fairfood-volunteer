@@ -127,7 +127,7 @@ export function audienceFacets(
   if (r.programme !== "all") facets.push(programmeTitle ?? r.programme);
   if (r.scope === "confirmed") facets.push("confirmed bookings");
   if (r.scope === "upcoming") facets.push("upcoming confirmed");
-  if (r.filter === "flagged") facets.push("needs review");
+  if (r.filter === "flagged") facets.push("flagged");
   if (r.filter === "pending") facets.push("profile pending");
   if (r.filter === "complete") facets.push("profile complete");
   if (r.filter === "admins") facets.push("admins");

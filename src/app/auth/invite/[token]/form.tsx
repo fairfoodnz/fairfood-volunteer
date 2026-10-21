@@ -4,7 +4,8 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/patterns/form-field";
+import { FormMessage } from "@/components/auth/form-message";
 import { claimInviteAction, type ClaimInviteState } from "@/app/auth/actions";
 
 /**
@@ -31,7 +32,7 @@ export function ClaimInviteForm({
       <input type="hidden" name="token" value={token} />
 
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
           Step 1 of 2
         </p>
         <h2 className="display mt-1.5 text-xl font-bold leading-tight">
@@ -42,101 +43,56 @@ export function ClaimInviteForm({
         </p>
       </div>
 
-      <Field
-        label="Password"
+      <FormField
         id="password"
-        autoComplete="new-password"
+        label="Password"
         helper="At least 8 characters."
         error={fe.password}
         required
-      />
-      <Field
-        label="Confirm password"
+      >
+        <Input
+          name="password"
+          type="password"
+          autoComplete="new-password"
+          required
+        />
+      </FormField>
+      <FormField
         id="confirm"
-        autoComplete="new-password"
+        label="Confirm password"
         error={fe.confirm}
         required
-      />
+      >
+        <Input
+          name="confirm"
+          type="password"
+          autoComplete="new-password"
+          required
+        />
+      </FormField>
 
-      {state.error && (
-        <div role="alert" aria-live="polite" className="space-y-1">
-          <p className="text-sm text-destructive">{state.error}</p>
-          <Link
-            href="/auth/sign-in"
-            className="text-sm font-semibold text-leaf-deep underline-offset-4 hover:underline"
-          >
-            Go to sign-in →
-          </Link>
-        </div>
-      )}
+      <FormMessage tone="error" message={state.error}>
+        <Link
+          href="/auth/sign-in"
+          className="inline-flex min-h-11 items-center font-semibold text-leaf-deep underline-offset-4 hover:underline"
+        >
+          Go to sign-in →
+        </Link>
+      </FormMessage>
 
       <Button
         type="submit"
         size="lg"
         disabled={pending}
-        className="h-12 w-full bg-leaf text-base font-semibold hover:bg-leaf-deep"
+        className="w-full text-base font-semibold"
       >
         {pending ? "Setting up…" : `Claim my account${firstName ? `, ${firstName}` : ""} →`}
       </Button>
 
-      <p className="text-xs text-foreground/55">
+      <p className="text-xs text-foreground/65">
         After this you&rsquo;ll fill out a short questionnaire so coordinators
         know how to best welcome you on your first shift.
       </p>
     </form>
-  );
-}
-
-function Field({
-  label,
-  id,
-  autoComplete,
-  helper,
-  error,
-  required,
-}: {
-  label: string;
-  id: string;
-  autoComplete?: string;
-  helper?: string;
-  error?: string;
-  required?: boolean;
-}) {
-  const helperId = helper ? `${id}-helper` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>
-        {label}
-        {required && <span className="ml-1 text-tomato">*</span>}
-      </Label>
-      <Input
-        id={id}
-        name={id}
-        type="password"
-        autoComplete={autoComplete}
-        required={required}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={
-          [helperId, errorId].filter(Boolean).join(" ") || undefined
-        }
-        className="h-11"
-      />
-      {helper && !error && (
-        <p id={helperId} className="text-xs text-foreground/55">
-          {helper}
-        </p>
-      )}
-      {error && (
-        <p
-          id={errorId}
-          role="alert"
-          aria-live="polite"
-          className="text-sm text-destructive"
-        >
-          {error}
-        </p>
-      )}
-    </div>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { StatusPill } from "@/components/patterns/status-pill";
 import {
   revealFlagAction,
   setFlagReviewedAction,
@@ -34,7 +35,7 @@ export type FlaggedRowData = {
     whenLabel: string;
     programme: string;
     countdown: string;
-    // Today or tomorrow - the chat can't wait.
+    // Today or tomorrow — the chat can't wait.
     imminent: boolean;
   } | null;
 };
@@ -46,7 +47,7 @@ const CLOCK = new Intl.DateTimeFormat("en-NZ", {
 });
 
 const MONO_LABEL =
-  "font-mono text-[10px] uppercase tracking-widest text-foreground/55";
+  "font-mono text-[10px] uppercase tracking-widest text-foreground/65";
 
 export function FlaggedRow({ person }: { person: FlaggedRowData }) {
   const [disclosure, setDisclosure] = useState<FlagDisclosure | null>(null);
@@ -139,9 +140,7 @@ export function FlaggedRow({ person }: { person: FlaggedRowData }) {
                 {disclosure?.fullName ?? person.shortName}
               </span>
               {person.firstTimer && (
-                <span className="rounded-full bg-leaf/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-leaf-deep">
-                  First shift
-                </span>
+                <StatusPill tone="info">First shift</StatusPill>
               )}
             </p>
             <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -165,14 +164,14 @@ export function FlaggedRow({ person }: { person: FlaggedRowData }) {
                 {person.nextShift.countdown}
               </span>
               <span className="text-foreground/85">{person.nextShift.whenLabel}</span>
-              <span className="truncate text-foreground/60">
+              <span className="truncate text-foreground/70">
                 {person.nextShift.programme}
               </span>
             </div>
           ) : (
-            <p className="text-foreground/55">No shift booked</p>
+            <p className="text-foreground/65">No shift booked</p>
           )}
-          <p className="mt-1 text-xs text-foreground/55">
+          <p className="mt-1 text-xs text-foreground/65">
             {reviewed
               ? `Reviewed ${person.reviewedLabel}`
               : `Flagged ${person.flaggedLabel}`}
@@ -225,7 +224,7 @@ export function FlaggedRow({ person }: { person: FlaggedRowData }) {
                     href={`mailto:${disclosure.email}`}
                     className="inline-flex max-w-full items-center gap-2 text-foreground/85 underline-offset-4 hover:text-leaf-deep hover:underline"
                   >
-                    <Mail className="size-3.5 shrink-0 text-foreground/50" />
+                    <Mail className="size-3.5 shrink-0 text-foreground/65" />
                     <span className="truncate">{disclosure.email}</span>
                   </a>
                 </li>
@@ -235,7 +234,7 @@ export function FlaggedRow({ person }: { person: FlaggedRowData }) {
                       href={`tel:${disclosure.phone.replace(/\s+/g, "")}`}
                       className="inline-flex items-center gap-2 text-foreground/85 underline-offset-4 hover:text-leaf-deep hover:underline"
                     >
-                      <Phone className="size-3.5 shrink-0 text-foreground/50" />
+                      <Phone className="size-3.5 shrink-0 text-foreground/65" />
                       {disclosure.phone}
                     </a>
                   </li>
@@ -246,7 +245,7 @@ export function FlaggedRow({ person }: { person: FlaggedRowData }) {
                       href={`/admin/shifts/${person.nextShift.id}`}
                       className="inline-flex items-center gap-2 text-foreground/85 underline-offset-4 hover:text-leaf-deep hover:underline"
                     >
-                      <CalendarDays className="size-3.5 shrink-0 text-foreground/50" />
+                      <CalendarDays className="size-3.5 shrink-0 text-foreground/65" />
                       Open their next shift
                     </Link>
                   </li>
@@ -272,7 +271,7 @@ export function FlaggedRow({ person }: { person: FlaggedRowData }) {
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/50">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
               Revealed by you · {revealedAt}
             </p>
             <button
@@ -308,14 +307,14 @@ function TypeChip({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Disclosure({ label, details }: { label: string; details: string }) {
+export function Disclosure({ label, details }: { label: string; details: string }) {
   return (
     <div className="rounded-md border-l-2 border-leaf bg-cream-deep px-4 py-3">
       <p className={MONO_LABEL}>{label} · what they shared</p>
       <p className="mt-1.5 whitespace-pre-wrap text-sm text-foreground/85">
         {details.length > 0
           ? details
-          : "Answered yes but left the details blank - worth following up."}
+          : "Answered yes but left the details blank — worth following up."}
       </p>
     </div>
   );

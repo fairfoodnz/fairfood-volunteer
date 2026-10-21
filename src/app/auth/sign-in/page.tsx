@@ -35,16 +35,16 @@ export default async function SignInPage({ searchParams }: Props) {
   return (
     <>
       <SiteNav />
-      <main className="flex-1 py-16 md:py-24">
+      <main id="main" className="flex-1 py-12 md:py-16">
         <div className="container-x grid gap-16 lg:grid-cols-2">
           <div className="max-w-md space-y-6">
             <p className="eyebrow">Kia ora — welcome back</p>
-            <h1 className="display text-balance text-4xl font-semibold leading-tight md:text-5xl">
+            <h1 className="display text-balance text-4xl font-bold leading-tight md:text-5xl">
               Sign in to manage your shifts.
             </h1>
             <p className="text-foreground/75">
-              Use the email and password you set when you signed up. We&rsquo;ll
-              remember you on this device.
+              Use Google, a passkey, or the email and password you signed up
+              with. We&rsquo;ll remember you on this device.
             </p>
             <ul className="mt-6 space-y-3 text-sm text-foreground/70">
               <li className="flex gap-3">
@@ -53,11 +53,11 @@ export default async function SignInPage({ searchParams }: Props) {
               </li>
               <li className="flex gap-3">
                 <Dot />
-                Cancel up to 12 hours before so we can reoffer your spot
+                Can&rsquo;t make it? Cancel as early as you can so we can offer your spot to someone else
               </li>
               <li className="flex gap-3">
                 <Dot />
-                Get gentle reminders the day before
+                Get an email reminder the day before
               </li>
             </ul>
           </div>
@@ -67,7 +67,7 @@ export default async function SignInPage({ searchParams }: Props) {
               {errorMsg && (
                 <div
                   role="alert"
-                  className="mb-5 flex items-start gap-3 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-tomato"
+                  className="mb-5 flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-destructive"
                 >
                   <AlertCircle className="mt-0.5 size-5 shrink-0" aria-hidden />
                   <p className="text-sm font-medium">{errorMsg}</p>
@@ -111,7 +111,7 @@ function DevQuickLogin() {
   if (process.env.NODE_ENV !== "development") return null;
   return (
     <div className="mt-6 rounded-md border border-dashed border-leaf/40 bg-leaf/5 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/55">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
         Dev only — seed accounts
       </p>
       <p className="mt-1 text-xs text-foreground/65">
@@ -122,7 +122,7 @@ function DevQuickLogin() {
           <input type="hidden" name="role" value="volunteer" />
           <button
             type="submit"
-            className="inline-flex h-9 items-center rounded border border-leaf/40 bg-card px-3 text-xs font-semibold text-leaf-deep transition-colors hover:bg-leaf hover:text-cream"
+            className="inline-flex h-11 items-center rounded border border-leaf/40 bg-card px-3 text-xs font-semibold text-leaf-deep transition-colors hover:bg-leaf-deep hover:text-cream"
           >
             Sign in as volunteer
           </button>
@@ -131,7 +131,7 @@ function DevQuickLogin() {
           <input type="hidden" name="role" value="admin" />
           <button
             type="submit"
-            className="inline-flex h-9 items-center rounded border border-charcoal/30 bg-card px-3 text-xs font-semibold text-charcoal transition-colors hover:bg-charcoal hover:text-cream"
+            className="inline-flex h-11 items-center rounded border border-charcoal/30 bg-card px-3 text-xs font-semibold text-charcoal transition-colors hover:bg-charcoal hover:text-cream"
           >
             Sign in as admin
           </button>

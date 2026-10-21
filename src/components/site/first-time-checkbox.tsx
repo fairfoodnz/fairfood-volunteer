@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * "This is my first time volunteering with Fair Food", on the booking forms.
@@ -20,15 +21,18 @@ export function FirstTimeCheckbox({
 }) {
   return (
     <label
-      className={`group flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium transition-colors has-[input:checked]:border-leaf has-[input:checked]:bg-leaf/5 has-[input:checked]:text-leaf-deep has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-leaf has-[input:focus-visible]:ring-offset-2 has-[input:focus-visible]:ring-offset-background ${className ?? ""}`}
+      className={cn(
+        "group flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-border bg-card px-4 py-3 text-sm font-medium transition-colors has-[input:checked]:border-leaf-deep has-[input:checked]:bg-leaf/5 has-[input:checked]:text-leaf-deep has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring has-[input:focus-visible]:ring-offset-2 has-[input:focus-visible]:ring-offset-background",
+        className,
+      )}
     >
       <input type="checkbox" name="firstTime" value="yes" className="sr-only" />
       <span
         aria-hidden
-        className="mt-px grid h-5 w-5 shrink-0 place-items-center rounded-[4px] border border-border transition-colors group-has-[input:checked]:border-leaf-deep group-has-[input:checked]:bg-leaf-deep"
+        className="mt-px grid h-5 w-5 shrink-0 place-items-center rounded-[4px] border border-input transition-colors group-has-[input:checked]:border-leaf-deep group-has-[input:checked]:bg-leaf-deep"
       >
         <Check
-          className="h-3 w-3 scale-0 text-cream transition-transform group-has-[input:checked]:scale-100"
+          className="h-3 w-3 scale-0 text-cream motion-safe:transition-transform group-has-[input:checked]:scale-100"
           strokeWidth={3}
         />
       </span>

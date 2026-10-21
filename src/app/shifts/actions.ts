@@ -419,16 +419,23 @@ export async function bookShiftsAction(
   redirect(`/me?bookedMany=${confirmed.length}`);
 }
 
-export async function cancelBookingAction(formData: FormData) {
+/**
+ * Cancel the signed-in volunteer's own booking. Returns whether it worked so
+ * the dialog can confirm with a toast (or say it didn't) — the page itself
+ * just re-renders without the booking.
+ */
+export async function cancelBookingAction(
+  formData: FormData,
+): Promise<{ ok: boolean }> {
   const id = formData.get("bookingId");
-  if (typeof id !== "string") return;
+  if (typeof id !== "string") return { ok: false };
   const user = await currentUser();
-  if (!user) return;
+  if (!user) return { ok: false };
   const booking = await db.booking.findFirst({
     where: { id, userId: user.id },
     include: { shift: true },
   });
-  if (!booking) return;
+  if (!booking) return { ok: false };
   await db.booking.update({
     where: { id: booking.id },
     data: { status: BookingStatus.CANCELLED },
@@ -444,4 +451,5 @@ export async function cancelBookingAction(formData: FormData) {
 
   revalidatePath("/me");
   revalidatePath(`/shifts/${booking.shiftId}`);
+  return { ok: true };
 }

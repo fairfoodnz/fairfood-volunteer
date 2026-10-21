@@ -3,7 +3,7 @@ import { Logo } from "./logo";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 bg-charcoal text-cream">
+    <footer className="mt-16 bg-charcoal md:mt-20 text-cream">
       <div className="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="space-y-4">
           <Logo variant="light" size={88} />
@@ -11,18 +11,18 @@ export function SiteFooter() {
             Rescuing surplus food from across Tāmaki Makaurau and turning it
             into 2,400+ kilos of kai every day. Mā tātou anō tātou e manaaki.
           </p>
-          <p className="text-sm text-cream/60">
+          <p className="text-sm text-cream/70">
             624 Rosebank Road
             <br />
             Avondale, Tāmaki Makaurau
           </p>
-          <p className="text-xs text-cream/50">
+          <p className="text-xs text-cream/70">
             Registered charity{" "}
             <a
               href="https://register.charities.govt.nz/Charity/CC48507"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4 hover:text-cream hover:underline"
+              className="underline underline-offset-4 hover:text-cream"
             >
               CC48507
             </a>
@@ -61,14 +61,14 @@ export function SiteFooter() {
         />
       </div>
       <div className="border-t border-cream/10">
-        <div className="container-x flex flex-col items-start justify-between gap-2 py-6 text-xs text-cream/50 md:flex-row md:items-center">
+        <div className="container-x flex flex-col items-start justify-between gap-2 py-6 text-xs text-cream/70 md:flex-row md:items-center">
           <span>
             © {new Date().getFullYear()} Fair Food Aotearoa. Built with aroha.
           </span>
           <span className="flex items-center gap-4">
             <Link
               href="/privacy"
-              className="text-cream/60 underline-offset-4 hover:text-cream hover:underline"
+              className="inline-flex min-h-11 items-center text-cream/85 underline-offset-4 hover:text-cream hover:underline md:min-h-0"
             >
               Privacy policy
             </Link>
@@ -89,15 +89,15 @@ function FooterCol({
 }) {
   return (
     <div>
-      <div className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-cream/50">
+      <div className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-cream/70">
         {title}
       </div>
-      <ul className="space-y-2.5 text-sm">
+      <ul className="space-y-1 text-sm md:space-y-2.5">
         {items.map((i) => (
           <li key={i.label}>
             <Link
               href={i.href}
-              className="text-cream/85 underline-offset-4 hover:text-cream hover:underline"
+              className="inline-flex min-h-11 items-center text-cream/85 underline-offset-4 hover:text-cream hover:underline md:min-h-0"
             >
               {i.label}
             </Link>

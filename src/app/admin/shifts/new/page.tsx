@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ShiftForm } from "@/components/admin/shift-form";
 import { createShift } from "../../actions";
 
@@ -10,20 +11,24 @@ export default async function NewShiftPage() {
   const programs = await db.program.findMany({
     where: { visibility: { not: "ARCHIVED" } },
     orderBy: { order: "asc" },
+    select: { slug: true, title: true },
   });
 
   return (
-    <div className="px-6 py-12 md:px-10 md:py-16">
+    <div className="px-6 py-10 md:px-10 md:py-14">
       <div className="mx-auto max-w-2xl">
-        <p className="eyebrow">New shift</p>
-        <h1 className="display mt-2 text-3xl font-bold leading-tight">
-          Add a shift to the roster
-        </h1>
+        <AdminPageHeader
+          back={{ href: "/admin/shifts", label: "Manage shifts" }}
+          eyebrow="Rosters"
+          title="Add a shift to the roster"
+          description="One shift at a time. To roll out many at once, use Bulk schedule."
+        />
 
         <ShiftForm
           programs={programs}
           action={createShift}
           submitLabel="Create shift"
+          cancelHref="/admin/shifts"
         />
       </div>
     </div>

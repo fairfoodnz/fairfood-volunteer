@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
+import { StatusPill } from "@/components/patterns/status-pill";
+import { formatTime12, plural } from "@/lib/format";
 
 export type TemplateRecord = {
   id: string;
@@ -28,14 +31,6 @@ export type TemplateRecord = {
 };
 
 const INITIAL: TemplateFormState = {};
-
-/** "09:00" → "9:00 AM". Hours are wall-clock NZ, no timezone involved. */
-function formatTime12(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  const period = h < 12 ? "AM" : "PM";
-  const hour = h % 12 === 0 ? 12 : h % 12;
-  return `${hour}:${String(m).padStart(2, "0")} ${period}`;
-}
 
 export function ProgrammeTemplates({
   programId,
@@ -90,7 +85,7 @@ export function ProgrammeTemplates({
 
       <div className="mt-5">
         {templates.length === 0 && !adding ? (
-          <div className="rounded-md border border-dashed border-border px-5 py-8 text-center text-sm text-foreground/65">
+          <div className="rounded-md border border-dashed border-border px-5 py-8 text-center text-sm text-foreground/70">
             No templates yet. Add one to start bulk scheduling.
           </div>
         ) : (
@@ -114,15 +109,12 @@ export function ProgrammeTemplates({
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold">{t.label}</span>
                       {!t.active && (
-                        <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground/60">
-                          Inactive
-                        </span>
+                        <StatusPill tone="neutral">Inactive</StatusPill>
                       )}
                     </div>
                     <p className="mt-0.5 text-sm text-foreground/70">
                       {formatTime12(t.startTime)} – {formatTime12(t.endTime)} ·{" "}
-                      {t.capacity}{" "}
-                      {t.capacity === 1 ? "spot" : "spots"}
+                      {t.capacity} {plural(t.capacity, "spot")}
                     </p>
                     {t.notes && (
                       <p className="mt-1 text-sm italic text-foreground/65">
@@ -197,7 +189,7 @@ function TemplateEditor({
       {state.error && (
         <div
           role="alert"
-          className="rounded-md border border-tomato/40 bg-tomato/10 px-3 py-2 text-sm text-tomato"
+          className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
         >
           {state.error}
         </div>
@@ -295,7 +287,7 @@ function TemplateEditor({
             type="submit"
             size="sm"
             disabled={pending}
-            className="bg-leaf hover:bg-leaf-deep"
+            className="bg-leaf-deep hover:bg-leaf-ink"
           >
             {pending
               ? "Saving…"
@@ -311,51 +303,35 @@ function TemplateEditor({
 
 function DeleteTemplateButton({ id, label }: { id: string; label: string }) {
   const router = useRouter();
-  const [confirming, setConfirming] = useState(false);
 
-  if (confirming) {
-    return (
-      <form
-        action={async (fd) => {
-          await deleteTemplate(fd);
-          toast.success("Template deleted.");
-          router.refresh();
-        }}
-        className="flex items-center gap-2"
-      >
-        <input type="hidden" name="id" value={id} />
-        <span className="text-xs text-foreground/65">Delete “{label}”?</span>
-        <Button
-          type="submit"
-          variant="ghost"
-          size="sm"
-          className="text-xs text-tomato hover:bg-tomato/10 hover:text-tomato"
-        >
-          Yes, delete
-        </Button>
+  return (
+    <ConfirmDialog
+      trigger={
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className="text-xs"
-          onClick={() => setConfirming(false)}
+          className="gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
-          Keep
+          <Trash2 aria-hidden className="size-3.5" />
+          Delete
+          <span className="sr-only"> {label}</span>
         </Button>
-      </form>
-    );
-  }
-
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      className="gap-1.5 text-xs text-tomato hover:bg-tomato/10 hover:text-tomato"
-      onClick={() => setConfirming(true)}
-    >
-      <Trash2 className="size-3.5" />
-      Delete
-    </Button>
+      }
+      title={`Delete the “${label}” template?`}
+      description="Future bulk schedules won’t offer it. Shifts already made from it stay exactly as they are."
+      confirmLabel="Delete template"
+      pendingLabel="Deleting…"
+      fields={{ id }}
+      action={async (fd) => {
+        try {
+          await deleteTemplate(fd);
+          toast.success("Template deleted.");
+          router.refresh();
+        } catch {
+          toast.error("Couldn't delete that template. Try again.");
+        }
+      }}
+    />
   );
 }

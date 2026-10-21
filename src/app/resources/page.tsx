@@ -1,13 +1,12 @@
+import Link from "next/link";
 import { FileText, Image as ImageIcon, Map as MapIcon } from "lucide-react";
 import { SiteNav } from "@/components/site/nav";
 import { SiteFooter } from "@/components/site/footer";
+import { PageHeader } from "@/components/patterns/page-header";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import {
-  CATEGORY_LABELS,
-  CATEGORY_ORDER,
-  formatBytes,
-} from "@/lib/documents";
+import { CATEGORY_LABELS, CATEGORY_ORDER, formatBytes } from "@/lib/documents";
 import { DocumentCategory } from "@/generated/prisma";
 
 export const metadata = {
@@ -80,6 +79,14 @@ export default async function ResourcesPage() {
     orderBy: [{ category: "asc" }, { title: "asc" }],
   });
 
+  // Anonymous visitors get a quiet nudge to sign in, but only when there's
+  // genuinely more behind it. A bare count reveals nothing about the files.
+  const hiddenCount = user
+    ? 0
+    : await db.document.count({
+        where: { deletedAt: null, visibility: "VOLUNTEER" },
+      });
+
   const cards: ResourceCard[] = documents.map((d) => ({
     id: d.id,
     title: d.title,
@@ -101,44 +108,63 @@ export default async function ResourcesPage() {
   return (
     <>
       <SiteNav />
-      <main className="container-x flex-1 py-16 md:py-20">
-        <header className="max-w-2xl">
-        <p className="eyebrow">Volunteer kete</p>
-        <h1 className="display mt-3 text-4xl font-bold leading-tight md:text-5xl">
-          Things to read before you come in.
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-foreground/75">
-          A small library to help you settle into a shift — what to wear, where
-          the kitchen is, how we keep each other safe. Updated whenever the
-          coordinators have something new to share.
-        </p>
-      </header>
+      <main id="main" className="flex-1">
+        <PageHeader
+          band
+          eyebrow="Volunteer kete"
+          title="Things to read before you come in."
+          lead="A small library to help you settle into a shift — what to wear, where the kitchen is, how we keep each other safe. Updated whenever the coordinators have something new to share."
+        >
+          {hiddenCount > 0 && (
+            <p className="mt-4 text-sm text-foreground/70">
+              There&rsquo;s more here for volunteers once you&rsquo;re signed
+              in.{" "}
+              <Link
+                href="/auth/sign-in?next=/resources"
+                className="font-semibold text-leaf-deep underline underline-offset-4 hover:text-leaf-ink"
+              >
+                Sign in to see everything →
+              </Link>
+            </p>
+          )}
+        </PageHeader>
 
-      {documents.length === 0 ? (
-        <div className="mt-12 rounded-md border border-dashed border-border bg-cream-deep/50 p-12 text-center">
-          <p className="text-sm text-foreground/65">
-            The team is still putting the kete together — check back soon.
-          </p>
+        <div className="container-x py-12 md:py-16">
+          {documents.length === 0 ? (
+            hiddenCount > 0 ? (
+              <EmptyState
+                action={{
+                  href: "/auth/sign-in?next=/resources",
+                  label: "Sign in to read them →",
+                }}
+              >
+                Everything in the kete is for volunteers right now.
+              </EmptyState>
+            ) : (
+              <EmptyState>
+                The team is still putting the kete together — check back soon.
+              </EmptyState>
+            )
+          ) : (
+            <div className="space-y-12">
+              {CATEGORY_ORDER.filter((c) => grouped.has(c)).map((c) => (
+                <section key={c}>
+                  <div className="mb-5 flex items-center gap-3">
+                    <span className="h-px w-8 bg-foreground/25" />
+                    <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/65">
+                      {CATEGORY_LABELS[c]}
+                    </h2>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {grouped.get(c)!.map((card) => (
+                      <ResourceCardArticle key={card.id} card={card} />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="mt-12 space-y-12">
-          {CATEGORY_ORDER.filter((c) => grouped.has(c)).map((c) => (
-            <section key={c}>
-              <div className="mb-5 flex items-center gap-3">
-                <span className="h-px w-8 bg-foreground/25" />
-                <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-foreground/65">
-                  {CATEGORY_LABELS[c]}
-                </h2>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {grouped.get(c)!.map((card) => (
-                  <ResourceCardArticle key={card.id} card={card} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
       </main>
       <SiteFooter />
     </>
@@ -149,7 +175,7 @@ function ResourceCardArticle({ card }: { card: ResourceCard }) {
   const sizeMb = (card.sizeBytes / (1024 * 1024)).toFixed(1);
   const ariaLabel = `Download ${card.title}, ${shortType(card.mimeType)}, ${sizeMb} megabytes`;
   return (
-    <article className="group flex gap-4 rounded-md border border-border bg-card p-5 transition-colors hover:border-leaf/40">
+    <article className="flex gap-4 rounded-md border border-border bg-card p-5">
       <CategoryGlyph
         category={card.category}
         mimeType={card.mimeType}
@@ -157,7 +183,7 @@ function ResourceCardArticle({ card }: { card: ResourceCard }) {
       />
       <div className="min-w-0 flex-1">
         <h3 className="text-base font-semibold leading-snug">{card.title}</h3>
-        <p className="mt-1 font-mono text-xs text-foreground/55">
+        <p className="mt-1 font-mono text-xs text-foreground/65">
           {shortType(card.mimeType)} · {formatBytes(card.sizeBytes)} · Updated{" "}
           {NZ_DATE.format(card.updatedAt)}
         </p>
@@ -171,7 +197,7 @@ function ResourceCardArticle({ card }: { card: ResourceCard }) {
           target="_blank"
           rel="noopener"
           aria-label={ariaLabel}
-          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-leaf-deep transition-colors hover:text-leaf"
+          className="mt-1 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-leaf-deep underline-offset-4 transition-colors hover:text-leaf-ink hover:underline"
         >
           Download {shortType(card.mimeType)}
           <span aria-hidden>→</span>
