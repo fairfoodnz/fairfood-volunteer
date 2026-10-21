@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatusPill } from "@/components/patterns/status-pill";
+import { EmptyState } from "@/components/patterns/empty-state";
+import { FormField } from "@/components/patterns/form-field";
 import {
   Accordion,
   AccordionContent,
@@ -252,7 +255,7 @@ export default function DesignSystemPage() {
             index="02"
             eyebrow="Colour"
             title="One palette, defined once in globals.css"
-            intro="Use these tokens via Tailwind utilities — never hand-pick a new hex. Light surfaces carry charcoal text; leaf and tomato must clear 4.5:1 as foregrounds, not just charcoal."
+            intro="Use these tokens via Tailwind utilities — never hand-pick a new hex. leaf and tomato are decorative (dots, rules, tints, display type): they don't reach 4.5:1 as text or behind white text, so text and filled controls use leaf-deep and tomato-deep."
           >
             <div className="space-y-8">
               <div>
@@ -271,8 +274,9 @@ export default function DesignSystemPage() {
                   Brand
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Swatch name="leaf" cls="bg-leaf / text-leaf" oklch="0.62 0.17 142" swatchClass="bg-leaf" />
-                  <Swatch name="leaf-deep" cls="text-leaf-deep" oklch="0.5 0.16 142" swatchClass="bg-leaf-deep" />
+                  <Swatch name="leaf" cls="decorative only" oklch="0.62 0.17 142" swatchClass="bg-leaf" />
+                  <Swatch name="leaf-deep" cls="text / CTA fill · 5.1:1" oklch="0.5 0.16 142" swatchClass="bg-leaf-deep" />
+                  <Swatch name="leaf-ink" cls="CTA hover" oklch="0.43 0.14 142" swatchClass="bg-leaf-ink" />
                   <Swatch name="forest" cls="text-forest" oklch="0.22 0.04 140" swatchClass="bg-forest" />
                   <Swatch name="charcoal" cls="text-foreground" oklch="0.18 0.012 140" swatchClass="bg-charcoal" />
                 </div>
@@ -282,22 +286,22 @@ export default function DesignSystemPage() {
                   Accents
                 </p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Swatch name="tomato" cls="text-tomato-deep" oklch="0.66 0.19 32" swatchClass="bg-tomato-deep" />
-                  <Swatch name="destructive" cls="text-destructive" oklch="0.58 0.22 27" swatchClass="bg-destructive" />
+                  <Swatch name="tomato" cls="decorative only" oklch="0.66 0.19 32" swatchClass="bg-tomato" />
+                  <Swatch name="tomato-deep" cls="warning text · 5.5:1" oklch="0.52 0.19 32" swatchClass="bg-tomato-deep" />
+                  <Swatch name="destructive" cls="errors / destroy" oklch="0.52 0.2 27" swatchClass="bg-destructive" />
                   <Swatch name="clay" cls="bg-clay" oklch="0.42 0.09 45" swatchClass="bg-clay" />
                   <Swatch name="ocean" cls="bg-ocean" oklch="0.4 0.055 215" swatchClass="bg-ocean" />
                 </div>
               </div>
 
-              <Demo label="foreground opacity ladder — use these, not new greys">
+              <Demo label="foreground opacity ladder — use these, not new greys (floor is /65)">
                 <div className="space-y-1.5">
                   <p className="text-foreground">text-foreground — primary body</p>
                   <p className="text-foreground/85">text-foreground/85 — body emphasis</p>
-                  <p className="text-foreground/70">text-foreground/70 — secondary</p>
+                  <p className="text-foreground/70">text-foreground/70 — secondary, eyebrows</p>
                   <p className="font-mono text-sm text-foreground/65">
-                    text-foreground/65 — mono labels
+                    text-foreground/65 — mono labels, very muted (lowest step: 5.6:1)
                   </p>
-                  <p className="text-foreground/65">text-foreground/65 — very muted</p>
                 </div>
               </Demo>
             </div>
@@ -377,10 +381,9 @@ export default function DesignSystemPage() {
                 <div className="flex flex-wrap items-end gap-6">
                   {[
                     ["rounded-sm", "rounded-sm"],
-                    ["rounded-md", "rounded-md"],
-                    ["rounded-lg", "rounded-lg"],
-                    ["rounded-xl", "rounded-xl"],
-                    ["rounded-full", "rounded-full"],
+                    ["rounded-md", "rounded-md · cards"],
+                    ["rounded", "rounded · chips"],
+                    ["rounded-full", "rounded-full · pills"],
                   ].map(([cls, label]) => (
                     <div key={label} className="text-center">
                       <div
@@ -445,7 +448,7 @@ export default function DesignSystemPage() {
               {/* Buttons */}
               <div>
                 <h3 className="font-semibold text-foreground">Buttons</h3>
-                <Demo label="variants — default · outline · secondary · ghost · destructive · link" className="!pb-6">
+                <Demo label="variants — default · outline · secondary · ghost · destructive · link (default h-11, sm h-9 for dense admin rows only)" className="!pb-6">
                   <div className="flex flex-wrap items-center gap-3">
                     <Button>Default</Button>
                     <Button variant="outline">Outline</Button>
@@ -458,15 +461,12 @@ export default function DesignSystemPage() {
                 <div className="mt-4">
                   <Demo label="MASTER recipes — primary CTA (h-12) & cancel">
                     <div className="flex flex-wrap items-center gap-3">
-                      <Button
-                        size="lg"
-                        className="h-12 bg-leaf-deep px-6 text-base font-semibold hover:bg-leaf-ink"
-                      >
+                      <Button size="lg" className="font-semibold">
                         Book this shift
                       </Button>
                       <Button
                         variant="outline"
-                        className="h-11 border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
+                        className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
                       >
                         Cancel booking
                       </Button>
@@ -489,20 +489,14 @@ export default function DesignSystemPage() {
                   </div>
                 </Demo>
                 <div className="mt-4">
-                  <Demo label="MASTER pill recipes">
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
-                      <span className="rounded-full bg-leaf/15 px-2.5 py-1 text-leaf-deep">
-                        Confirmed
-                      </span>
-                      <span className="rounded-full bg-tomato/15 px-2.5 py-1 text-tomato-deep">
-                        Low capacity
-                      </span>
-                      <span className="rounded-full bg-foreground/10 px-2.5 py-1 text-foreground/65">
-                        Neutral
-                      </span>
-                      <span className="rounded-full bg-leaf-deep px-2.5 py-1 text-cream">
-                        Solid emphasis
-                      </span>
+                  <Demo label="<StatusPill tone=…> — patterns/status-pill">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusPill tone="positive">Confirmed</StatusPill>
+                      <StatusPill tone="warning">Almost full</StatusPill>
+                      <StatusPill tone="danger">Cancelled</StatusPill>
+                      <StatusPill tone="info">First shift</StatusPill>
+                      <StatusPill tone="neutral">Not marked yet</StatusPill>
+                      <StatusPill tone="solid">Attended</StatusPill>
                     </div>
                   </Demo>
                 </div>
@@ -534,20 +528,12 @@ export default function DesignSystemPage() {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 rounded-md border border-dashed border-border bg-card p-10 text-center">
-                  <p className="text-foreground/70">
-                    Nothing here yet.{" "}
-                    <Link
-                      className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
-                      href="/shifts"
-                    >
-                      Browse open shifts →
-                    </Link>
-                  </p>
-                  <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-foreground/65">
-                    empty state
-                  </p>
-                </div>
+                <EmptyState
+                  className="mt-4"
+                  action={{ href: "/shifts", label: "Browse open shifts →" }}
+                >
+                  Nothing here yet.
+                </EmptyState>
               </div>
 
               {/* Definition list */}
@@ -577,37 +563,28 @@ export default function DesignSystemPage() {
               {/* Form field */}
               <div>
                 <h3 className="font-semibold text-foreground">Form field</h3>
-                <Demo label="visible label · h-11 · helper · error · required">
+                <Demo label="<FormField> — visible label · h-11 · helper · linked error · required">
                   <div className="max-w-sm space-y-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="ds-email">
-                        Email <span className="text-tomato-deep">*</span>
-                      </Label>
+                    <FormField
+                      id="ds-email"
+                      label="Email"
+                      required
+                      error="Enter a valid email address."
+                    >
                       <Input
-                        id="ds-email"
                         type="email"
-                        className="h-11"
                         placeholder="you@example.com"
                         defaultValue="not-an-email"
-                        aria-invalid
                       />
-                      <p
-                        className="text-sm text-destructive"
-                        aria-live="polite"
-                      >
-                        Enter a valid email address.
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="ds-note">Anything we should know?</Label>
-                      <Textarea
-                        id="ds-note"
-                        placeholder="Dietary needs, access requirements, anything else…"
-                      />
-                      <p className="text-xs text-foreground/65">
-                        Optional — helps coordinators plan the shift.
-                      </p>
-                    </div>
+                    </FormField>
+                    <FormField
+                      id="ds-note"
+                      label="Anything we should know?"
+                      optional
+                      helper="Helps coordinators plan the shift."
+                    >
+                      <Textarea placeholder="Dietary needs, access requirements, anything else…" />
+                    </FormField>
                   </div>
                 </Demo>
               </div>
@@ -620,7 +597,7 @@ export default function DesignSystemPage() {
                 <Demo label="the auth-form error pattern">
                   <div
                     role="alert"
-                    className="flex items-start gap-3 rounded-md border border-tomato/30 bg-tomato/10 px-4 py-3 text-tomato-deep"
+                    className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-destructive"
                   >
                     <X className="mt-0.5 size-5 shrink-0" aria-hidden />
                     <p className="text-sm font-medium">
@@ -756,10 +733,11 @@ export default function DesignSystemPage() {
                 </p>
                 <ul className="mt-3 space-y-2.5 text-sm text-foreground/80">
                   {[
-                    "≥4.5:1 contrast — verify leaf & tomato as foregrounds",
-                    "Leaf focus ring at 2–3px (wired via --ring)",
-                    "Touch targets ≥44pt — buttons h-11 / h-12",
-                    "Form errors near the field + aria-live=polite",
+                    "≥4.5:1 text contrast — text uses leaf-deep / tomato-deep, never leaf / tomato",
+                    "Solid leaf-deep focus ring with offset (wired via --ring)",
+                    "Touch targets ≥44pt — Button/Input defaults are h-11",
+                    "Form errors linked to the field (<FormField>) and announced",
+                    "Consequential actions confirm via <ConfirmDialog>",
                     "Sensitive admin flags collapsed until clicked",
                   ].map((t) => (
                     <li key={t} className="flex gap-2.5">
@@ -781,7 +759,7 @@ export default function DesignSystemPage() {
                     "SaaS gradients, glassmorphism, or neon",
                     "Emoji as functional icons (use Lucide)",
                     "New font families beyond Poppins + mono",
-                    "Grey-on-grey low-contrast text",
+                    "Text below foreground/65, or white on leaf / tomato",
                     "Spinners >300ms without a skeleton or copy",
                   ].map((t) => (
                     <li key={t} className="flex gap-2.5">
