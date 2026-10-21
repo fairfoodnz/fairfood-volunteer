@@ -39,7 +39,7 @@ export function Hero() {
             </Button>
             <Button
               asChild
-              variant="ghost"
+              variant="outline"
               size="lg"
               className="h-12 px-5 text-base"
             >

@@ -154,7 +154,7 @@ export function PendingInvitesPanel({ rows }: { rows: PendingRow[] }) {
       </div>
 
       {/* List */}
-      <div className="mt-3 overflow-x-auto rounded-md border border-border bg-card">
+      <div className="relative mt-3 overflow-x-auto rounded-md border border-border bg-card">
         <table className="w-full min-w-[32rem] text-sm">
           <caption className="sr-only">
             Imported volunteers who haven&rsquo;t claimed their account yet

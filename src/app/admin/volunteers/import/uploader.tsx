@@ -448,7 +448,7 @@ function Preview(props: {
             No rows match this filter.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <caption className="sr-only">
                 Rows from {filename} and what the import will do with each

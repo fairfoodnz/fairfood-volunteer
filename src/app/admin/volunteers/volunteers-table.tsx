@@ -195,7 +195,7 @@ export function VolunteersTable({
         </EmptyState>
       ) : (
         <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-sm">
               <caption className="sr-only">
                 Volunteers matching the current filters

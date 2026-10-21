@@ -42,14 +42,17 @@ export default async function AdminLayout({
         }}
         unreviewedCount={unreviewedCount}
       />
-      <SidebarInset id="main" className="bg-background">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/60 bg-background/85 px-4 backdrop-blur md:hidden">
-          <SidebarTrigger />
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground/65">
+      {/* min-w-0: without it this flex child grows to its widest table and
+          the page clips the overflow, hiding the right-hand columns on
+          phones instead of letting each table scroll. */}
+      <SidebarInset id="main" className="min-w-0 bg-background">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border/60 bg-background/85 px-2 backdrop-blur md:hidden">
+          <SidebarTrigger className="size-11" />
+          <span className="font-mono text-xs uppercase tracking-[0.18em] text-foreground/70">
             Admin
           </span>
         </header>
-        <div className="flex-1">{children}</div>
+        <div className="min-w-0 flex-1">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -137,7 +137,7 @@ export function ShiftBulkTable({ shifts }: { shifts: ShiftRow[] }) {
   return (
     <>
       <div className="overflow-hidden rounded-md border border-border bg-card">
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[40rem] text-sm">
             <caption className="sr-only">
               Shifts matching the current filters. Select rows to cancel,

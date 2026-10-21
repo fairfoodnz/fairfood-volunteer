@@ -39,7 +39,7 @@ export default async function ProgrammesPage() {
             No programmes yet. Add your first one to start scheduling shifts.
           </EmptyState>
         ) : (
-          <div className="overflow-x-auto rounded-md border border-border bg-card">
+          <div className="relative overflow-x-auto rounded-md border border-border bg-card">
             <table className="w-full min-w-[40rem] text-sm">
               <caption className="sr-only">
                 Volunteer programmes, with who can see each one

@@ -161,7 +161,7 @@ export function ShiftsList({
           aria-label="Jump to week"
           className="sticky top-16 z-20 -mx-6 mb-8 border-b border-border/60 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/85 md:-mx-10 md:px-10"
         >
-          <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 py-1">
+          <ul className="relative -mx-1 flex gap-2 overflow-x-auto px-1 py-1">
             {weeks.map((w) => (
               <li key={w.key} className="shrink-0">
                 <a
@@ -436,7 +436,9 @@ function ShiftCardItem({
               "grid size-6 place-items-center rounded border-2 transition-colors",
               selected
                 ? "border-leaf-deep bg-leaf-deep text-cream md:border-cream"
-                : "border-leaf-deep bg-card text-leaf-deep/40 group-hover/select:text-leaf-deep",
+                : // Empty until ticked — a faint tick on hover previews the
+                  // action without making every card look already selected.
+                  "border-input bg-card text-transparent group-hover/select:border-leaf-deep group-hover/select:text-leaf-deep/40",
             )}
           >
             <Check className="size-4" strokeWidth={3} />

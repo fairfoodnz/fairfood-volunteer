@@ -176,7 +176,7 @@ export default async function AdminPage() {
             </EmptyState>
           ) : (
             <div className="overflow-hidden rounded-md border border-border bg-card">
-              <div className="overflow-x-auto">
+              <div className="relative overflow-x-auto">
                 <table className="w-full min-w-[36rem] text-sm">
                   <caption className="sr-only">
                     The next {countOf(upcoming.length, "shift")} after today,
