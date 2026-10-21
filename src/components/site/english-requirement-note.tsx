@@ -27,7 +27,7 @@ export function EnglishRequirementNote({
     <div
       className={`rounded-md border-l-2 border-leaf bg-cream-deep px-5 py-4 text-sm ${className ?? ""}`}
     >
-      <p className="font-mono text-[10px] uppercase tracking-widest text-foreground/65">
+      <p className="font-mono text-xs uppercase tracking-widest text-foreground/70">
         {title}
       </p>
       {parts.map((p, i) => (

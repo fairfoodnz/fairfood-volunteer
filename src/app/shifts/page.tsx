@@ -184,7 +184,7 @@ export default async function ShiftsPage({ searchParams }: Props) {
                       href={href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors",
+                        "inline-flex min-h-11 items-center rounded border px-4 text-sm font-medium transition-colors",
                         active
                           ? "border-leaf-deep bg-leaf-deep text-cream"
                           : "border-foreground/15 bg-background text-foreground/85 hover:border-foreground/35",

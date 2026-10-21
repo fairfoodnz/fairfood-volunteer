@@ -31,10 +31,10 @@ export function BookForm({
     <form action={action} className="space-y-4">
       <input type="hidden" name="shiftId" value={shiftId} />
       <div className="space-y-1">
-        <p className="eyebrow text-leaf-deep">Book this shift</p>
-        <h3 className="display text-xl font-semibold">
+        <p className="eyebrow text-leaf-deep">Your spot</p>
+        <h2 className="display text-xl font-semibold">
           {user ? `Lock it in, ${user.firstName}` : "Sign up to book"}
-        </h3>
+        </h2>
         {!user && (
           <p className="text-sm text-foreground/70">
             We&rsquo;ll get you set up in two minutes and bring you straight
@@ -73,26 +73,27 @@ export function BookForm({
           type="submit"
           size="lg"
           disabled={pending}
-          className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
+          className="w-full font-semibold"
         >
-          {pending ? "Booking…" : "Confirm booking"}
+          {pending ? "Booking…" : "Book this shift"}
         </Button>
       ) : (
         <div className="space-y-2">
           <Button
             asChild
             size="lg"
-            className="h-12 w-full bg-leaf-deep text-base font-semibold hover:bg-leaf-ink"
+            className="w-full font-semibold"
           >
             <Link href={`/auth/sign-up?next=${encodeURIComponent(`/shifts/${shiftId}`)}`}>
-              Create account & book →
+              Sign up &amp; book
             </Link>
           </Button>
           <p className="text-center text-sm text-foreground/65">
             Already have an account?{" "}
             <Link
               href={`/auth/sign-in?next=${encodeURIComponent(`/shifts/${shiftId}`)}`}
-              className="font-semibold text-leaf-deep underline-offset-4 hover:underline"
+              // Padded hit area (≥44px tall) without changing the line box.
+              className="-my-3 inline-block py-3 font-semibold text-leaf-deep underline-offset-4 hover:underline"
             >
               Sign in
             </Link>

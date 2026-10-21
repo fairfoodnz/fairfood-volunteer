@@ -420,7 +420,7 @@ function ShiftCardItem({
           type="button"
           role="checkbox"
           aria-checked={selected}
-          aria-label={`Select ${shift.program.title}, ${shift.whenLabel.replace(" · ", ", ")}`}
+          aria-label={`Select ${shift.program.title}, ${shift.whenLabel.replaceAll(" · ", ", ")}`}
           onClick={onToggle}
           className={cn(
             "group/select absolute right-1 top-1/2 z-10 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center gap-2 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",

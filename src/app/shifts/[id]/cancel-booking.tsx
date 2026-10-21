@@ -1,18 +1,15 @@
 "use client";
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/patterns/confirm-dialog";
 import { cancelBookingAction } from "../actions";
 
+/**
+ * Volunteer-side "cancel my booking", on shift detail and /me. ConfirmDialog
+ * keeps "Keep my spot" focused, shows "Cancelling…" while the action runs and
+ * can't be double-submitted; the toast confirms once the spot is freed.
+ */
 export function CancelBookingDialog({
   bookingId,
   triggerLabel = "Cancel shift",
@@ -21,41 +18,27 @@ export function CancelBookingDialog({
   triggerLabel?: string;
 }) {
   return (
-    <Dialog>
-      <DialogTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
-          >
-            {triggerLabel}
-          </Button>
-        }
-      />
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Cancel this shift?</DialogTitle>
-          <DialogDescription>
-            We&rsquo;ll free your spot for someone else. You can always rebook.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
-          <DialogClose render={<Button type="button" variant="ghost" autoFocus />}>
-            Keep my spot
-          </DialogClose>
-          <form action={cancelBookingAction}>
-            <input type="hidden" name="bookingId" value={bookingId} />
-            <Button
-              type="submit"
-              className="bg-tomato-deep text-cream hover:bg-tomato-deep/90"
-            >
-              Cancel shift
-            </Button>
-          </form>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ConfirmDialog
+      trigger={
+        <Button
+          type="button"
+          variant="outline"
+          className="border-tomato/40 text-tomato-deep hover:bg-tomato/10 hover:text-tomato-deep"
+        >
+          {triggerLabel}
+        </Button>
+      }
+      title="Cancel this shift?"
+      description="We’ll free your spot for someone else. You can always rebook."
+      cancelLabel="Keep my spot"
+      confirmLabel="Cancel shift"
+      pendingLabel="Cancelling…"
+      fields={{ bookingId }}
+      action={async (formData) => {
+        const { ok } = await cancelBookingAction(formData);
+        if (ok) toast.success("Shift cancelled — your spot is free for someone else.");
+        else toast.error("We couldn’t cancel that shift. Refresh and try again.");
+      }}
+    />
   );
 }
