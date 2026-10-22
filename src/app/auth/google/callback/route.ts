@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createSession, currentUser, postAuthDestination } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
+import { isImpersonating } from "@/lib/impersonation";
 import {
   GOOGLE_PROVIDER,
   OAuthError,
@@ -47,10 +48,19 @@ async function resolveDestination(
 
   // ---- Connect flow: someone already signed in is linking Google. ----
   if (sessionUser) {
+    // An admin impersonating a volunteer must not be able to attach their own
+    // Google account and keep signing in as the volunteer afterwards.
+    if (await isImpersonating()) return "/me/security?error=impersonating";
     if (linked && linked.userId !== sessionUser.id) {
       return "/me/security?error=google_taken";
     }
     if (!linked) {
+      // Same reasoning as passkeys: an unverified account may belong to
+      // someone squatting on another person's email, and a Google link would
+      // let them keep a way in after the real owner claims the address.
+      if (!sessionUser.emailVerifiedAt) {
+        return "/me/security?error=google_verify_email";
+      }
       const hasGoogle = await db.oAuthAccount.count({
         where: { userId: sessionUser.id, provider: GOOGLE_PROVIDER },
       });
@@ -110,7 +120,25 @@ async function resolveDestination(
     // Link + (if needed) mark the email verified in one atomic step so an
     // interruption can't leave the account half-linked. A verified Google
     // email also proves inbox control, hence the emailVerifiedAt backfill.
+    //
+    // If the account was never verified, whoever created it never proved they
+    // own this inbox — it may be someone who signed up with this address ahead
+    // of the real owner. The Google user has just proved ownership, so drop
+    // every sign-in method and session the earlier registrant could have set
+    // up before handing the account over.
+    const unverified = !byEmail.emailVerifiedAt;
     await db.$transaction([
+      ...(unverified
+        ? [
+            db.session.deleteMany({ where: { userId: byEmail.id } }),
+            db.passkey.deleteMany({ where: { userId: byEmail.id } }),
+            db.oAuthAccount.deleteMany({ where: { userId: byEmail.id } }),
+            db.user.update({
+              where: { id: byEmail.id },
+              data: { passwordHash: null, emailVerifiedAt: new Date() },
+            }),
+          ]
+        : []),
       db.oAuthAccount.create({
         data: {
           userId: byEmail.id,
@@ -118,14 +146,6 @@ async function resolveDestination(
           providerAccountId: identity.sub,
         },
       }),
-      ...(byEmail.emailVerifiedAt
-        ? []
-        : [
-            db.user.update({
-              where: { id: byEmail.id },
-              data: { emailVerifiedAt: new Date() },
-            }),
-          ]),
     ]);
     await createSession(byEmail.id);
     const posthog = getPostHogClient();

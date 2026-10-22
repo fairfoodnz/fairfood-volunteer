@@ -27,6 +27,7 @@ import { PrismaClient } from "../src/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { EmailLogStatus } from "../src/generated/prisma";
 import { inferTemplateFromSubject } from "../src/lib/email-template-inference";
+import { redactAuthTokens } from "../src/lib/redact-tokens";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 if (!RESEND_API_KEY) {
@@ -206,8 +207,10 @@ async function main() {
             status: EmailLogStatus.SENT,
             providerId: item.id,
             error: null,
-            bodyHtml: body.html,
-            bodyText: body.text,
+            // Same redaction as live sends (recordEmailLog): never persist a
+            // raw reset / verify / invite token.
+            bodyHtml: redactAuthTokens(body.html),
+            bodyText: redactAuthTokens(body.text),
             createdAt,
           },
         });

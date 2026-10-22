@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { formatShiftRange } from "@/lib/programs";
 import { sumBlocks } from "@/lib/shifts";
 import { BookingStatus, Prisma } from "@/generated/prisma";
@@ -54,6 +55,7 @@ export default async function ManageShiftsPage({
     page?: string;
   }>;
 }) {
+  await requireAdmin();
   const sp = await searchParams;
   const range: RangeKey =
     (RANGES.find((r) => r.key === sp.range)?.key as RangeKey) ?? "upcoming";

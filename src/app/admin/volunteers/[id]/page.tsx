@@ -19,6 +19,7 @@ import {
   EMAIL_STATUS_BADGE,
   EMAIL_TEMPLATE_LABELS,
   formatEmailTimestamp,
+  isRetryableTemplate,
 } from "@/lib/email-display";
 
 // Cap how many EmailLog rows we render inline on the detail page. Old rows
@@ -320,7 +321,9 @@ export default async function VolunteerDetailPage({ params }: Props) {
                           >
                             {badge.label}
                           </span>
-                          {failed && <RetryEmailButton emailLogId={e.id} />}
+                          {failed && isRetryableTemplate(e.template) && (
+                            <RetryEmailButton emailLogId={e.id} />
+                          )}
                           <Link
                             href={`/admin/emails/${e.id}`}
                             className="text-xs font-semibold text-leaf-deep hover:underline"

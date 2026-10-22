@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: Pick<Props, "params">) {
 }
 
 export default async function EditProgrammePage({ params, searchParams }: Props) {
+  await requireAdmin();
   const { id } = await params;
   const { error } = await searchParams;
 

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ShiftForm } from "@/components/admin/shift-form";
 import { createShift } from "../../actions";
@@ -7,6 +8,7 @@ export const metadata = { title: "New shift · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function NewShiftPage() {
+  await requireAdmin();
   // Archived programmes are the only ones you can't roster new shifts onto.
   const programs = await db.program.findMany({
     where: { visibility: { not: "ARCHIVED" } },

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { toNzDateTimeLocal } from "@/lib/schedule";
 import { formatShiftRange } from "@/lib/programs";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ id: string }> };
 
 export default async function EditShiftPage({ params }: Props) {
+  await requireAdmin();
   const { id } = await params;
 
   const [shift, schedulablePrograms] = await Promise.all([

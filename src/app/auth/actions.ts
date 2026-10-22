@@ -340,8 +340,24 @@ export async function resetPasswordAction(
     };
   }
 
+  // Never-verified account: whoever registered it never proved they own this
+  // inbox, and the person redeeming the link just did. Sessions and the old
+  // password are replaced below either way; also drop passkeys and Google
+  // links, which would otherwise survive and keep the earlier registrant in.
+  const target = await db.user.findUniqueOrThrow({
+    where: { id: record.userId },
+    select: { emailVerifiedAt: true },
+  });
+  const unverified = !target.emailVerifiedAt;
+
   const passwordHash = await hashPassword(parsed.data.password);
   await db.$transaction([
+    ...(unverified
+      ? [
+          db.passkey.deleteMany({ where: { userId: record.userId } }),
+          db.oAuthAccount.deleteMany({ where: { userId: record.userId } }),
+        ]
+      : []),
     db.user.update({
       where: { id: record.userId },
       data: { passwordHash },

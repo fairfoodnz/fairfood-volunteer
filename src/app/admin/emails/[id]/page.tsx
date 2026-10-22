@@ -10,6 +10,7 @@ import {
   EMAIL_STATUS_BADGE,
   EMAIL_TEMPLATE_LABELS,
   formatEmailTimestamp,
+  isRetryableTemplate,
 } from "@/lib/email-display";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +103,8 @@ export default async function EmailDetailPage({ params }: Props) {
             <p className="mt-2 whitespace-pre-wrap break-words text-sm text-destructive">
               {row.error}
             </p>
-            {row.status === EmailLogStatus.FAILED && (
+            {row.status === EmailLogStatus.FAILED &&
+              isRetryableTemplate(row.template) && (
               <div className="mt-4 border-t border-destructive/20 pt-4">
                 <RetryEmailButton emailLogId={row.id} tone="block" />
               </div>

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { BookingStatus } from "@/generated/prisma";
 import { initials, isFirstTimer, type PersonName } from "@/lib/users";
 import { cn } from "@/lib/utils";
@@ -66,7 +67,10 @@ export default async function FlaggedPage({
 }: {
   searchParams: Promise<FlaggedQueryParams>;
 }) {
-  // Admin gate is enforced by /admin/layout.tsx via requireAdmin().
+  // Gate here, not just in /admin/layout.tsx: layouts are skipped on
+  // client-side navigation (partial rendering), so a layout check alone
+  // doesn't guard this page's RSC payload.
+  await requireAdmin();
   const query = resolveFlaggedQuery(await searchParams);
   const now = new Date();
 

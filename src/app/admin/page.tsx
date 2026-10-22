@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { formatShiftRange, formatShiftTimes } from "@/lib/programs";
 import { sumBlocks, shiftAvailability } from "@/lib/shifts";
 import { nzTomorrowUtcRange, nzWallTimeToUtc } from "@/lib/schedule";
@@ -26,6 +27,7 @@ const shiftInclude = {
 } satisfies Prisma.ShiftInclude;
 
 export default async function AdminPage() {
+  await requireAdmin();
   const now = new Date();
   const sevenDaysAgo = new Date(now);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
