@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { BulkScheduler } from "@/components/admin/bulk-scheduler";
 
@@ -7,6 +8,7 @@ export const metadata = { title: "Bulk schedule · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function BulkSchedulePage() {
+  await requireAdmin();
   // Everything but archived: a private programme still needs shifts scheduled,
   // it just never advertises them.
   const programmes = await db.program.findMany({

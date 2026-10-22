@@ -29,6 +29,10 @@ const ERROR_COPY: Record<string, string> = {
   google_exists:
     "A Google account is already connected. Disconnect it before linking another.",
   google_failed: "Something went wrong with Google. Please try again.",
+  google_verify_email:
+    "Verify your email before connecting Google — check your inbox for the link, or resend it from your dashboard.",
+  impersonating:
+    "You're viewing this account as a coordinator. Only the volunteer can change how they sign in.",
 };
 
 type Props = {

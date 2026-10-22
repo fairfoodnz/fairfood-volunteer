@@ -18,6 +18,22 @@ export const EMAIL_TEMPLATE_LABELS: Record<EmailTemplate, string> = {
 };
 
 /**
+ * Templates whose body carries a single-use sign-in token. Their EmailLog copy
+ * is stored with the token redacted (see recordEmailLog in src/lib/email.tsx),
+ * so replaying it would send a dead link — admins can't retry them; the
+ * volunteer requests a fresh link instead.
+ */
+const TOKEN_LINK_TEMPLATES: ReadonlySet<EmailTemplate> = new Set<EmailTemplate>([
+  "PASSWORD_RESET",
+  "VERIFY_EMAIL",
+  "VOLUNTEER_INVITE",
+]);
+
+export function isRetryableTemplate(template: EmailTemplate) {
+  return !TOKEN_LINK_TEMPLATES.has(template);
+}
+
+/**
  * Status badge classes for the admin email-log list. Failures get the tomato
  * accent the rest of the admin UI uses for things that need attention; dev-
  * logged uses a quiet neutral so a developer's local activity doesn't look

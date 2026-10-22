@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { fullName } from "@/lib/users";
 import { ImportUploader } from "./uploader";
 import { PendingInvitesPanel } from "./pending-invites-panel";
@@ -16,6 +17,7 @@ const NZ_DATE = new Intl.DateTimeFormat("en-NZ", {
 });
 
 export default async function ImportVolunteersPage() {
+  await requireAdmin();
   // Anyone whose `importedAt` is still set hasn't claimed yet. Active = has a
   // live, unredeemed invite. Stale = imported but no live invite — likely
   // never had one sent, or token already expired (7d TTL).

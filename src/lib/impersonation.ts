@@ -174,6 +174,24 @@ export async function stopImpersonation(): Promise<boolean> {
 }
 
 /**
+ * True when the current request's session is an impersonation session. Sign-in
+ * method changes (passkeys, password, Google link) refuse to run under one:
+ * otherwise an admin could plant their own passkey or password on the
+ * volunteer's account and keep signing in as them after the 1h fuse, with no
+ * ImpersonationLog row to show for it.
+ */
+export async function isImpersonating(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const currentToken = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!currentToken) return false;
+  const session = await db.session.findUnique({
+    where: { tokenHash: hashSessionToken(currentToken) },
+    select: { isImpersonation: true },
+  });
+  return session?.isImpersonation ?? false;
+}
+
+/**
  * If the current request is happening inside an impersonation, returns the
  * admin doing the impersonating. Otherwise null. Used by the global banner so
  * the impersonated person's view carries a visible "you're not really them"

@@ -20,6 +20,7 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { isImpersonating } from "@/lib/impersonation";
 import { fullName } from "@/lib/users";
 import { GOOGLE_PROVIDER } from "@/lib/oauth";
 import { getPostHogClient } from "@/lib/posthog-server";
@@ -43,6 +44,11 @@ export type RegisterFinishState = { ok: boolean; error?: string };
 
 const MAX_PASSKEYS = 10;
 const LABEL_MAX = 40;
+
+const IMPERSONATING_ERROR =
+  "You're viewing this account as a coordinator. Only the volunteer can change how they sign in.";
+const VERIFY_FIRST_ERROR =
+  "Verify your email before adding a passkey — check your inbox for the link, or resend it from your dashboard.";
 
 /**
  * Count the distinct ways `userId` can still get in. Always called inside the
@@ -68,6 +74,11 @@ async function signInMethodCount(
 
 export async function beginPasskeyRegistration(): Promise<RegisterBeginState> {
   const user = await requireUser();
+  if (await isImpersonating()) return { ok: false, error: IMPERSONATING_ERROR };
+  // An unverified account may have been registered by someone who doesn't own
+  // the inbox. A passkey would outlive the real owner later proving the email
+  // (Google link, password reset), so only verified accounts can add one.
+  if (!user.emailVerifiedAt) return { ok: false, error: VERIFY_FIRST_ERROR };
   try {
     const existing = await db.passkey.findMany({
       where: { userId: user.id },
@@ -114,6 +125,8 @@ export async function finishPasskeyRegistration(
   rawLabel: string,
 ): Promise<RegisterFinishState> {
   const user = await requireUser();
+  if (await isImpersonating()) return { ok: false, error: IMPERSONATING_ERROR };
+  if (!user.emailVerifiedAt) return { ok: false, error: VERIFY_FIRST_ERROR };
 
   const label =
     z.string().trim().min(1).max(LABEL_MAX).safeParse(rawLabel).data ??
@@ -179,6 +192,7 @@ const RemovePasskeySchema = z.object({ passkeyId: z.string().min(1) });
 
 export async function removePasskeyAction(formData: FormData) {
   const user = await requireUser();
+  if (await isImpersonating()) redirect("/me/security?error=impersonating");
   const parsed = RemovePasskeySchema.safeParse({
     passkeyId: formData.get("passkeyId"),
   });
@@ -244,6 +258,7 @@ export async function changePasswordAction(
   formData: FormData,
 ): Promise<ChangePasswordState> {
   const user = await requireUser();
+  if (await isImpersonating()) return { error: IMPERSONATING_ERROR };
 
   const parsed = ChangePasswordSchema.safeParse({
     currentPassword: formData.get("currentPassword") ?? undefined,
@@ -331,6 +346,7 @@ export async function changePasswordAction(
 
 export async function disconnectGoogleAction() {
   const user = await requireUser();
+  if (await isImpersonating()) redirect("/me/security?error=impersonating");
 
   const outcome = await db.$transaction(
     async (tx) => {

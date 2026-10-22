@@ -12,6 +12,8 @@ import VolunteerInviteEmail from "../../emails/volunteer-invite";
 import { EmailLogStatus, EmailTemplate } from "@/generated/prisma";
 import { db } from "@/lib/db";
 import type { CalendarLinks } from "@/lib/calendar";
+import { isRetryableTemplate } from "@/lib/email-display";
+import { redactAuthTokens } from "@/lib/redact-tokens";
 
 /**
  * Transactional email via Resend.
@@ -69,6 +71,10 @@ type SendArgs = {
  * Best-effort EmailLog write. Swallows DB errors after console-logging so a
  * failed audit insert never breaks the underlying email send (the send is
  * already done by the time we get here).
+ *
+ * Bodies are stored with reset/verify/invite tokens redacted: the raw token
+ * is a live credential, and admins (who can read every log row) must not be
+ * able to lift one — e.g. trigger a reset for another admin and read the link.
  */
 async function recordEmailLog(row: {
   userId: string | null;
@@ -82,7 +88,13 @@ async function recordEmailLog(row: {
   bodyText: string;
 }) {
   try {
-    await db.emailLog.create({ data: row });
+    await db.emailLog.create({
+      data: {
+        ...row,
+        bodyHtml: redactAuthTokens(row.bodyHtml),
+        bodyText: redactAuthTokens(row.bodyText),
+      },
+    });
   } catch (e) {
     console.error("[email-log] failed to record send", e);
   }
@@ -212,6 +224,11 @@ export async function resendStoredEmail(row: {
   template: EmailTemplate;
   userId: string | null;
 }) {
+  if (!isRetryableTemplate(row.template)) {
+    throw new Error(
+      "This email carried a one-time link and can't be re-sent. Ask the volunteer to request a new one.",
+    );
+  }
   return deliverPreRendered({
     to: row.toEmail,
     subject: row.subject,

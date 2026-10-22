@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -21,6 +22,7 @@ const NZ_DATE = new Intl.DateTimeFormat("en-NZ", {
 });
 
 export default async function AdminDocumentsPage() {
+  await requireAdmin();
   const documents = await db.document.findMany({
     where: { deletedAt: null },
     orderBy: [{ category: "asc" }, { title: "asc" }],

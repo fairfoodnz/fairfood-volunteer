@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { programmeTheme } from "@/lib/programme-theme";
 import { programHref } from "@/lib/programs";
 import { ProgrammeVisibilityBadge } from "@/components/admin/programme-visibility-badge";
@@ -11,6 +12,7 @@ export const metadata = { title: "Programmes · Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function ProgrammesPage() {
+  await requireAdmin();
   const programmes = await db.program.findMany({
     orderBy: [{ visibility: "asc" }, { order: "asc" }, { title: "asc" }],
     include: { _count: { select: { shifts: true } } },

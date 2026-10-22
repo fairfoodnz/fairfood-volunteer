@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { resendStoredEmail } from "@/lib/email";
+import { isRetryableTemplate } from "@/lib/email-display";
 import { EmailLogStatus } from "@/generated/prisma";
 
 const RetryEmailSchema = z.object({ emailLogId: z.string().min(1) });
@@ -54,6 +55,12 @@ export async function retryEmailAction(
   if (!row) return { error: "Email not found." };
   if (row.status !== EmailLogStatus.FAILED) {
     return { error: "Only failed sends can be retried." };
+  }
+  if (!isRetryableTemplate(row.template)) {
+    return {
+      error:
+        "This email carried a one-time link, so it can't be re-sent. Ask the volunteer to request a new one.",
+    };
   }
 
   try {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
 import { BookingStatus, Role } from "@/generated/prisma";
 import { fullName } from "@/lib/users";
 import {
@@ -30,6 +31,7 @@ export default async function VolunteersPage({
 }: {
   searchParams: Promise<VolunteerQueryParams & { page?: string }>;
 }) {
+  await requireAdmin();
   const { page: pageParam, ...raw } = await searchParams;
   const resolved = resolveVolunteerQuery(raw);
   const { where, orderBy, programme } = resolved;

@@ -1,6 +1,7 @@
 import posthog from "posthog-js";
 
 import { filterThirdPartyExceptions } from "@/lib/posthog-exception-filter";
+import { scrubAuthTokens } from "@/lib/posthog-url-scrub";
 
 posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   api_host: "/ingest",
@@ -9,7 +10,9 @@ posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   capture_exceptions: true,
   // Drop exceptions thrown by browser extensions / injected scripts before
   // they pollute error tracking (see fairfoodnz/fairfood-volunteer#123).
-  before_send: filterThirdPartyExceptions,
+  // Then strip reset / verify / invite tokens from every URL the event carries
+  // (see src/lib/posthog-url-scrub.ts).
+  before_send: [filterThirdPartyExceptions, scrubAuthTokens],
   debug: process.env.NODE_ENV === "development",
   // Off by default: the onboarding questionnaire captures sensitive free-text
   // (health conditions, arrest history) and session recording masks

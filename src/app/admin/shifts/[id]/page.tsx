@@ -57,6 +57,7 @@ const BOOKING_PILL: Partial<
 };
 
 export default async function AdminShiftPage({ params, searchParams }: Props) {
+  await requireAdmin();
   const { id } = await params;
   const { flash } = await searchParams;
 
