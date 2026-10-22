@@ -1,4 +1,7 @@
+import "dotenv/config";
 import { expect, test } from "@playwright/test";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../../src/generated/prisma";
 
 // The sign-up form renders required-field labels as "<label> *", so getByLabel
 // can't match exactly — target the inputs by their stable id (= name).
@@ -104,16 +107,40 @@ test.describe("passkeys", () => {
       },
     });
 
+    const email = `e2e-passkey-${Date.now()}@example.com`;
     await page.goto("/auth/sign-up");
     await page.locator("#firstName").fill("Pania");
     await page.locator("#lastName").fill("Passkey");
-    await page.locator("#email").fill(`e2e-passkey-${Date.now()}@example.com`);
+    await page.locator("#email").fill(email);
     await page.locator("#password").fill("supersecret1");
     await page.locator("#confirm").fill("supersecret1");
     await page.getByRole("button", { name: /Create account/i }).click();
     await page.waitForURL("**/me/profile/complete");
 
+    // An unverified account can't add a passkey: whoever signed up may not own
+    // the inbox, and the passkey would outlive the real owner claiming it.
     await page.goto("/me/security");
+    await page.getByLabel("Add a passkey").fill("E2E authenticator");
+    await page.getByRole("button", { name: "Add passkey" }).click();
+    await expect(
+      page.getByText(/Verify your email before adding a passkey/),
+    ).toBeVisible();
+
+    // Stand in for clicking the emailed verification link (its token only
+    // exists in the server log).
+    const db = new PrismaClient({
+      adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+    });
+    try {
+      await db.user.update({
+        where: { email },
+        data: { emailVerifiedAt: new Date() },
+      });
+    } finally {
+      await db.$disconnect();
+    }
+
+    await page.reload();
     await page.getByLabel("Add a passkey").fill("E2E authenticator");
     await page.getByRole("button", { name: "Add passkey" }).click();
     await expect(page.getByText("Passkey added.")).toBeVisible();
