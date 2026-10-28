@@ -64,8 +64,8 @@ export default async function AdminSettingsPage() {
           description={
             <>
               Reword what volunteers read on the sign-up questionnaire, their
-              profile and the booking form — no developer needed. Changes are
-              live as soon as you save.
+              profile, shift pages and booking emails — no developer needed.
+              Changes are live as soon as you save.
               {lastEdit && (
                 <span className="mt-2 block font-mono text-[11px] uppercase tracking-widest text-foreground/70">
                   Last edited {NZ_DATE.format(lastEdit.updatedAt)}

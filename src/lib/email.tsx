@@ -14,6 +14,7 @@ import { db } from "@/lib/db";
 import type { CalendarLinks } from "@/lib/calendar";
 import { isRetryableTemplate } from "@/lib/email-display";
 import { redactAuthTokens } from "@/lib/redact-tokens";
+import { getSiteCopy, paragraphs } from "@/lib/site-copy";
 
 /**
  * Transactional email via Resend.
@@ -320,6 +321,7 @@ export async function sendBookingConfirmationEmail(opts: {
   ics: string;
   userId?: string;
 }) {
+  const { whatToWear } = await getSiteCopy();
   return sendEmail({
     to: opts.to,
     userId: opts.userId,
@@ -331,6 +333,7 @@ export async function sendBookingConfirmationEmail(opts: {
         programTitle={opts.programTitle}
         whenLabel={opts.whenLabel}
         location={opts.location}
+        whatToWear={paragraphs(whatToWear)}
         notes={opts.notes}
         manageUrl={opts.manageUrl}
         calendar={opts.calendar}
@@ -393,6 +396,7 @@ export async function sendBookingReminderEmail(opts: {
   manageUrl: string;
   userId?: string;
 }) {
+  const { whatToWear } = await getSiteCopy();
   return sendEmail({
     to: opts.to,
     userId: opts.userId,
@@ -404,6 +408,7 @@ export async function sendBookingReminderEmail(opts: {
         programTitle={opts.programTitle}
         whenLabel={opts.whenLabel}
         location={opts.location}
+        whatToWear={paragraphs(whatToWear)}
         notes={opts.notes}
         manageUrl={opts.manageUrl}
       />

@@ -22,6 +22,11 @@ export interface BookingConfirmationEmailProps {
   whenLabel: string;
   /** Where to show up. */
   location: string;
+  /**
+   * The dress code, already split into paragraphs. Coordinators edit it in
+   * /admin/settings (`whatToWear` in src/lib/site-copy.ts).
+   */
+  whatToWear: string[];
   /** The volunteer's own note on the booking, if they left one. */
   notes?: string;
   /** Link to manage / cancel the booking (the /me dashboard). */
@@ -35,6 +40,7 @@ export default function BookingConfirmationEmail({
   programTitle,
   whenLabel,
   location,
+  whatToWear,
   notes,
   manageUrl,
   calendar,
@@ -82,10 +88,11 @@ export default function BookingConfirmationEmail({
         </Section>
         <Section className={notes ? "mb-[16px]" : ""}>
           <Text className={detailLabel}>What to wear</Text>
-          <Text className={detailValue}>
-            Please ensure you&apos;re wearing closed toed shoes, hair tied back
-            and comfortable clothes you don&apos;t mind getting food on.
-          </Text>
+          {whatToWear.map((p, i) => (
+            <Text key={i} className={detailValue}>
+              {p}
+            </Text>
+          ))}
         </Section>
         {notes ? (
           <Section>
@@ -156,6 +163,9 @@ BookingConfirmationEmail.PreviewProps = {
   programTitle: "Kai Box",
   whenLabel: "Sat, 24 May · 9:00 am – 12:00 pm",
   location: "624 Rosebank Road, Avondale, Tāmaki Makaurau",
+  whatToWear: [
+    "Fully enclosed shoes with a closed toe and heel, hair tied back, and comfortable clothes you don't mind getting food on.",
+  ],
   notes: "First time volunteering — looking forward to it!",
   manageUrl: "https://volunteer.fairfood.org.nz/me",
   calendar: {
