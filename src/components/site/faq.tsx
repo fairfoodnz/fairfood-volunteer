@@ -4,39 +4,48 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { getSiteCopy, type SiteCopy } from "@/lib/site-copy";
+import { WhatToWear } from "./what-to-wear";
 
 // Plain Unicode here, not HTML entities — the answers render as text so
 // React would escape any `&rsquo;` literally. Keeps the dangerouslySetInnerHTML
 // off this component (and out of a future CMS-backed refactor where it would
-// turn into stored XSS).
-const faqs = [
-  {
-    q: "Do I need any experience to volunteer?",
-    a: "Nope — as long as you are willing to do the mahi then we will welcome you at the kai tables.",
-  },
-  {
-    q: "How old do I need to be?",
-    a: "Anyone under 18 years old must come with a parent or guardian first. We are a working warehouse and kitchen, so ages 16+ is recommended. For younger rangatahi, get in touch — we run school groups under supervision and can usually welcome tamariki ages 10+ with an adult helper.",
-  },
-  {
-    q: "What should I wear and bring?",
-    a: "Closed-toe shoes and hair tied back. Hi-vis, aprons, gloves and a cuppa on us.",
-  },
-  {
-    q: "Can I come as a walk-in?",
-    a: "We can’t always accommodate walk-ins because shifts have a set capacity. Booking ahead through this site is the most reliable way to get a spot.",
-  },
-  {
-    q: "I want to bring my workplace — how does that work?",
-    a: "Email volunteering@fairfood.org.nz with your group’s size and a few dates that suit. We’ve hosted 150+ companies and shape each session around your group’s interests.",
-  },
-  {
-    q: "What if I need to cancel?",
-    a: "No worries — just open the shift in “My shifts” and tap cancel. Letting us know early helps us offer the spot to someone else.",
-  },
-];
+// turn into stored XSS). The dress-code answer is coordinator-edited in
+// /admin/settings, which is why the list is built per render.
+function faqs(copy: SiteCopy): { q: string; a: React.ReactNode }[] {
+  return [
+    {
+      q: "Do I need any experience to volunteer?",
+      a: "Nope — as long as you are willing to do the mahi then we will welcome you at the kai tables.",
+    },
+    {
+      q: "How old do I need to be?",
+      a: "Anyone under 18 years old must come with a parent or guardian first. We are a working warehouse and kitchen, so ages 16+ is recommended. For younger rangatahi, get in touch — we run school groups under supervision and can usually welcome tamariki ages 10+ with an adult helper.",
+    },
+    {
+      q: "What should I wear and bring?",
+      a: (
+        <WhatToWear dressCode={copy.whatToWear} provided={copy.whatWeProvide} />
+      ),
+    },
+    {
+      q: "Can I come as a walk-in?",
+      a: "We can’t always accommodate walk-ins because shifts have a set capacity. Booking ahead through this site is the most reliable way to get a spot.",
+    },
+    {
+      q: "I want to bring my workplace — how does that work?",
+      a: "Email volunteering@fairfood.org.nz with your group’s size and a few dates that suit. We’ve hosted 150+ companies and shape each session around your group’s interests.",
+    },
+    {
+      q: "What if I need to cancel?",
+      a: "No worries — just open the shift in “My shifts” and tap cancel. Letting us know early helps us offer the spot to someone else.",
+    },
+  ];
+}
 
-export function Faq() {
+export async function Faq() {
+  const items = faqs(await getSiteCopy());
+
   return (
     <section id="faq" className="container-x py-16 md:py-20">
       <div className="grid gap-12 md:grid-cols-[1fr_1.4fr]">
@@ -57,7 +66,7 @@ export function Faq() {
           </p>
         </div>
         <Accordion className="rounded-md border border-border bg-background">
-          {faqs.map((f, i) => (
+          {items.map((f, i) => (
             <AccordionItem
               key={f.q}
               value={`item-${i}`}

@@ -28,6 +28,12 @@ export const COPY_SECTIONS = [
     description:
       "Asked once on the sign-up questionnaire, and again on the booking form for volunteers who joined before we started asking.",
   },
+  {
+    id: "whatToWear",
+    title: "What to wear",
+    description:
+      "Shown on every shift page and in the home page FAQ. The dress code also goes out in the booking confirmation and reminder emails.",
+  },
 ] as const;
 
 export type CopySectionId = (typeof COPY_SECTIONS)[number]["id"];
@@ -85,6 +91,23 @@ export const SITE_COPY = {
     multiline: false,
     maxLength: 160,
     fallback: "This is my first time volunteering with Fair Food",
+  },
+  whatToWear: {
+    section: "whatToWear",
+    label: "Dress code",
+    help: "On shift pages, in the FAQ, and in the confirmation and reminder emails. Leave a blank line between paragraphs.",
+    multiline: true,
+    maxLength: 600,
+    fallback:
+      "Fully enclosed shoes with a closed toe and heel, hair tied back, and comfortable clothes you don't mind getting food on.",
+  },
+  whatWeProvide: {
+    section: "whatToWear",
+    label: "What we provide",
+    help: "Added under the dress code on shift pages and in the FAQ. Not included in emails.",
+    multiline: false,
+    maxLength: 160,
+    fallback: "Hi-vis, aprons, gloves and a cuppa on us.",
   },
 } as const satisfies Record<string, CopyField>;
 

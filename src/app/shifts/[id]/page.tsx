@@ -24,6 +24,8 @@ import { absoluteUrl, jsonLdScript, ORG_ID, ORG_SITE_URL } from "@/lib/seo";
 import { buildBookingCalendarEvent, calendarLinks } from "@/lib/calendar";
 import { AddToCalendar } from "@/components/site/add-to-calendar";
 import { firstTimePrompt } from "@/lib/first-time";
+import { getSiteCopy } from "@/lib/site-copy";
+import { WhatToWear } from "@/components/site/what-to-wear";
 import { Button } from "@/components/ui/button";
 import { countOf } from "@/lib/format";
 import { BookForm } from "./book-form";
@@ -83,7 +85,10 @@ export default async function ShiftPage({ params }: Props) {
   if (!shift) notFound();
 
   const user = await currentUser();
-  const firstTimeLabel = await firstTimePrompt(user);
+  const [firstTimeLabel, copy] = await Promise.all([
+    firstTimePrompt(user),
+    getSiteCopy(),
+  ]);
   const myBooking =
     (user && shift.bookings.find((b) => b.userId === user.id)) || null;
 
@@ -252,8 +257,13 @@ export default async function ShiftPage({ params }: Props) {
               <dl className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
                 <Detail label="Location" value={shift.program.location} />
                 <Detail
-                  label="Bring"
-                  value="Closed-toe shoes and hair tied back. Hi-vis, aprons, gloves and a cuppa on us."
+                  label="What to wear"
+                  value={
+                    <WhatToWear
+                      dressCode={copy.whatToWear}
+                      provided={copy.whatWeProvide}
+                    />
+                  }
                 />
                 <Detail
                   label="Not sure?"

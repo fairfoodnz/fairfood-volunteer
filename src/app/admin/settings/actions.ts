@@ -49,5 +49,7 @@ export async function saveSiteCopyAction(
   );
 
   revalidatePath("/admin/settings");
+  // The home page is prerendered; its FAQ carries the dress code.
+  revalidatePath("/");
   return { ok: true, values };
 }
