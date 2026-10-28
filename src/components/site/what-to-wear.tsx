@@ -13,12 +13,10 @@ export function WhatToWear({
   provided: string;
 }) {
   return (
-    <span className="block space-y-2">
+    <div className="space-y-2">
       {[...paragraphs(dressCode), provided].map((p, i) => (
-        <span key={i} className="block">
-          {p}
-        </span>
+        <p key={i}>{p}</p>
       ))}
-    </span>
+    </div>
   );
 }
