@@ -39,6 +39,20 @@ export const metadata: Metadata = {
   title: "Fair Food · Volunteer",
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  // iOS Safari's data detectors turn anything that looks like a phone number,
+  // street address, date or email into a link by rewriting the server HTML
+  // before React hydrates it. React then sees markup it didn't render and
+  // throws a hydration mismatch (#418), which in production hit the programme
+  // pages (venue address, shift dates) on iPhones. Every phone and email we
+  // want tappable is already an explicit tel:/mailto: link, so the detectors
+  // add nothing. See fairfoodnz/fairfood-volunteer#134 and #211.
+  formatDetection: {
+    telephone: false,
+    address: false,
+    date: false,
+    email: false,
+    url: false,
+  },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

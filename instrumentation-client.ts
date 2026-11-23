@@ -2,6 +2,12 @@ import posthog from "posthog-js";
 
 import { filterThirdPartyExceptions } from "@/lib/posthog-exception-filter";
 import { scrubAuthTokens } from "@/lib/posthog-url-scrub";
+import { installTranslationSafeDom } from "@/lib/translation-safe-dom";
+
+// Must run synchronously before hydration: keeps a translated page (Chrome /
+// Safari "Translate this page") from crashing React's next commit. See the
+// header of src/lib/translation-safe-dom.ts.
+installTranslationSafeDom(Node.prototype);
 
 posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   api_host: "/ingest",
