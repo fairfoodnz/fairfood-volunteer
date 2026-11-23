@@ -9,6 +9,7 @@ import {
 import { createSession, postAuthDestination } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { rateLimit, retryAfterText } from "@/lib/rate-limit";
 import {
   decodeTransports,
   rpID,
@@ -25,6 +26,13 @@ export type PasskeyLoginFinishState =
   | { ok: true; redirectTo: string }
   | { ok: false; error: string };
 
+function tooManyPasskeyAttempts(retryAfterSeconds: number) {
+  return {
+    ok: false as const,
+    error: `Too many sign-in attempts. Wait ${retryAfterText(retryAfterSeconds)} and try again.`,
+  };
+}
+
 /**
  * Begin a usernameless (discoverable-credential) sign-in: no `allowCredentials`
  * means the authenticator offers whichever passkey the user has for this site.
@@ -36,6 +44,8 @@ export type PasskeyLoginFinishState =
  * (Touch/Face ID, Windows Hello, Android biometric) satisfy this transparently.
  */
 export async function beginPasskeyLogin(): Promise<PasskeyLoginBeginState> {
+  const limited = await rateLimit("passkeyBegin", {});
+  if (!limited.ok) return tooManyPasskeyAttempts(limited.retryAfterSeconds);
   try {
     const options = await generateAuthenticationOptions({
       rpID: rpID(),
@@ -59,6 +69,9 @@ export async function finishPasskeyLogin(
   response: AuthenticationResponseJSON,
   next?: string | null,
 ): Promise<PasskeyLoginFinishState> {
+  const limited = await rateLimit("passkeyFinish", {});
+  if (!limited.ok) return tooManyPasskeyAttempts(limited.retryAfterSeconds);
+
   const expectedChallenge = await takeChallenge("authentication");
   if (!expectedChallenge) {
     return {

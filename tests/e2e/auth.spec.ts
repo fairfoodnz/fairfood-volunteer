@@ -72,6 +72,8 @@ test.describe("sign in", () => {
       page.getByText(/That email and password don.t match/i),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/auth\/sign-in/);
+    // A mistyped password doesn't also cost them the email they typed.
+    await expect(page.getByLabel("Email")).toHaveValue("nobody@example.com");
   });
 
   test("a seeded volunteer can sign in and reach their dashboard", async ({
@@ -86,6 +88,53 @@ test.describe("sign in", () => {
     await expect(
       page.getByRole("heading", { name: /Your shifts at the kai table/i }),
     ).toBeVisible();
+  });
+
+  test("locks out an email after too many failed attempts", async ({ page }) => {
+    // A fresh email and client IP per run, so this neither inherits counts
+    // from earlier runs nor spends the shared localhost IP allowance the
+    // other sign-in specs rely on. The app trusts the right-most
+    // X-Forwarded-For hop, which with no proxy in front is this one.
+    const run = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+    const ip = `198.51.100.${Math.floor(Math.random() * 254) + 1}`;
+    await page.setExtraHTTPHeaders({ "x-forwarded-for": ip });
+
+    await page.goto("/auth/sign-in");
+    const email = page.getByLabel("Email");
+    const password = page.getByLabel("Password", { exact: true });
+    const submit = page.getByRole("button", { name: "Sign in", exact: true });
+
+    // One Server Action POST per submit. React resets the form once each
+    // action settles, so wait for that reset (the password clears) before the
+    // next fill, or the reset can wipe what was just typed. The email is
+    // echoed back and survives the reset.
+    const attempt = async (address: string, pass: string) => {
+      await email.fill(address);
+      await password.fill(pass);
+      await Promise.all([
+        page.waitForResponse(
+          (r) => r.request().method() === "POST" && r.url().includes("/auth/sign-in"),
+        ),
+        submit.click(),
+      ]);
+      await expect(password).toHaveValue("");
+      await expect(email).toHaveValue(address);
+    };
+
+    // The limit is 10 per email per 10 minutes: all ten get the normal error.
+    for (let n = 1; n <= 10; n++) {
+      await attempt(`locked-${run}@example.com`, `wrong-password-${n}`);
+      await expect(page.getByText(/That email and password don.t match/i)).toBeVisible();
+    }
+
+    await attempt(`locked-${run}@example.com`, "wrong-password-11");
+    await expect(
+      page.getByText(/Too many sign-in attempts\. Wait 10 minutes and try again/i),
+    ).toBeVisible();
+
+    // Another email from the same address is still let through.
+    await attempt(`other-${run}@example.com`, "wrong-password");
+    await expect(page.getByText(/That email and password don.t match/i)).toBeVisible();
   });
 });
 
