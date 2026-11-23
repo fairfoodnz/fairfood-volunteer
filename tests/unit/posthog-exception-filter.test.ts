@@ -54,7 +54,7 @@ describe("filterThirdPartyExceptions", () => {
     expect(filterThirdPartyExceptions(event)).toBe(event);
   });
 
-  describe("Google iOS injected-script stack overflow", () => {
+  describe("Google iOS injected-script errors", () => {
     const CHROME_IOS =
       "Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/153.0.7980.45 Mobile/15E148 Safari/604.1";
     const GOOGLE_APP =
@@ -136,6 +136,87 @@ describe("filterThirdPartyExceptions", () => {
         ],
       });
       expect(filterThirdPartyExceptions(event)).toBe(event);
+    });
+
+    // #161 / #162: the same injected scripts also throw bare minified names
+    // and TypeErrors reading off them, in the shapes captured in production.
+    function injectedError(
+      userAgent: string,
+      value: string,
+      frames: unknown[] | undefined,
+    ) {
+      return exceptionEvent({
+        $raw_user_agent: userAgent,
+        $exception_list: [
+          {
+            type: "Error",
+            value,
+            ...(frames ? { stacktrace: { type: "raw", frames } } : {}),
+          },
+        ],
+      });
+    }
+
+    const pageLineFrame = [frame("https://volunteer.fairfood.org.nz/shifts", "?")];
+
+    it.each(["fa", "ga", "Ba", "Na", "he", "$a"])(
+      "drops the bare minified identifier %j",
+      (value) => {
+        expect(
+          filterThirdPartyExceptions(injectedError(CHROME_IOS, value, pageLineFrame)),
+        ).toBeNull();
+      },
+    );
+
+    it("drops a bare identifier with no frames on the Google app", () => {
+      expect(filterThirdPartyExceptions(injectedError(GOOGLE_APP, "Ba", []))).toBeNull();
+    });
+
+    it("drops the TypeError reading a property off a minified name", () => {
+      const event = injectedError(
+        CHROME_IOS,
+        "undefined is not an object (evaluating 'a.J')",
+        pageLineFrame,
+      );
+      expect(filterThirdPartyExceptions(event)).toBeNull();
+    });
+
+    it("unwraps posthog-js's frameless 'captured as exception' form", () => {
+      const typeError = injectedError(
+        CHROME_IOS,
+        "'TypeError' captured as exception with message: 'undefined is not an object (evaluating 'a.J')'",
+        undefined,
+      );
+      const bareName = injectedError(
+        CHROME_IOS,
+        "'Error' captured as exception with message: 'Aa'",
+        undefined,
+      );
+      expect(filterThirdPartyExceptions(typeError)).toBeNull();
+      expect(filterThirdPartyExceptions(bareName)).toBeNull();
+    });
+
+    it("keeps a short message thrown from our bundles", () => {
+      const event = injectedError(CHROME_IOS, "fa", [
+        frame("https://volunteer.fairfood.org.nz/_next/static/chunks/0f3a9c.js", "x"),
+      ]);
+      expect(filterThirdPartyExceptions(event)).toBe(event);
+    });
+
+    it("keeps a short message from any other browser", () => {
+      const event = injectedError(SAFARI, "fa", pageLineFrame);
+      expect(filterThirdPartyExceptions(event)).toBe(event);
+    });
+
+    it("keeps longer identifiers and real property-read errors", () => {
+      const word = injectedError(CHROME_IOS, "Load", pageLineFrame);
+      const realRead = injectedError(
+        CHROME_IOS,
+        "undefined is not an object (evaluating 'shift.startsAt')",
+        pageLineFrame,
+      );
+      expect(filterThirdPartyExceptions(word)).toBe(word);
+      expect(filterThirdPartyExceptions(realRead)).toBe(realRead);
     });
   });
 

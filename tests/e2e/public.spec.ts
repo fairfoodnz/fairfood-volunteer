@@ -70,3 +70,42 @@ test.describe("auth guards (logged out)", () => {
     await expect(page).toHaveURL(/\/auth\/sign-in\?next=%2Fadmin|\/auth\/sign-in\?next=\/admin/);
   });
 });
+
+test.describe("browser rewrites of server HTML", () => {
+  test("a translated page doesn't crash React's DOM updates", async ({ page }) => {
+    // Chrome's "Translate this page" swaps each text node for <font>
+    // wrappers. React later removes or inserts against the original node,
+    // which used to throw NotFoundError mid-commit. The guard from
+    // instrumentation-client.ts must be live before hydration.
+    await page.goto("/programs");
+    const outcome = await page.evaluate(() => {
+      const p = document.createElement("p");
+      const original = document.createTextNode("Kia ora");
+      p.appendChild(original);
+      document.body.appendChild(p);
+      const font = document.createElement("font");
+      font.textContent = "Hello";
+      p.replaceChild(font, original);
+      try {
+        p.insertBefore(document.createTextNode("new"), original);
+        p.removeChild(original);
+        return p.textContent;
+      } catch (err) {
+        return String(err);
+      } finally {
+        p.remove();
+      }
+    });
+    expect(outcome).toBe("Hellonew");
+  });
+
+  test("iOS data detectors are switched off", async ({ page }) => {
+    // Safari rewriting addresses and dates into links before hydration caused
+    // React hydration mismatches on the programme pages.
+    await page.goto("/programs");
+    await expect(page.locator('meta[name="format-detection"]')).toHaveAttribute(
+      "content",
+      "telephone=no, date=no, address=no, email=no, url=no",
+    );
+  });
+});

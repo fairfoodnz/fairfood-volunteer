@@ -72,6 +72,8 @@ test.describe("sign in", () => {
       page.getByText(/That email and password don.t match/i),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/auth\/sign-in/);
+    // A mistyped password doesn't also cost them the email they typed.
+    await expect(page.getByLabel("Email")).toHaveValue("nobody@example.com");
   });
 
   test("a seeded volunteer can sign in and reach their dashboard", async ({

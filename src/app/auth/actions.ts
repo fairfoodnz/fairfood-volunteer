@@ -73,7 +73,12 @@ const SignUpSchema = z
     path: ["confirm"],
   });
 
-export type SignInState = { error?: string };
+export type SignInState = {
+  error?: string;
+  /** Echoed back on failure so React's post-action form reset doesn't wipe
+   *  the address the volunteer typed. Never the password. */
+  email?: string;
+};
 export type SignUpState = {
   error?: string;
   /** Echoed back on validation failure so React's post-action form reset
@@ -93,8 +98,10 @@ export async function signInAction(
     password: formData.get("password"),
     next: formData.get("next") || undefined,
   });
+  const typedEmail = formData.get("email");
+  const email = typeof typedEmail === "string" ? typedEmail : "";
   if (!parsed.success) {
-    return { error: "Please enter your email and password." };
+    return { error: "Please enter your email and password.", email };
   }
   const lower = parsed.data.email.trim().toLowerCase();
   const user = await db.user.findUnique({ where: { email: lower } });
@@ -106,7 +113,7 @@ export async function signInAction(
   const validHash = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
   const ok = await verifyPassword(parsed.data.password, validHash);
   if (!user || !ok) {
-    return { error: "That email and password don't match." };
+    return { error: "That email and password don't match.", email };
   }
   await createSession(user.id);
   if (!user.profileCompletedAt) {

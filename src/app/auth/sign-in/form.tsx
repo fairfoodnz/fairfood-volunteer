@@ -13,9 +13,15 @@ export function SignInForm({ next }: { next?: string }) {
     signInAction,
     {},
   );
+  // React resets the form after every action; remounting on the echoed email
+  // re-seeds the uncontrolled input (Base UI ignores a changed defaultValue),
+  // so a mistyped password doesn't also cost the volunteer their email. A
+  // repeat failure with the same email deliberately doesn't remount: the
+  // native form reset restores the defaultValue the last remount seeded.
+  const formKey = state.email ?? "initial";
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form key={formKey} action={formAction} className="space-y-5">
       <FormField id="email" label="Email" required>
         <Input
           name="email"
@@ -23,6 +29,7 @@ export function SignInForm({ next }: { next?: string }) {
           required
           autoComplete="email"
           placeholder="you@example.com"
+          defaultValue={state.email}
         />
       </FormField>
       <div>
