@@ -15,7 +15,9 @@ export function SignInForm({ next }: { next?: string }) {
   );
   // React resets the form after every action; remounting on the echoed email
   // re-seeds the uncontrolled input (Base UI ignores a changed defaultValue),
-  // so a mistyped password doesn't also cost the volunteer their email.
+  // so a mistyped password doesn't also cost the volunteer their email. A
+  // repeat failure with the same email deliberately doesn't remount: the
+  // native form reset restores the defaultValue the last remount seeded.
   const formKey = state.email ?? "initial";
 
   return (
