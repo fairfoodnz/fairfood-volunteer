@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { installTranslationSafeDom } from "@/lib/translation-safe-dom";
+import {
+  installTranslationSafeDom,
+  type TranslationRecovery,
+} from "@/lib/translation-safe-dom";
 
 // A tiny stand-in for the DOM: just enough tree structure, and the same
 // NotFoundError the real removeChild/insertBefore throw for a node that is not
 // a direct child. The unit suite runs in Node (no jsdom), so a fresh class per
 // test keeps each patched prototype isolated.
-function makeDom() {
+function makeDom(onRecover?: (kind: TranslationRecovery) => void) {
   class FakeNode {
     parentNode: FakeNode | null = null;
     childNodes: FakeNode[] = [];
@@ -34,7 +37,7 @@ function makeDom() {
       return node;
     }
   }
-  installTranslationSafeDom(FakeNode.prototype as unknown as Node);
+  installTranslationSafeDom(FakeNode.prototype as unknown as Node, onRecover);
   return FakeNode;
 }
 
@@ -103,5 +106,39 @@ describe("installTranslationSafeDom", () => {
     const patched = FakeNode.prototype.removeChild;
     installTranslationSafeDom(FakeNode.prototype as unknown as Node);
     expect(FakeNode.prototype.removeChild).toBe(patched);
+  });
+
+  describe("onRecover", () => {
+    it("reports each recovered call, and stays quiet for normal ones", () => {
+      const kinds: TranslationRecovery[] = [];
+      const Dom = makeDom((kind) => kinds.push(kind));
+
+      const p = new Dom("p");
+      const kept = p.appendChild(new Dom("kept"));
+      p.removeChild(kept);
+      expect(kinds).toEqual([]);
+
+      const wrapped = p.appendChild(new Dom("wrapped"));
+      p.appendChild(new Dom("font")).appendChild(wrapped);
+      p.removeChild(wrapped);
+
+      const detached = new Dom("detached");
+      p.removeChild(detached);
+      p.insertBefore(new Dom("new"), detached);
+
+      expect(kinds).toEqual([
+        "removeChild:reparented",
+        "removeChild:detached",
+        "insertBefore:moved-anchor",
+      ]);
+    });
+
+    it("never lets a failing reporter turn a recovery back into a crash", () => {
+      const Dom = makeDom(() => {
+        throw new Error("analytics down");
+      });
+      const p = new Dom("p");
+      expect(() => p.removeChild(new Dom("detached"))).not.toThrow();
+    });
   });
 });

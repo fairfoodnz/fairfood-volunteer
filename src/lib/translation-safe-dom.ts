@@ -21,17 +21,37 @@
 
 type PatchableNode = Pick<Node, "removeChild" | "insertBefore">;
 
+/** Which guarded call recovered from a node the translator had moved. */
+export type TranslationRecovery =
+  | "removeChild:reparented"
+  | "removeChild:detached"
+  | "insertBefore:moved-anchor";
+
 const PATCHED = Symbol.for("fairfood.translationSafeDom");
 
 /**
  * Patch `proto.removeChild` / `proto.insertBefore` (normally `Node.prototype`)
  * so a reference node that is no longer a direct child no longer throws.
  * Behaviour for every well-formed call is unchanged. Idempotent.
+ *
+ * `onRecover` fires each time a call that would have thrown is recovered, so
+ * the caller can measure how often the guard is actually needed.
  */
-export function installTranslationSafeDom(proto: PatchableNode): void {
+export function installTranslationSafeDom(
+  proto: PatchableNode,
+  onRecover?: (kind: TranslationRecovery) => void,
+): void {
   const marked = proto as PatchableNode & { [PATCHED]?: true };
   if (marked[PATCHED]) return;
   marked[PATCHED] = true;
+
+  const recovered = (kind: TranslationRecovery) => {
+    try {
+      onRecover?.(kind);
+    } catch {
+      // Reporting must never turn a recovered DOM call back into a crash.
+    }
+  };
 
   const originalRemoveChild = proto.removeChild;
   proto.removeChild = function <T extends Node>(this: Node, child: T): T {
@@ -40,11 +60,13 @@ export function installTranslationSafeDom(proto: PatchableNode): void {
       // The translator re-parented the node (e.g. into a <font> it inserted
       // under `this`). Removing it from where it actually lives is what React
       // meant, and it keeps the stale node from lingering on screen.
+      recovered("removeChild:reparented");
       return originalRemoveChild.call(parent, child) as T;
     }
     if (!parent) {
       // Already detached by the translator: the removal React asked for has,
       // in effect, happened.
+      recovered("removeChild:detached");
       return child;
     }
     return originalRemoveChild.call(this, child) as T;
@@ -60,6 +82,7 @@ export function installTranslationSafeDom(proto: PatchableNode): void {
       // The anchor React picked was moved or detached. Appending keeps the new
       // node in the right parent; its exact position among siblings the
       // translator has already rearranged is the best that can be recovered.
+      recovered("insertBefore:moved-anchor");
       return originalInsertBefore.call(this, node, null) as T;
     }
     return originalInsertBefore.call(this, node, child) as T;
