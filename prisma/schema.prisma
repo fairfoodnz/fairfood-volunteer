@@ -534,19 +534,3 @@ model EmailLog {
   @@index([userId, createdAt])
   @@index([createdAt])
 }
-
-// Fixed-window attempt counters for the auth endpoints (sign-in, password
-// reset, sign-up, verification resend, passkey). See src/lib/rate-limit.ts.
-//
-// Postgres rather than process memory so a redeploy doesn't hand an attacker
-// a fresh allowance and a second container would share the same counts.
-// `key` is "<scope>:<dimension>:<sha256 of the identifier>", so the table
-// never holds a raw email or IP address. Rows are pruned lazily once their
-// window has passed.
-model RateLimitBucket {
-  key     String   @id
-  count   Int
-  resetAt DateTime
-
-  @@index([resetAt])
-}

@@ -662,11 +662,8 @@ async function wipeSeedData() {
   const users = await prisma.user.deleteMany({
     where: { email: { endsWith: `@${SEED_EMAIL_DOMAIN}` } },
   });
-  // A reseed is a fresh start: don't leave the auth rate limits (counted per
-  // IP, which is always localhost here) tripped from earlier e2e runs.
-  const limits = await prisma.rateLimitBucket.deleteMany({});
   console.log(
-    `Wiped: ${bookings.count} bookings, ${shifts.count} shifts, ${templates.count} templates, ${users.count} seeded volunteers, ${limits.count} rate-limit buckets.`,
+    `Wiped: ${bookings.count} bookings, ${shifts.count} shifts, ${templates.count} templates, ${users.count} seeded volunteers.`,
   );
 }
 

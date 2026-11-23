@@ -23,7 +23,6 @@ import {
 import { stopImpersonation } from "@/lib/impersonation";
 import { FirstNameSchema, LastNameSchema } from "@/lib/name-fields";
 import { getPostHogClient } from "@/lib/posthog-server";
-import { rateLimit, retryAfterText } from "@/lib/rate-limit";
 
 const PASSWORD_MIN = 8;
 const RESET_TTL_HOURS = 24;
@@ -105,15 +104,6 @@ export async function signInAction(
     return { error: "Please enter your email and password.", email };
   }
   const lower = parsed.data.email.trim().toLowerCase();
-  // Checked before bcrypt so a blocked attempt costs no hashing. Counted per
-  // email whether or not the account exists, so the message reveals nothing.
-  const limited = await rateLimit("signIn", { email: lower });
-  if (!limited.ok) {
-    return {
-      error: `Too many sign-in attempts. Wait ${retryAfterText(limited.retryAfterSeconds)} and try again, or reset your password.`,
-      email,
-    };
-  }
   const user = await db.user.findUnique({ where: { email: lower } });
   // Run bcrypt even when the user doesn't exist, to avoid leaking which emails
   // are registered. A null passwordHash (Google-/passkey-only account that
@@ -170,13 +160,6 @@ export async function signUpAction(
   }
 
   const lower = parsed.data.email.trim().toLowerCase();
-  const limited = await rateLimit("signUp", {});
-  if (!limited.ok) {
-    return {
-      error: `Too many sign-ups from your network. Wait ${retryAfterText(limited.retryAfterSeconds)} and try again.`,
-      values,
-    };
-  }
   const existing = await db.user.findUnique({ where: { email: lower } });
   if (existing) {
     return {
@@ -279,11 +262,6 @@ export async function requestPasswordResetAction(
   }
 
   const email = parsed.data.email.trim().toLowerCase();
-  // Over the limit, answer exactly as for a normal request but send nothing:
-  // whoever is asking already has recent reset emails in that inbox.
-  const limited = await rateLimit("passwordResetRequest", { email });
-  if (!limited.ok) return { sent: true };
-
   const user = await db.user.findUnique({ where: { email } });
 
   if (user) {
@@ -347,13 +325,6 @@ export async function resetPasswordAction(
     return Object.keys(fieldErrors).length
       ? { fieldErrors }
       : { error: "Choose a password of at least 8 characters." };
-  }
-
-  const limited = await rateLimit("passwordResetConfirm", {});
-  if (!limited.ok) {
-    return {
-      error: `Too many attempts. Wait ${retryAfterText(limited.retryAfterSeconds)} and try again.`,
-    };
   }
 
   const record = await db.passwordResetToken.findUnique({
@@ -580,12 +551,6 @@ export async function resendVerificationAction(
           error: `Please wait a moment before requesting another verification email.`,
         };
       }
-    }
-    const limited = await rateLimit("resendVerification", { user: user.id });
-    if (!limited.ok) {
-      return {
-        error: `You've asked for several verification emails. Check your inbox and spam folder, or wait ${retryAfterText(limited.retryAfterSeconds)} and try again.`,
-      };
     }
     await issueEmailVerification(user);
   }
